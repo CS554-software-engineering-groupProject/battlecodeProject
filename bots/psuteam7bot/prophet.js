@@ -6,3 +6,6 @@ prophet.doAction = (self) => {
     self.log("prophet " + self.id + " taking turn");
     return;
 }
+
+
+export default prophet;

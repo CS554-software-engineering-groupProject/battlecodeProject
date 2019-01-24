@@ -6,3 +6,6 @@ church.doAction = (self) => {
     self.log("church " + self.id + " taking turn.");
     return;
 }
+
+
+export default church;

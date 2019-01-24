@@ -6,3 +6,6 @@ pilgrim.doAction = (self) => {
     self.log("pilgrim " + self.id + " taking turn");
     return;
 }
+
+
+export default pilgrim;

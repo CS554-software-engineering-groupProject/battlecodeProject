@@ -1,6 +1,6 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
 
-const prophet;
+const prophet = {};
 
 prophet.doAction = (self) => {
     self.log("prophet " + self.id + " taking turn");

@@ -1,0 +1,7 @@
+*.bc19
+*/*.bc19
+*/*/*.bc19
+.vscode/
+*/*/.eslintrc*
+*/package-lock.json
+/node_modules

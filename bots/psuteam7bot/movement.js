@@ -163,6 +163,7 @@ movement.getClosestResource(location, resourceMap)
 
 
 //Return an array of resource depot locations sorted by distance from location passed as parameter
+//Might exceed chess clock? remove if so...
 movement.getSortedResourceList(location, resourceMap)
 {
     const length = resourceMap.length;
@@ -199,11 +200,39 @@ movement.getSortedResourceList(location, resourceMap)
     return sortedArr;
 }
 
-/*
-//For robot movement
+
+//For robot movement from point A to Point B
+//Input reference to robot and destination location in {x, y}
+//Output should be return value of BC19 robot move function
 movement.moveTowards = (self, destination) => {
+    const maxDist = SPECS.UNITS[self.me.unit].SPEED;
+    const distance = getDistance(self.me, destination);
 
+    //Case 0: Need to check global fuel
+    //Case 1: source->destination is within bot's movement range
+    if(distance <= maxDist)
+    {
+        const maxFuelCost = (distance * SPECS.UNITS[self.me.unit].FUEL_PER_MOVE);
+        //Looking through API discord channel, 'karbonite' and 'fuel' seems to be the way to get global team's karbonite and fuel
+        if(maxFuelCost < fuel)
+        {
+            //Either don't move due to low resources or get highest value possible
 
+            //Check possible passable paths towards destination, return location of a point C tile which has the shortest distance to destination
+            //Might exceed chess clock, need to check after implementing, if so, replace with simpler pathfinding
+        }
+        
+        //Check possible passable paths towards destination, return location of a point C tile which has the shortest distance to destination
+        //Might exceed chess clock, need to check after implementing, if so, replace with simpler pathfinding
+    }
+
+    //Case 2: source->destination is outside the bot's movement range
+
+    //Need to get point C between point A to Point B that is within the specific bot's movement range
+
+    
+    //Check possible passable paths towards destination, return location of a point C tile which has the shortest distance to destination
+    //Might exceed chess clock, need to check after implementing, if so, replace with simpler pathfinding
 }
-*/
+
 export default movement

@@ -7,6 +7,12 @@ import church from './church.js';
 var step = -1;
 
 class MyRobot extends BCAbstractRobot {
+    constructor() {
+        super();
+        this.role = "UNASSIGNED";   //Role for unit (for strategy purposes)
+        this.target = null;         //Target destionation like {x: _, y: _}  
+        this.base = null;           //Closest (or original) castle/church like {x: _, y: _} 
+    }
     turn() {
         if (this.myType === undefined){
             switch(this.me.unit) {

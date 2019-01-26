@@ -6,6 +6,65 @@ const expect = chai.expect;
 
 
 describe('Pilgrim Unit Tests', function() {
+    describe('Role objectives tests', function(done) {
+        it('MINERS without a target should identify and move towards a resource', function(done) {
+            let returnValue;
+            let target;
+            const myBot = new MyRobot();
+            myBot._bc_game_state = {shadow: null};
+            myBot.me = {
+                id: 1,
+                unit: 2, //Pilgrim
+                x: 0,
+                y: 0,
+                fuel: 0,
+                karbonite: 0
+            }
+            myBot._bc_game_state.shadow = myBot.map = 
+                        [[1,0,0,0,0],
+                         [0,0,0,0,0],
+                         [0,0,0,0,0],
+                         [0,0,0,0,0],
+                         [0,0,0,0,0]];
+            myBot.karbonite_map = [[0,0,0,0,0],
+                                   [0,0,0,0,0],
+                                   [0,0,0,0,0],
+                                   [0,0,0,1,0],
+                                   [1,0,1,0,1]];
+            myBot.fuel_map = [[0,0,0,1,0],
+                              [0,0,0,0,0],
+                              [0,0,1,0,0],
+                              [1,0,0,0,0],
+                              [0,0,0,0,0]];
+
+            //Initially should be unassigned with no target
+            expect(myBot.role).equals('UNASSIGNED');
+            expect(myBot.target).to.be.null;
+            //Test target being set to nearest karbonite location when relatively less karbonite
+            myBot.karbonite = 0;
+            myBot.fuel = 10;
+
+            returnValue = pilgrim.doAction(myBot);
+            expect(myBot.role).equals('MINER');
+            expect(myBot.target).to.be.have.property('x', 0);
+            expect(myBot.target).to.be.have.property('y', 4);
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.ok;
+
+            //Test target being set to nearest fuel location when relatively less fuel
+            myBot.target = null;
+            myBot.karbonite = 10;
+            myBot.fuel = 10;
+
+            returnValue = pilgrim.doAction(myBot);
+            expect(myBot.role).equals('MINER');
+            expect(myBot.target).to.be.have.property('x', 2);
+            expect(myBot.target).to.be.have.property('y', 2);
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.ok;
+
+            done();
+        });
+    });
+
     describe('Mining tests', function() {
         it('should be able to mine if on a resource depot', function(done) {
             let returnValue;

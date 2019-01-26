@@ -200,39 +200,53 @@ movement.getSortedResourceList(location, resourceMap)
     return sortedArr;
 }
 
-
 //For robot movement from point A to Point B
 //Input reference to robot and destination location in {x, y}
-//Output should be return value of BC19 robot move function
+//Output should be point C, location to call robot.move with.
+//Returns {-1, -1} if distance from robot location to destination <= 0
 movement.moveTowards = (self, destination) => {
     const maxDist = SPECS.UNITS[self.me.unit].SPEED;
-    const distance = getDistance(self.me, destination);
+    let distance = getDistance(self.me, destination);
 
-    //Case 0: Need to check global fuel
-    //Case 1: source->destination is within bot's movement range
-    if(distance <= maxDist)
+
+    const maxFuelCost = (distance * SPECS.UNITS[self.me.unit].FUEL_PER_MOVE);
+
+    //Looking through 'API questions' discord channel, 'karbonite' and 'fuel' seems to be the way to get global team's karbonite and fuel
+    if(fuel < maxFuelCost)
+        distance = Math.floor(fuel/FUEL_PER_MOVE);
+
+    var Deque = require("collections/deque");
+
+    let {dx, dy} = destination;
+    let x = -1;
+    let y = -1;
+
+    //Case 0: No movement
+    if(distance <= 0)
+        return {x, y};
+
+    if(distance > maxDist)
     {
-        const maxFuelCost = (distance * SPECS.UNITS[self.me.unit].FUEL_PER_MOVE);
-        //Looking through API discord channel, 'karbonite' and 'fuel' seems to be the way to get global team's karbonite and fuel
-        if(maxFuelCost < fuel)
-        {
-            //Either don't move due to low resources or get highest value possible
+        let {distX, distY} = getDistanceXY(self.me, destination);
+        let rDist = Math.sqrt(maxDist);
+        let direction = getRelativeDirection(self.me, destination);
 
-            //Check possible passable paths towards destination, return location of a point C tile which has the shortest distance to destination
-            //Might exceed chess clock, need to check after implementing, if so, replace with simpler pathfinding
-        }
-        
-        //Check possible passable paths towards destination, return location of a point C tile which has the shortest distance to destination
-        //Might exceed chess clock, need to check after implementing, if so, replace with simpler pathfinding
+        if(distX < rDist)
+            dx%=rDist;
+        if(distY < rDist)
+            dy%=rDist;
+
+        dx *= direction.x;
+        dy *= direction.y;
     }
 
-    //Case 2: source->destination is outside the bot's movement range
+    var deque = new Deque([{x, y, c:0}])
 
-    //Need to get point C between point A to Point B that is within the specific bot's movement range
 
-    
+
     //Check possible passable paths towards destination, return location of a point C tile which has the shortest distance to destination
     //Might exceed chess clock, need to check after implementing, if so, replace with simpler pathfinding
+    return {x, y};
 }
 
 export default movement

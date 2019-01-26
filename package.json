@@ -6,6 +6,13 @@
   "dependencies": {
     "bc19": "^0.4.4"
   },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0"
+  },
+  "scripts": {
+    "test": "./projectUtils/test_script.sh"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/CS554-software-engineering-groupProject/battlecodeProject.git"

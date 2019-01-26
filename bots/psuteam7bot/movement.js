@@ -1,5 +1,7 @@
 const movement = {}
 
+movement.directions = [{ x: 0, y: -1 }, { x: 1, y: -1 }, { x: -1, y: -1 }, { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: -1, y: 1 }]
+
 //Return relative position of point A from point B
 movement.getRelativePosition = (A, B) => {
     const x = (A.x-B.x);
@@ -26,19 +28,19 @@ movement.getRelativeDirection = (A, B) => {
 
 //Get result of n-times rotation of the direction passed in
 movement.rotateDirection = (direction, n) => {
-    const directions = [{ x: 0, y: -1 }, { x: 1, y: -1 }, { x: -1, y: -1 }, { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: -1, y: 1 }]
+    const dirsLen = movement.directions.length;
     let {x, y} = direction;
     let currIndex = null;
-    for(let i = 0; i < directions.length; ++i)
+    for(let i = 0; i < dirsLen; ++i)
     {
-        if(x === directions[i].x && y === directions[i].y)
+        if(x === movement.directions[i].x && y === movement.directions[i].y)
         {
             currIndex = i;
             break;
         }
     }
-    currIndex += n;
-    return (directions[currIndex % directions.length]);
+    currIndex = (((currIndex + n) % dirsLen) + dirsLen) % dirsLen;
+    return (movement.directions[currIndex]);
 }
 
 //Return difference of x-coord and y-coord between A and B

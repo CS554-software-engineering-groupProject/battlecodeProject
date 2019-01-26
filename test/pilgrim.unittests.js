@@ -1,6 +1,5 @@
 const mocha = require('mocha');
 const chai = require('chai');
-//const BCAR = require('../projectUtils/psuteam7botCompiled.js').BCAbstractRobot;
 const MyRobot = require('../projectUtils/psuteam7botCompiled.js').MyRobot;
 const pilgrim = require('../projectUtils/psuteam7botCompiled.js').pilgrim;
 const expect = chai.expect;
@@ -100,6 +99,37 @@ describe('Pilgrim Unit Tests', function() {
             returnValue = pilgrim.mine(myBot);
             expect(returnValue).to.be.undefined;
             expect(myBot._bc_logs).to.include(expectedErrorLog);
+
+            done();
+        });
+
+        it('should be able to find the closest resource', function(done) {
+            let returnValue;
+            const myBot = new MyRobot();
+            myBot.me = {
+                unit: 2, //Pilgrim
+                x: 0,
+                y: 0
+            }
+
+            myBot.karbonite_map = [[0,0,0,0,0],
+                                   [0,0,0,0,0],
+                                   [0,0,0,0,0],
+                                   [0,0,0,1,0],
+                                   [1,0,1,0,1]];
+
+            returnValue = pilgrim.findClosestResource(myBot.me, myBot.karbonite_map);
+            expect(returnValue).to.be.have.property('x', 0);
+            expect(returnValue).to.be.have.property('y', 4);
+            myBot.fuel_map = [[0,0,0,1,0],
+                              [0,0,0,0,0],
+                              [0,0,1,0,0],
+                              [1,0,0,0,0],
+                              [0,0,0,0,0]];
+
+            returnValue = pilgrim.findClosestResource(myBot.me, myBot.fuel_map);
+            expect(returnValue).to.be.have.property('x', 2);
+            expect(returnValue).to.be.have.property('y', 2);
 
             done();
         });

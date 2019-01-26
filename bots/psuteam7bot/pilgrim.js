@@ -36,6 +36,33 @@ pilgrim.mine = (self) => {
     }
 }
 
+/**
+ * Method to find the location of the closest resource to a bot.
+ * @TODO There might be a more efficient version of this to implement
+ * 
+ * @param position Object with x and y fields representing the bot's current position
+ * @param depotMap The 2d boolean map, either `karbonite_map` or `fuel_map`
+ * @return Returns an object with the x and y position of the closet resource
+ */
+pilgrim.findClosestResource = (position, depotMap) => {
+    const mapSize = depotMap.length;
+    let minDist = 2*Math.pow(mapSize, 2);
+    let closest = { x: -1, y: -1}
+    const getR2 = (from, to) => {
+        return Math.pow(from.x-to.x, 2) + Math.pow(from.y-to.y, 2);
+    }
+    for(let y = 0; y < mapSize; y++) {
+        for(let x = 0; x < mapSize; x++) {
+            const currDist = getR2(position, {x: x, y: y});
+            if (depotMap[y][x] && (currDist<minDist)) {
+                closest.x = x;
+                closest.y = y;
+                minDist = currDist;
+            }
+        }
+    }
+    return closest;
+}
 
 
 export default pilgrim;

@@ -3,5 +3,6 @@
 */*/*.bc19
 .vscode/
 */*/.eslintrc*
-*/package-lock.json
+package-lock.json
 /node_modules
+/projectUtils/*Compiled.js

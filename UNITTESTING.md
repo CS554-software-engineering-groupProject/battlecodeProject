@@ -1,3 +1,7 @@
+# UNITTESTING.md
+
+File to hold instructions, tips, tricks, and general notes on unit testing
+
 ## Overview
 1. Run `npm install` or `npm update`.
 1. Check for battlecode update - `npm install -g bc19`.

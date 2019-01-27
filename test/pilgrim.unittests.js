@@ -63,6 +63,90 @@ describe('Pilgrim Unit Tests', function() {
 
             done();
         });
+
+        it.only('MINERS at capacity for either karbonite or fuel should be able to deposit resources', function(done) {
+            let returnValue;
+            let target;
+            const myBot = new MyRobot();
+            myBot._bc_game_state = {shadow: null};
+            myBot.me = {
+                id: 1,
+                unit: 2, //Pilgrim
+                x: 0,
+                y: 0,
+                fuel: 0,
+                karbonite: 0
+            }
+            const castle = new MyRobot();
+            castle.me = {
+                id: 10,
+                unit: 0, //Pilgrim
+                x: 1,
+                y: 0
+            }
+            myBot._bc_game_state.shadow = myBot.map = 
+                        [[10,0,0,0,0],
+                         [0,1,0,0,0],
+                         [0,0,0,0,0],
+                         [0,0,0,0,0],
+                         [0,0,0,0,0]];
+            myBot.karbonite_map = [[0,0,0,0,0],
+                                   [0,0,0,0,0],
+                                   [0,0,0,0,0],
+                                   [0,0,0,1,0],
+                                   [1,0,1,0,1]];
+            myBot.fuel_map = [[0,0,0,1,0],
+                              [0,0,0,0,0],
+                              [0,0,1,0,0],
+                              [1,0,0,0,0],
+                              [0,0,0,0,0]];
+
+            console.log(myBot.getVisibleRobots());
+
+            done();
+        });
+
+        it('PIONEERS without a target should identify and move towards a resource', function(done) {
+            let returnValue;
+            let target;
+            const myBot = new MyRobot();
+            myBot._bc_game_state = {shadow: null};
+            myBot.me = {
+                id: 1,
+                unit: 2, //Pilgrim
+                x: 0,
+                y: 0,
+                fuel: 0,
+                karbonite: 0
+            }
+            const castle = new MyRobot();
+            castle.me = {
+                id: 10,
+                unit: 0, //Pilgrim
+                x: 1,
+                y: 0
+            }
+            myBot._bc_game_state.shadow = myBot.map = 
+                        [[1,0,0,0,0],
+                         [0,0,0,0,0],
+                         [0,0,0,0,0],
+                         [0,0,0,0,0],
+                         [0,0,0,0,0]];
+            myBot.karbonite_map = [[0,0,0,0,0],
+                                   [0,0,0,0,0],
+                                   [0,0,0,0,0],
+                                   [0,0,0,1,0],
+                                   [1,0,1,0,1]];
+            myBot.fuel_map = [[0,0,0,1,0],
+                              [0,0,0,0,0],
+                              [0,0,1,0,0],
+                              [1,0,0,0,0],
+                              [0,0,0,0,0]];
+
+            console.log(myBot.getVisibleRobots());
+
+            done();
+        });
     });
 
     describe('Mining tests', function() {

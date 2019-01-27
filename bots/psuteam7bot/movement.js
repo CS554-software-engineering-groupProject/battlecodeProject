@@ -35,6 +35,25 @@ movement.getRelativeDirection = (A, B) => {
     return {x, y};
 }
 
+/*Get index of the element matching direction in directions
+*Input: direction   - a 'direction' object {x, y}
+*Output:    retVal  - the index of the element matching direction in directions 
+*                   - OR -1 if direction has invalid x, y values
+*                   - OR -2 if for loop somehow falls through
+*/
+movement.getDirectionIndex = (direction) => {
+    let {x, y} = direction;
+    if(x > 1 || x < -1 || y > 1 || y < -1)
+        return -1;
+
+    for(let i = 0; i < movement.directions.length; ++i)
+    {
+        if(direction === directions[i])
+            return i;
+    }
+    return -2;
+}
+
 /*Get result of n-times rotation of the direction passed in
 *Input: direction   - a 'direction' object {x, y}
 *       n           - number of rotations can be clockwise (+ value), counter-clockwise (-value), or 0 (no movement)
@@ -232,20 +251,14 @@ movement.getSortedResourceList(location, resourceMap)
 }
 */
 
-
-/*Pathfinding algorithm to check passable path of a robot's current location/ position towards a destination and get the closest possible position to destination
-*
-*/
-movement.pathFinding = (self, destination) => {
-    return;
-}
-
 /*A more simple moveTowards, move to a nearby passable adjacent tile, hopefully closer to destination
 *Input: self        -   The robot unit
 *       destination -   The destination 'position/ location' object {x, y}
-*Output:    retVal  -   A 'position/ location' object {x, y} which is adjacent to self.me OR self.me if they are all not passable
-TODO: potential problem case: stuck in 'corner' of impassable terrain, robot might need to remember previous tile it moved from to solve, commented alternative below
+*Output:    retVal  -   A 'position/ location' object {x, y} which is adjacent to self.me 
+*                   -   OR self.me if they are all not passable
+*version of dumberMoveTowards with robot not recording a previous, might get stuck in corner
 */
+/*
 movement.dumberMoveTowards = (self, destination) => {
     let fullMap = self.map;
     let robotMap = self.getVisibleRobotMap();
@@ -264,23 +277,24 @@ movement.dumberMoveTowards = (self, destination) => {
 
     return self.me;
 }
-
-/*A more simple moveTowards, move to a nearby passable adjacent tile, hopefully closer to destination
-*Input: self        -   The robot unit
-*       destination -   The destination 'position/ location' object {x, y}
-*       previous    -   The 'position/ location' object {x, y} the robot was at in the previous turn
-*Output:    retVal  -   A 'position/ location' object {x, y} which is adjacent to self.me OR self.me if they are all not passable
 */
-/*
-movement.dumberMoveTowards = (self, destination, previous) => {
-    let fullMap = self.map;
-    let robotMap = self.getVisibleRobotMap();
-    let direction = getRelativeDirection(self.me, destination);
-    let {x, y} = self.me;
+
+/*The most simplest moveTowards, get location of a nearby passable adjacent tile, hopefully closer to destination
+*Input:     location    -   the robot's 'position/ location' object, should be self.me
+*           fullMap     -   the full map, should be self.map or self.getPassableMap()
+*           robotMap    -   robot map, should be self.getVisibleRobotMap()
+*           destination -   The destination 'position/ location' object {x, y}
+*           previous    -   A 'position/ location' object {x, y}, should be self.previous/ the position the robot was in the previous turn
+*Output:    retVal          -   A 'position/ location' object {x, y} which is adjacent to self.me 
+*                           -   OR the passed in location if they are all not passable
+*/
+movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous) => {
+    let direction = getRelativeDirection(location, destination);
+    let {x, y} = location;
     let candidate = {x : (x+direction.x), y: (y+direction.y)}
 
     if(isPassable(candidate, fullMap, robotMap))
-            return candidate;
+        return candidate;
 
     let dirA = direction;
     let dirB = direction;
@@ -295,19 +309,19 @@ movement.dumberMoveTowards = (self, destination, previous) => {
         let candidateB = {x : (x+dirB.x), y: (y+dirB.y)}
         if(candidateB !== previous && isPassable(candidateB, fullMap, robotMap))
             return candidateB;
-
     }while(dirA !== direction);
 
-    return self.me;
+    return location;
 }
-*/
 
-/*For robot movement from point A to Point B
-*Input reference to robot and destination location in {x, y}
-*Output should be point C, location to call robot.move with.
-*Returns {-1, -1} if distance from robot location to destination <= 0
+/*More complex pathfinding algorithm to check passable path of a robot's current location/ position towards a destination and get the closest possible position to destination
+*
 */
-movement.moveTowards = (self, destination) => {
+/*
+movement.pathFinding = (self, destination) => {
+    return;
+}
+movement.pathfinding = (self, destination) => {
     const maxDist = SPECS.UNITS[self.me.unit].SPEED;
     let distance = getDistance(self.me, destination);
     const maxFuelCost = (distance * SPECS.UNITS[self.me.unit].FUEL_PER_MOVE);
@@ -320,10 +334,6 @@ movement.moveTowards = (self, destination) => {
     let direction = getRelativeDirection(self.me, destination);
     let x = -1;
     let y = -1;
-
-    //Case 0: No movement
-    if(distance <= 0)
-        return {x, y};
 
     //Get number of XY tile moves to get to the location in moverange that is closest to destination
     if(distance > maxDist)
@@ -351,48 +361,48 @@ movement.moveTowards = (self, destination) => {
     x += self.me.x;
     y += self.me.y;
 
+    //Goal is the location in moverange that is closest to destination, may be impassable
     let goal = {x,y};
+}
+*/
 
-    //While goal is not passable, check closer tiles (Only checks closer tiles) and use it instead
-    while(!movement.isPassable(goal, self.fullMap, self.robotMap))
+/*A simple movement function for robot movement from point A to Point B,
+*Input: self        -   The robot unit
+*       destination -   The destination 'position/ location' object {x, y}, assumes passable
+*Output:    retVal  -   A 'position/ location' object {x, y} within moverange of robot location, which is passable and closest to destination
+*                   -   OR {-1, -1} if distance from robot location to destination <= 0
+*/
+movement.moveTowards = (self, destination) => {
+    const maxDist = SPECS.UNITS[self.me.unit].SPEED;
+    let fullMap = self.map;
+    let robotMap = self.getVisibleRobotMap();
+    let distance = getDistance(self.me, destination);
+    const maxFuelCost = (distance * SPECS.UNITS[self.me.unit].FUEL_PER_MOVE);
+
+    //Looking through 'API questions' discord channel, 'karbonite' and 'fuel' seems to be the way to get global team's karbonite and fuel
+    if(fuel < maxFuelCost)
+        maxDist = Math.floor(fuel/FUEL_PER_MOVE);
+
+
+    //Case 0: No movement
+    if(distance <= 0)
+        return {x: -1, y: -1};
+
+    //Case 1: move towards dest
+    let current = {
+        x: self.me.x, 
+        y: self.me.y
+    };
+    let previous = self.me.previous;
+
+    for(let distTravelled = 0; distTravelled < maxDist; ++distTravelled)
     {
-        //Case if no passable tiles
-        if(goal === {x,y})
-            break;
-
-        //Flawed logic, need to check case goal.x or goal.y < self.me.x or self.me.y if so start decrementing by x or y only until goal === self.me
-        let goal1 = {x: goal.x+direction.x, y: goal.y-direction.y};
-        let goal2 = {x: goal.x-direction.x, y: goal.y+direction.y};
-        if(movement.isPassable(goal1, self.fullMap, self.robotMap))
-        {
-            goal = goal1;
-        }
-        else if(movement.isPassable(goal2, self.fullMap, self.robotMap))
-        {
-            goal = goal2;
-        }
-        else
-        {
-            goal = {x: goal.x-direction.x, y: goal.y-direction.y};
-        }
+        let temp = movement.dumberMoveTowards(current, fullMap, robotMap, destination, previous);
+        previous = current;
+        current = temp;
     }
 
-    if(goal !== self.me)
-    //Call pathfinding algo to check path to passable goal
-
-    let currDistX = dx;
-    let currDistY = dy;
-
-
-
-
-
-
-    //Check possible passable paths towards destination, return location of a point C tile which has the shortest distance to destination
-    //Might exceed chess clock, need to check after implementing, if so, replace with simpler pathfinding
-    return {x, y};
+    return current;
 }
-
-
 
 export default movement

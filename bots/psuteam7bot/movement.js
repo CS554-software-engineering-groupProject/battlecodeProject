@@ -200,6 +200,11 @@ movement.getSortedResourceList(location, resourceMap)
     return sortedArr;
 }
 
+movement.pathFinding = (self, destination) => {
+    return;
+}
+
+
 //For robot movement from point A to Point B
 //Input reference to robot and destination location in {x, y}
 //Output should be point C, location to call robot.move with.
@@ -207,17 +212,14 @@ movement.getSortedResourceList(location, resourceMap)
 movement.moveTowards = (self, destination) => {
     const maxDist = SPECS.UNITS[self.me.unit].SPEED;
     let distance = getDistance(self.me, destination);
-
-
     const maxFuelCost = (distance * SPECS.UNITS[self.me.unit].FUEL_PER_MOVE);
 
     //Looking through 'API questions' discord channel, 'karbonite' and 'fuel' seems to be the way to get global team's karbonite and fuel
     if(fuel < maxFuelCost)
         distance = Math.floor(fuel/FUEL_PER_MOVE);
 
-    var Deque = require("collections/deque");
-
     let {dx, dy} = destination;
+    let direction = getRelativeDirection(self.me, destination);
     let x = -1;
     let y = -1;
 
@@ -225,22 +227,66 @@ movement.moveTowards = (self, destination) => {
     if(distance <= 0)
         return {x, y};
 
+    //Get number of XY tile moves to get to the location in moverange that is closest to destination
     if(distance > maxDist)
     {
         let {distX, distY} = getDistanceXY(self.me, destination);
         let rDist = Math.sqrt(maxDist);
-        let direction = getRelativeDirection(self.me, destination);
 
-        if(distX < rDist)
-            dx%=rDist;
-        if(distY < rDist)
-            dy%=rDist;
+        if(distX > rDist && distY > rDist)
+        {
+            dx = rDist;
+            dy = rDist;
+        } 
+        else if(distX < rDist && distY > rDist)
+        {
+            dy = maxDist-dx;
+        }
+        else if(distX > rDist && distY < rDist)
+        {
+            dx = maxDist-dy;
+        }
 
-        dx *= direction.x;
-        dy *= direction.y;
+        x = dx * direction.x;
+        y = dy * direction.y;
+    }
+    x += self.me.x;
+    y += self.me.y;
+
+    let goal = {x,y};
+
+    //While goal is not passable, check closer tiles (Only checks closer tiles) and use it instead
+    while(!movement.isPassable(goal, self.fullMap, self.robotMap))
+    {
+        //Case if no passable tiles
+        if(goal === {x,y})
+            break;
+
+        //Flawed logic, need to check case goal.x or goal.y < self.me.x or self.me.y if so start decrementing by x or y only until goal === self.me
+        let goal1 = {x: goal.x+direction.x, y: goal.y-direction.y};
+        let goal2 = {x: goal.x-direction.x, y: goal.y+direction.y};
+        if(movement.isPassable(goal1, self.fullMap, self.robotMap))
+        {
+            goal = goal1;
+        }
+        else if(movement.isPassable(goal2, self.fullMap, self.robotMap))
+        {
+            goal = goal2;
+        }
+        else
+        {
+            goal = {x: goal.x-direction.x, y: goal.y-direction.y};
+        }
     }
 
-    var deque = new Deque([{x, y, c:0}])
+    if(goal !== self.me)
+    //Call pathfinding algo to check path to passable goal
+
+    let currDistX = dx;
+    let currDistY = dy;
+
+
+
 
 
 
@@ -248,5 +294,6 @@ movement.moveTowards = (self, destination) => {
     //Might exceed chess clock, need to check after implementing, if so, replace with simpler pathfinding
     return {x, y};
 }
+
 
 export default movement

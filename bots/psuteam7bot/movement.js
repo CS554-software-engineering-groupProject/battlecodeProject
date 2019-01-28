@@ -1,26 +1,26 @@
 const movement = {}
 
 //Array for getting direction after rotation
-movement.directions = [{ x: 0, y: -1 }, { x: 1, y: -1 }, { x: -1, y: -1 }, { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: -1, y: 1 }]
+movement.directions = [{ x: 0, y: -1 }, { x: 1, y: -1 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }, { x: -1, y: 1 }, { x: -1, y: 0 }, { x: -1, y: -1 }]
 
-/*Return relative position of point A from point B
+/*Return relative position of point B from point A
 *Input: A - a 'position/ location' object {x, y}
 *       B - a 'position/ location' object {x, y}
-*Output:    retVal - an object {x, y}, containing how many x and y steps needed for A to reach B
+*Output:    retVal - an object {x, y}, containing how many x and y steps needed from A to reach B
 */
 movement.getRelativePosition = (A, B) => {
-    const x = (A.x-B.x);
-    const y = (A.y-B.y);
+    const x = (B.x-A.x);
+    const y = (B.y-A.y);
     return {x, y};
 }
 
 /*Return relative direction of B from point A
 *Input: A - a 'position/ location' object {x, y}
-*       B - a 'position/ location' object {x, y}
+*       B - a 'position/ location' object {x, y}    
 *Output:    retVal - an object {x, y}, which is the relative direction of B from point A
 */
 movement.getRelativeDirection = (A, B) => {
-    const {x, y} = getRelativePosition(A, B);
+    const {x, y} = movement.getRelativePosition(A, B);
 
     if(x < 0)
         x = -1;
@@ -99,7 +99,7 @@ movement.rotateDirection = (direction, n) => {
 *Output:    retVal - an object {x, y}, where x is the difference between A.x and B.x and y is the difference between A.y and B.y
 */
 movement.getDistanceXY = (A, B) => {
-    const {x, y} = getRelativePosition(A, B);
+    const {x, y} = movement.getRelativePosition(A, B);
 
     x = Math.abs(x);
     y = Math.abs(y);
@@ -162,7 +162,7 @@ movement.getPotentialEnemyCastleLocation = (myCastleLocation, fullmap) => {
     const midLength = fullmap.length/2;
     const distX = 2*(midLength-x);
     const distY = 2*(midlength-y);
-    const quadrant = checkQuadrant(myCastleLocation, fullmap);
+    const quadrant = movement.checkQuadrant(myCastleLocation, fullmap);
 
     let Ax = null;
     let By = null;
@@ -289,27 +289,28 @@ movement.dumberMoveTowards = (self, destination) => {
 *                           -   OR the passed in location if they are all not passable
 */
 movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous) => {
-    let direction = getRelativeDirection(location, destination);
+    let direction = movement.getRelativeDirection(location, destination);
     let {x, y} = location;
     let candidate = {x : (x+direction.x), y: (y+direction.y)}
 
-    if(isPassable(candidate, fullMap, robotMap))
+    if(movement.isPassable(candidate, fullMap, robotMap))
         return candidate;
 
     let dirA = direction;
     let dirB = direction;
+
     do{
-        dirA = rotateDirection(dirA, 1);
-        dirB = rotateDirection(dirB, -1);
+        dirA = movement.rotateDirection(dirA, 1);
+        dirB = movement.rotateDirection(dirB, -1);
 
         let candidateA = {x : (x+dirA.x), y: (y+dirA.y)}
-        if(candidateA !== previous && isPassable(candidateA, fullMap, robotMap))
+        if(candidateA !== previous && movement.isPassable(candidateA, fullMap, robotMap))
             return candidateA;
 
         let candidateB = {x : (x+dirB.x), y: (y+dirB.y)}
-        if(candidateB !== previous && isPassable(candidateB, fullMap, robotMap))
+        if(candidateB !== previous && movement.isPassable(candidateB, fullMap, robotMap))
             return candidateB;
-    }while(dirA !== direction);
+    }while(!(dirA.x === direction.x && dirA.y === direction.y));
 
     return location;
 }
@@ -376,7 +377,7 @@ movement.moveTowards = (self, destination) => {
     const maxDist = SPECS.UNITS[self.me.unit].SPEED;
     let fullMap = self.map;
     let robotMap = self.getVisibleRobotMap();
-    let distance = getDistance(self.me, destination);
+    let distance = movement.getDistance(self.me, destination);
     const maxFuelCost = (distance * SPECS.UNITS[self.me.unit].FUEL_PER_MOVE);
 
     //Looking through 'API questions' discord channel, 'karbonite' and 'fuel' seems to be the way to get global team's karbonite and fuel

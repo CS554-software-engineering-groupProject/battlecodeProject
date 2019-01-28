@@ -1,7 +1,17 @@
+import {SPECS} from "battlecode";
 const movement = {}
 
 //Array for getting direction after rotation
 movement.directions = [{ x: 0, y: -1 }, { x: 1, y: -1 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }, { x: -1, y: 1 }, { x: -1, y: 0 }, { x: -1, y: -1 }]
+
+/*Checks whether the x and y values of position A and B are equivalent
+*Input: A - a 'position/ location' object {x, y}
+*       B - a 'position/ location' object {x, y}
+*Output:    retVal - true if x and y matches, false otherwise
+*/
+movement.positionsAreEqual = (A, B) =>{
+    return (A.x === B.x && A.y === B.y);
+}
 
 /*Return relative position of point B from point A
 *Input: A - a 'position/ location' object {x, y}
@@ -20,7 +30,7 @@ movement.getRelativePosition = (A, B) => {
 *Output:    retVal - an object {x, y}, which is the relative direction of B from point A
 */
 movement.getRelativeDirection = (A, B) => {
-    const {x, y} = movement.getRelativePosition(A, B);
+    let {x, y} = movement.getRelativePosition(A, B);
 
     if(x < 0)
         x = -1;
@@ -304,13 +314,13 @@ movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous
         dirB = movement.rotateDirection(dirB, -1);
 
         let candidateA = {x : (x+dirA.x), y: (y+dirA.y)}
-        if(candidateA !== previous && movement.isPassable(candidateA, fullMap, robotMap))
+        if(!(movement.positionsAreEqual(candidateA, previous)) && movement.isPassable(candidateA, fullMap, robotMap))
             return candidateA;
 
         let candidateB = {x : (x+dirB.x), y: (y+dirB.y)}
-        if(candidateB !== previous && movement.isPassable(candidateB, fullMap, robotMap))
+        if(!(movement.positionsAreEqual(candidateB, previous)) && movement.isPassable(candidateB, fullMap, robotMap))
             return candidateB;
-    }while(!(dirA.x === direction.x && dirA.y === direction.y));
+    }while(!movement.positionsAreEqual(candidateA, previous));
 
     return location;
 }
@@ -378,11 +388,12 @@ movement.moveTowards = (self, destination) => {
     let fullMap = self.map;
     let robotMap = self.getVisibleRobotMap();
     let distance = movement.getDistance(self.me, destination);
-    const maxFuelCost = (distance * SPECS.UNITS[self.me.unit].FUEL_PER_MOVE);
+    const fuelCostPerMove = SPECS.UNITS[self.me.unit].FUEL_PER_MOVE
+    const maxFuelCost = (distance * fuelCostPerMove);
 
     //Looking through 'API questions' discord channel, 'karbonite' and 'fuel' seems to be the way to get global team's karbonite and fuel
     if(fuel < maxFuelCost)
-        maxDist = Math.floor(fuel/FUEL_PER_MOVE);
+        maxDist = Math.floor(fuel/fuelCostPerMove);
 
 
     //Case 0: No movement
@@ -394,7 +405,7 @@ movement.moveTowards = (self, destination) => {
         x: self.me.x, 
         y: self.me.y
     };
-    let previous = self.me.previous;
+    let previous = self.previous;
 
     for(let distTravelled = 0; distTravelled < maxDist; ++distTravelled)
     {
@@ -402,6 +413,8 @@ movement.moveTowards = (self, destination) => {
         previous = current;
         current = temp;
     }
+
+    self.previous = previous;
 
     return current;
 }

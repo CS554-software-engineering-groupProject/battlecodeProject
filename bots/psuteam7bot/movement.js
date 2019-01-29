@@ -123,7 +123,7 @@ movement.getDistanceXY = (A, B) => {
 *Output:    retVal - an integer value, the squared value of the distance from A to B
 */
 movement.getDistance = (A, B) => {
-    return ((A.x-B.x)*(A.y-B.y)+(A.y-B.y)*(A.y-B.y));
+    return ((A.x-B.x)*(A.x-B.x)+(A.y-B.y)*(A.y-B.y));
 }
 
 /*Checks in which map quadrant the given coordinate is in

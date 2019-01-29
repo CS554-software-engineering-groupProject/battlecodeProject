@@ -1,9 +1,9 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
+import movement from './movement.js';
 
 const pilgrim = {};
 pilgrim.maxKarbonite = SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY;
 pilgrim.maxFuel = SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY;
-
 
 /**
  * Main action page for a pilgrim unit. Makes decisions and calls helper functions to take action 
@@ -14,108 +14,81 @@ pilgrim.doAction = (self) => {
         const mapSize = self.map.length;
         return (x < mapSize) && (x >= 0) && (y < mapSize) && (y >= 0)
     }
-    const findAdjacentBase = (self) => {
-        const bases = self.getVisibleRobots().filter(bot => {
-            const dx = Math.abs(bot.x - self.me.x);
-            const dy = Math.abs(bot.y - self.me.y);
-            const isTeamBase = (bot.unit === 0 || bot.unit === 1) && bot.team === self.me.team;
-            return isTeamBase && dx <= 1 && dy <= 1;
-        });
-        if (bases.length > 0) {
-            return {x: bases[0].x, y: bases[0].y};
-        } else {
-            return null;
-        }
-        /*
-        for(let y=self.me.y-1; y <= self.me.y+1; y++) {
-            for(let x=self.me.x-1; x <= self.me.y+1; x++) {
-                if (onMap(self, x, y)) {
-                    const id = self.getVisibleRobotMap()[y][x]
-                    //robot.unit = 0 for castle, 1 for church
-                    if(id > 0 && self.getRobot(id).unit <= 1) {
-                        return {x: x, y: y};
-                    }
-                }
-            }
-        }
-        return null;*/
-    }
+    
     if (self.role === 'UNASSIGNED') {
-        //temporary
-        //@todo Flesh out what to do if unassigned
-        //self.role = 'PIONEER';
-        self.role = 'MINER';
-        self.base = findAdjacentBase(self);
+        self.base = movement.findAdjacentBase(self);
         self.log("Set base as " + JSON.stringify(self.base));
+        //Gets nearby base, checks turn
+        self.role = 'PIONEER'
     }
-    //Since base (castle or church) will be close upon creation, check adjacent tiles for a base
-    //Currently skipping due to complications with testing
-    /* 
-    if(self.base === null) {
-        self.base = findAdjacentBase(self);
-    }*/
-    if(self.role === 'MINER') {
-        if(self.target === null) {
-            if(self.karbonite*5 <= self.fuel) {
-                self.target = pilgrim.findClosestResource(self.me, self.karbonite_map);
-                self.log("pilgrim MINER " + self.id + " targeting karbonite depot at [" + self.target.x + "," + self.target.y + "]")
-            } else {
-                self.target = pilgrim.findClosestResource(self.me, self.fuel_map);
-                self.log("pilgrim MINER " + self.id + " targeting fuel depot at [" + self.target.x + "," + self.target.y + "]")
-            }
-        }
-        self.log('Miner target: ' + JSON.stringify(self.target))
-        if(self.me.karbonite === pilgrim.maxKarbonite || self.me.fuel === pilgrim.maxFuel) {
-            let adjacentBase = findAdjacentBase(self);
-            if(adjacentBase != null) {
-                self.target === null;
-                self.log("pilgrim MINER " + self.id + " depositing resources with base at [" + adjacentBase.x + "," + adjacentBase.y + "]");
-                return self.give(adjacentBase.x-self.me.x, adjacentBase.y-self.me.y, self.me.karbonite, self.me.fuel)
-            }
-            self.target = self.base;
-            const distX = self.target.x - self.me.x;
-            const distY = self.target.y - self.me.y;
-            if (Math.pow(distX, 2) + Math.pow(distY,2) <= SPECS.UNITS[SPECS.PILGRIM].SPEED) {
-                return self.move(distX, distY);
-            }
-            if(Math.abs(distX) >= Math.abs(distY)) {
-                return self.move(2,0);
-            } else {
-                return self.move(0,2);
-            }
-        } else {
-            if(self.me.x === self.target.x && self.me.y === self.target.y) {
-                self.log("pilgrim MINER " + self.id + " mining resources at [" + self.me.x + "," + self.me.y + "]");
-                return self.mine();
-            } else {
-                const distX = self.target.x - self.me.x;
-                const distY = self.target.y - self.me.y;
-                if (Math.pow(distX, 2) + Math.pow(distY,2) <= SPECS.UNITS[SPECS.PILGRIM].SPEED) {
-                    return self.move(distX, distY);
-                }
-                if(Math.abs(distX) >= Math.abs(distY)) {
-                    return self.move(2,0);
-                } else {
-                    return self.move(0,2);
-                }
-            }
-        }
-    } else if (self.role === 'PIONEER') {
-        if(self.target === null) {
-            const localPilgrims = self.getVisibleRobots().filter(bots => {
-                return bots.team === self.me.team && bots.unit === 2;
-            });
-            if(localPilgrims.length%1 === 1) {
-                self.target = pilgrim.findClosestResource(self.me, self.karbonite_map);
-            } else {
-                self.target = pilgrim.findClosestResource(self.me, self.fuel_map);
-            }
-        }
 
-        
+    if(self.role === 'MINER') {
+        return pilgrim.takeMinerAction(self);
+    } else if (self.role === 'PIONEER') {
+        return pilgrim.takePioneerAction(self);
     }
 
     return;
+}
+
+pilgrim.takeMinerAction = (self) => {
+    if(self.target === null) {
+        if(self.karbonite*5 <= self.fuel) {
+            self.target = pilgrim.findClosestResource(self.me, self.karbonite_map);
+            self.log("pilgrim MINER " + self.id + " targeting karbonite depot at [" + self.target.x + "," + self.target.y + "]")
+        } else {
+            self.target = pilgrim.findClosestResource(self.me, self.fuel_map);
+            self.log("pilgrim MINER " + self.id + " targeting fuel depot at [" + self.target.x + "," + self.target.y + "]")
+        }
+    }
+    //If full on a resource, return to base to deposit
+    if(self.me.karbonite === pilgrim.maxKarbonite || self.me.fuel === pilgrim.maxFuel) {
+        let adjacentBase = movement.findAdjacentBase(self);
+        if(adjacentBase != null) {
+            self.target === null;
+            self.log("pilgrim MINER " + self.id + " depositing resources with base at [" + adjacentBase.x + "," + adjacentBase.y + "]");
+            return self.give(adjacentBase.x-self.me.x, adjacentBase.y-self.me.y, self.me.karbonite, self.me.fuel)
+        }
+        self.target = self.base;
+        const {x, y} = movement.moveTowards(self, self.target);
+        self.log('pilgrim MINER ' + self.id + ' moving, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']')
+        return self.move(x-self.me.x, y-self.me.y);
+    } else {
+        if(self.me.x === self.target.x && self.me.y === self.target.y) {
+            self.log("pilgrim MINER " + self.id + " mining resources at [" + self.me.x + "," + self.me.y + "]");
+            return self.mine();
+        } else {
+            const {x, y} = movement.moveTowards(self, self.target);
+            return self.move(x-self.me.x, y-self.me.y);
+        }
+    }
+}
+
+pilgrim.takePioneerAction = (self) => {
+    //If target not set, have pilgrims alternate between looking for karbonite or fuel
+    if(self.target === null) {
+        const localPilgrims = self.getVisibleRobots().filter(bots => {
+            return bots.team === self.me.team && bots.unit === 2;
+        });
+        if(localPilgrims.length % 2 === 1) {
+            self.target = pilgrim.findClosestResource(self.me, self.karbonite_map);
+            self.log("pilgrim PIONEER " + self.id + " targeting karbonite depot at [" + self.target.x + "," + self.target.y + "]")
+        } else {
+            self.target = pilgrim.findClosestResource(self.me, self.fuel_map);
+            self.log("pilgrim PIONEER " + self.id + " targeting fuel depot at [" + self.target.x + "," + self.target.y + "]")
+        }
+    }
+    //Target set - if not at target, move towards
+    if (self.target.x !== self.me.x || self.target.y !== self.me.y) {
+        const {x, y} = movement.moveTowards(self, self.target);
+        self.log('pilgrim PIONEER ' + self.id + ' moving, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']')
+        return self.move(x-self.me.x, y-self.me.y);
+    //If at target, become miner
+    } else {
+        self.role = 'MINER';
+        self.log('pilgrim PIONEER ' + self.id + ' becoming MINER')
+        return pilgrim.takeMinerAction(self);
+    }
 }
 
 /**

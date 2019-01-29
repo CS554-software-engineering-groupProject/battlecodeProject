@@ -392,7 +392,7 @@ movement.moveTowards = (self, destination) => {
 
     //No movement
     if(distance <= 0)
-        return {x: -1, y: -1};
+        return {x: self.me.x, y: self.me.y};
 
     //If destination within moverange, set maxDist to distance to destination
     if(distance < maxDist)
@@ -402,8 +402,8 @@ movement.moveTowards = (self, destination) => {
     const maxFuelCost = (maxDist * fuelCostPerMove);
 
     //Looking through 'API questions' discord channel, 'karbonite' and 'fuel' seems to be the way to get global team's karbonite and fuel
-    if(fuel < maxFuelCost)
-        maxDist = Math.floor(fuel/fuelCostPerMove);
+    if(self.fuel < maxFuelCost)
+        maxDist = Math.floor(self.fuel/fuelCostPerMove);
 
     //Square root maxDist which in r^2 to get the number of tile movement
     maxDist = Math.floor(Math.sqrt(maxDist));

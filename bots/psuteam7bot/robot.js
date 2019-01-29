@@ -7,7 +7,17 @@ import church from './church.js';
 var step = -1;
 
 class MyRobot extends BCAbstractRobot {
+    constructor() {
+        super();
+        this.role = "UNASSIGNED";                        //Role for unit (for strategy purposes)
+        this.target = null;                              //Target destionation like {x: _, y: _}  
+        this.base = null;                                //Closest (or original) castle/church like {x: _, y: _} 
+        this.previous = null;    //Previous tile traversed by unit like {x: _, y: _}, initialized to the spawning/ starting location
+    }
     turn() {
+        if(this.previous == null) {
+            this.previous = {x: this.me.x, y: this.me.y};
+        }
         if (this.myType === undefined){
             switch(this.me.unit) {
                 case SPECS.CASTLE:

@@ -132,14 +132,138 @@ describe('Movement Helpers Unit Tests', function() {
 
     describe('checkQuadrant Returns Values Correctly', function(done) {
         it('checkQuadrant Returns Valid Value Given Valid location And fullMap Objects With Valid Values', function(done) {
+            let A = {x: 0, y: 1};
+            let B = {x: 5, y: 2};
+            let C = {x: 2, y: 5};
+            let D = {x: 4, y: 4};
 
+            let fullmap =                         
+            [[0,0,0,0,0,0],
+            [0,0,0,0,0,0],
+            [0,0,0,0,0,0],
+            [0,0,0,0,0,0],
+            [0,0,0,0,0,0],
+            [0,0,0,0,0,0]];
+
+            expect(movement.checkQuadrant(A, fullMap)).equals(1);
+            expect(movement.checkQuadrant(B, fullMap)).equals(2);
+            expect(movement.checkQuadrant(C, fullMap)).equals(3);
+            expect(movement.checkQuadrant(D, fullMap)).equals(4);
             done();
         });
     });
-    movement.checkQuadrant(location, fullmap);
-    movement.getPotentialEnemyCastleLocation(myCastleLocation, fullmap);
-    movement.isPassable = (location, fullMap, robotMap);
-    movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous);
-    movement.moveTowards = (self, destination);
+
+    describe('getPotentialEnemyCastleLocation Returns Values Correctly', function(done) {
+        it('getPotentialEnemyCastleLocation Returns Valid Value Given Valid Castle location And fullMap Objects With Valid Values', function(done) {
+            const A = {x: 0, y: 1};
+            const B = {x: 5, y: 2};
+            const C = {x: 2, y: 5};
+            const D = {x: 4, y: 4};
+            const fullmap =                         
+            [[true,false,false,false,false,false],
+            [true,false,false,false,false,false],
+            [true,true,true,false,false,false],
+            [false,false,true,false,false,false],
+            [false,false,false,false,false,false],
+            [false,false,false,false,false,false]]; 
+
+            expect(movement.getPotentialEnemyCastleLocation(A, fullMap)).equals([{x: 5,y: 1}, {x:0 ,y: 4}]);
+            expect(movement.getPotentialEnemyCastleLocation(B, fullMap)).equals([{x: 0,y: 2}, {x:5 ,y: 3}]);
+            expect(movement.getPotentialEnemyCastleLocation(C, fullMap)).equals([{x: 3,y: 5}, {x:2 ,y: 0}]);
+            expect(movement.getPotentialEnemyCastleLocation(D, fullMap)).equals([{x: 4,y: 1}, {x:1 ,y: 4}]);
+            done();
+        });
+    });
+
+    describe('isPassable Returns Values Correctly', function(done) {                  
+        const fullmap =   
+        [[true,false,false,false,false,false],
+        [true,false,true,true,false,false],
+        [true,true,true,true,true,true],
+        [false,true,true,true,false,false],
+        [false,false,true,true,false,false],
+        [false,false,false,false,false,false]];                      
+
+
+        const robotMap = 
+        [[0,0,0,0,0,0],
+        [0,0,0,0,0,0],
+        [0,0,0,0,0,3005],
+        [0,0,0,0,0,0],
+        [0,0,0,0,0,0],
+        [0,0,0,0,0,0]];
+
+        it('isPassable Returns true Given Valid location, fullMap, and robotMap Objects With Valid Values, And Location Is Passable On The Map', function(done) {
+            const A = {x: 0, y: 1};
+            
+            expect(movement.isPassable(A, fullMap, robotMap)).equals(true);
+            done();
+        });
+        it('isPassable Returns false Given Valid location, fullMap, and robotMap Objects With Valid Values, And Location Is impassable On The Map', function(done) {
+            const B = {x: 5, y: 2};
+            const C = {x: 2, y: 5};
+            
+            expect(movement.isPassable(B, fullMap, robotMap)).equals(false);
+            expect(movement.isPassable(C, fullMap, robotMap)).equals(false);
+            done();
+        });
+
+        it('isPassable Returns true Given Valid location And fullMap Objects With location Values Outside Map', function(done) {
+            const D = {x: 4, y: 7};
+            const E = {x: -1, y: 2};
+
+            expect(movement.getPotentialEnemyCastleLocation(D, fullMap, robotMap)).equals(false);
+            expect(movement.getPotentialEnemyCastleLocation(E, fullMap, robotMap)).equals(false);
+            done();
+        });
+    });
+
+
+    describe('dumberMoveTowards Returns Values Correctly', function(done) {     
+        const fullMap = 
+            [[true,false,false,false,false,false],
+            [true,false,true,true,false,false],
+            [true,true,true,true,true,true],
+            [false,true,true,true,false,false],
+            [false,false,true,true,false,false],
+            [false,false,false,false,false,false]];                 
+
+
+        const robotMap = 
+        [[0,0,0,0,0,0],
+        [0,0,0,0,0,0],
+        [0,0,0,0,0,3005],
+        [0,0,0,0,0,0],
+        [0,0,0,0,0,0],
+        [0,0,0,0,0,0]];
+
+        it('dumberMoveTowards move to destination', function(done) {
+            const A = {x: 2, y: 2};
+
+            const destA = {x: 2, y: 3};
+
+            const previous = {x: 1, y: 2};
+            
+            expect(movement.moveTowards(A, fullMap, robotMap, destA, previous)).equals(destA);
+            done();
+        });
+        it('dumberMoveTowards gets best location to go around obstacle, and not previous location', function(done) {
+            const B = {x: 0, y: 0};
+            const C = {x: 3, y: 4};
+            
+            const destB = {x: 2, y: 5};
+
+            const previousB = B
+            const previousC = {}
+
+            expect(movement.isPassable(B, fullMap, robotMap)).equals(false);
+            expect(movement.isPassable(C, fullMap, robotMap)).equals(false);
+            done();
+        });
+
+        //TODO other cases
+    });
+
+    //TODO movetowards
 
 });

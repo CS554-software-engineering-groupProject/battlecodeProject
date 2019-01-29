@@ -16,6 +16,9 @@ class MyRobot extends BCAbstractRobot {
         this.turnsAlive = 0;                             //Record the number of turns the robot has been alive for (Used in 'DEFENDER' prophets for naive guard behavior)
     }
     turn() {
+        if(this.previous == null) {
+            this.previous = {x: this.me.x, y: this.me.y};
+        }
         if (this.myType === undefined){
             switch(this.me.unit) {
                 case SPECS.CASTLE:

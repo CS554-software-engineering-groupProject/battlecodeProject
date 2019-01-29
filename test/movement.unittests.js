@@ -39,17 +39,6 @@ describe('Movement Helpers Unit Tests', function() {
             expect(movement.positionsAreEqual(B,A)).equals(false);
             done();
         });
-        it('positionsAreEqual Returns Undefined Given Invalid Objects', function(done) {
-            const A = {x: 1, y: 1};
-            const B = null;
-            const C = {x: 2};
-            
-            expect(movement.positionsAreEqual(A,B)).to.be.undefined;
-            expect(movement.positionsAreEqual(B,A)).to.be.undefined;
-            expect(movement.positionsAreEqual(A,C)).to.be.undefined;
-            expect(movement.positionsAreEqual(C,A)).to.be.undefined;
-            done();
-        });
     });
     
     describe('getRelativePosition Returns Values Correctly', function(done) {
@@ -62,17 +51,6 @@ describe('Movement Helpers Unit Tests', function() {
             expect(movement.getRelativePosition(A,A)).equals({x: 0, y: 0});
             done();
         });
-        it('getRelativePosition Returns Undefined Value Given Invalid A And B Objects', function(done) {
-            const A = {x: 5, y: 7};
-            const B = null;
-            const C = {x: 4};
-            
-            expect(movement.getRelativePosition(A,B)).to.be.undefined;
-            expect(movement.getRelativePosition(B,A)).to.be.undefined;
-            expect(movement.getRelativePosition(C,A)).to.be.undefined;
-            expect(movement.getRelativePosition(A,C)).to.be.undefined;
-            done();
-        });
     });
 
     describe('getRelativeDirection Returns Values Correctly', function(done) {
@@ -83,17 +61,6 @@ describe('Movement Helpers Unit Tests', function() {
             expect(movement.getRelativeDirection(A,B)).equals({x: 1, y: 1});
             expect(movement.getRelativeDirection(B,A)).equals({x: -1, y: -1});
             expect(movement.getRelativeDirection(A,A)).equals({x: 0, y: 0});
-            done();
-        });
-        it('getRelativePosition Returns Undefined Value Given Invalid A And B Objects', function(done) {
-            const A = {x: 5, y: 7};
-            const B = null;
-            const C = {x: 4};
-            
-            expect(movement.getRelativeDirection(A,B)).to.be.undefined;
-            expect(movement.getRelativeDirection(B,A)).to.be.undefined;
-            expect(movement.getRelativeDirection(C,A)).to.be.undefined;
-            expect(movement.getRelativeDirection(A,C)).to.be.undefined;
             done();
         });
     });
@@ -109,10 +76,10 @@ describe('Movement Helpers Unit Tests', function() {
             expect(movement.DirectionIndex(C)).equals(2);
             done();
         });
-        it('getRelativePosition Returns -1 Given Valid/ Invalid Direction Object With x Or y Not An Element Of {-1, 1}', function(done) {
+        it('getDirectionIndex Returns -1 Given Valid/ Invalid Direction Object With x Or y Not An Element Of {-1, 1}', function(done) {
             const A = {x: -3, y: 1};
             const B = {x: -1, y: 2};
-            const C = {x: 0, 0};
+            const C = {x: 0, y: 0};
             const D = {x: 4};
             const E = {y: -4};
             
@@ -121,12 +88,6 @@ describe('Movement Helpers Unit Tests', function() {
             expect(movement.DirectionIndex(C)).equals(-1);
             expect(movement.DirectionIndex(D)).equals(-1);
             expect(movement.DirectionIndex(E)).equals(-1);
-            done();
-        });
-        it('getRelativePosition Returns Undefined Value Given Invalid Direction Object', function(done) {
-            const A = null;
-            
-            expect(movement.DirectionIndex(A)).to.be.undefined;
             done();
         });
     });
@@ -143,9 +104,38 @@ describe('Movement Helpers Unit Tests', function() {
             done();
         });
     });
-    movement.rotateDirection(direction, n);
-    movement.getDistanceXY(A, B);
-    movement.getDistance(A, B);
+
+    describe('getDistanceXY Returns Values Correctly', function(done) {
+        it('getDistanceXY Returns Valid Value Given Valid A And B Objects With Valid x And y Values', function(done) {
+            const A = {x: 5, y: 7};
+            const B = {x: 2, y: 4};
+            
+            expect(movement.getDistanceXY(A,B)).equals({x: 3, y: 3});
+            expect(movement.getDistanceXY(B,A)).equals({x: 3, y: 3});
+            expect(movement.getDistanceXY(A,A)).equals({x: 0, y: 0});
+            done();
+        });
+    });
+
+    describe('getDistance Returns Values Correctly', function(done) {
+        it('getDistance Returns Valid Value Given Valid A And B Objects With Valid x And y Values', function(done) {
+            const A = {x: 5, y: 7};
+            const B = {x: 2, y: 4};
+            const C = {x: 5, y: 8};
+            
+            expect(movement.getDistanceXY(A,B)).equals(9);
+            expect(movement.getDistanceXY(B,A)).equals(9);
+            expect(movement.getDistanceXY(A,A)).equals(25);
+            done();
+        });
+    });
+
+    describe('checkQuadrant Returns Values Correctly', function(done) {
+        it('checkQuadrant Returns Valid Value Given Valid location And fullMap Objects With Valid Values', function(done) {
+
+            done();
+        });
+    });
     movement.checkQuadrant(location, fullmap);
     movement.getPotentialEnemyCastleLocation(myCastleLocation, fullmap);
     movement.isPassable = (location, fullMap, robotMap);

@@ -2,7 +2,7 @@ import {SPECS} from "battlecode";
 const movement = {}
 
 //Array for getting direction after rotation
-movement.directions = [{ x: 0, y: -1 }, { x: 1, y: -1 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }, { x: -1, y: 1 }, { x: -1, y: 0 }, { x: -1, y: -1 }]
+movement.directions = [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 0 }, { x: 1, y: -1 }, { x: 0, y: -1 }, { x: -1, y: -1 }, { x: -1, y: 0 }, { x: -1, y: 1 }]
 
 /*Checks whether the x and y values of position A and B are equivalent
 *Input: A - a 'position/ location' object {x, y}
@@ -58,7 +58,7 @@ movement.getDirectionIndex = (direction) => {
 
     for(let i = 0; i < movement.directions.length; ++i)
     {
-        if(direction === directions[i])
+        if(direction === movement.directions[i])
             return i;
     }
     return -2;
@@ -308,12 +308,13 @@ movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous
 
     let dirA = direction;
     let dirB = direction;
+    let candidateA = {x : (x+dirA.x), y: (y+dirA.y)};
 
     do{
         dirA = movement.rotateDirection(dirA, 1);
         dirB = movement.rotateDirection(dirB, -1);
 
-        let candidateA = {x : (x+dirA.x), y: (y+dirA.y)}
+        candidateA = {x : (x+dirA.x), y: (y+dirA.y)}
         if(!(movement.positionsAreEqual(candidateA, previous)) && movement.isPassable(candidateA, fullMap, robotMap))
             return candidateA;
 
@@ -384,47 +385,75 @@ movement.pathfinding = (self, destination) => {
 *                   -   OR {-1, -1} if distance from robot location to destination <= 0
 */
 movement.moveTowards = (self, destination) => {
-    const maxDist = SPECS.UNITS[self.me.unit].SPEED;
+    let maxDist = SPECS.UNITS[self.me.unit].SPEED;
     let fullMap = self.map;
     let robotMap = self.getVisibleRobotMap();
     let distance = movement.getDistance(self.me, destination);
-    const fuelCostPerMove = SPECS.UNITS[self.me.unit].FUEL_PER_MOVE
-
-    //No movement
-    if(distance <= 0)
-        return {x: self.me.x, y: self.me.y};
-
-    //If destination within moverange, set maxDist to distance to destination
-    if(distance < maxDist)
-        maxDist = distance;
-
-    //get amount of fuel needed to make maxDist amount of moves
+    const fuelCostPerMove = SPECS.UNITS[self.me.unit].FUEL_PER_MOVE;
     const maxFuelCost = (maxDist * fuelCostPerMove);
 
     //Looking through 'API questions' discord channel, 'karbonite' and 'fuel' seems to be the way to get global team's karbonite and fuel
     if(self.fuel < maxFuelCost)
         maxDist = Math.floor(self.fuel/fuelCostPerMove);
 
-    //Square root maxDist which in r^2 to get the number of tile movement
-    maxDist = Math.floor(Math.sqrt(maxDist));
+    //If destination within moverange, set maxDist to distance to destination
+    if(distance < maxDist)
+        maxDist = distance;
 
-    //move towards dest
+    //Case 0: No movement
+    if(distance <= 0) {
+        return {x: self.me.x, y: self.me.y};
+    }
+    //Case 1: Move to destination possible - do it
     let current = {
         x: self.me.x, 
         y: self.me.y
     };
     let previous = self.previous;
+    let distTravelled = 0;
 
-    for(let distTravelled = 0; distTravelled < maxDist; ++distTravelled)
+    while(distTravelled <= maxDist)
     {
         let temp = movement.dumberMoveTowards(current, fullMap, robotMap, destination, previous);
-        previous = current;
-        current = temp;
+        distTravelled = movement.getDistance(self.me, temp);
+        //If at furthest move in target direction, do it
+        if(distTravelled === maxDist) {
+            self.previous = current;
+            return temp;
+        //If not past maxDistance, make move to get closer to optimal move
+        } else if (movement.getDistance(self.me, temp) < maxDist) {
+            previous = current;
+            current = temp;
+        }        
+        //Move goes past maxDistance - don't do and do last best move
+        break;
+
     }
 
     self.previous = previous;
 
     return current;
 }
+
+/**
+ * Function that looks for a "base" (castle/church) within one tile of current position.
+ * Could be used by any newly created unit to find which unit built it, set self.base to coordinates
+ * 
+ * @param self MyRobot object passed in
+ */
+movement.findAdjacentBase = (self) => {
+    const bases = self.getVisibleRobots().filter(bot => {
+        const dx = Math.abs(bot.x - self.me.x);
+        const dy = Math.abs(bot.y - self.me.y);
+        const isTeamBase = (bot.unit === 0 || bot.unit === 1) && bot.team === self.me.team;
+        return isTeamBase && dx <= 1 && dy <= 1;
+    });
+    if (bases.length > 0) {
+        return {x: bases[0].x, y: bases[0].y};
+    } else {
+        return null;
+    }
+}
+
 
 export default movement

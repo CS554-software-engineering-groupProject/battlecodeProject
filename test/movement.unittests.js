@@ -132,34 +132,14 @@ describe('Movement Helpers Unit Tests', function() {
     });
 
     describe('rotateDirection Returns Values Correctly', function(done) {
-        it('rotateDirection Returns Valid Value Given Valid Direction Object', function(done) {
+        it('rotateDirection Returns Valid Value Given Valid Direction Object and N value', function(done) {
             const A = {x: 0, y: 1};
             const B = {x: -1, y: -1};
             const C = {x: 1, y: 0};
             
-            expect(movement.DirectionIndex(A)).equals(0);
-            expect(movement.DirectionIndex(B)).equals(5);
-            expect(movement.DirectionIndex(C)).equals(2);
-            done();
-        });
-        it('getRelativePosition Returns -1 Given Valid/ Invalid Direction Object With x Or y Not An Element Of {-1, 1}', function(done) {
-            const A = {x: -3, y: 1};
-            const B = {x: -1, y: 2};
-            const C = {x: 0, 0};
-            const D = {x: 4};
-            const E = {y: -4};
-            
-            expect(movement.DirectionIndex(A)).equals(-1);
-            expect(movement.DirectionIndex(B)).equals(-1);
-            expect(movement.DirectionIndex(C)).equals(-1);
-            expect(movement.DirectionIndex(D)).equals(-1);
-            expect(movement.DirectionIndex(E)).equals(-1);
-            done();
-        });
-        it('getRelativePosition Returns Undefined Value Given Invalid Direction Object', function(done) {
-            const A = null;
-            
-            expect(movement.DirectionIndex(A)).to.be.undefined;
+            expect(movement.DirectionIndex(A, 3)).equals({x: 1, y: -1});
+            expect(movement.DirectionIndex(B, -5)).equals({x: 0, y: 1});
+            expect(movement.DirectionIndex(C, 0)).equals(C);
             done();
         });
     });

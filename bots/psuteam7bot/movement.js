@@ -389,13 +389,16 @@ movement.moveTowards = (self, destination) => {
     let fullMap = self.map;
     let robotMap = self.getVisibleRobotMap();
     let distance = movement.getDistance(self.me, destination);
-    const fuelCostPerMove = SPECS.UNITS[self.me.unit].FUEL_PER_MOVE
-    const maxFuelCost = (distance * fuelCostPerMove);
+    const fuelCostPerMove = SPECS.UNITS[self.me.unit].FUEL_PER_MOVE;
+    const maxFuelCost = (maxDist * fuelCostPerMove);
 
     //Looking through 'API questions' discord channel, 'karbonite' and 'fuel' seems to be the way to get global team's karbonite and fuel
     if(self.fuel < maxFuelCost)
         maxDist = Math.floor(self.fuel/fuelCostPerMove);
 
+    //If destination within moverange, set maxDist to distance to destination
+    if(distance < maxDist)
+        maxDist = distance;
 
     //Case 0: No movement
     if(distance <= 0) {

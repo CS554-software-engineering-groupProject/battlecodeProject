@@ -8,6 +8,9 @@ prophet.doAction = (self) => {
     self.log("prophet " + self.id + " taking turn");
 
     if (self.role === 'UNASSIGNED') {
+        self.base = movement.findAdjacentBase(self);
+        self.log("Set base as " + JSON.stringify(self.base));
+
         //TODO Change with addition of communication maybe have base record the number of defenders it built and have the prophet receive message from castle
         //Naive method of just filtering nearby prophets from base location, if passing by ATTACKER strays inside, messes with it
         const nearbyDefenders = self.getVisibleRobots().filter((robotElement) => {
@@ -17,9 +20,6 @@ prophet.doAction = (self) => {
                 return distance <= 16;
             }
         });
-
-        self.base = movement.getAdjacentBase(self);
-        self.log("Set base as " + JSON.stringify(self.base));
 
         //2 defenders per side, assigned as defender if it's less
         if(nearbyDefenders.length < 8)
@@ -40,6 +40,7 @@ prophet.doAction = (self) => {
     {
         if(self.target === null)
         {
+            self.log("prophet finding local defenders")
             //TODO Change with addition of communication maybe have base record the number of defenders it built and have the prophet receive message from castle
             //Naive method of just filtering nearby prophets from base location, if passing by ATTACKER strays inside, messes with it
             const nearbyDefenders = self.getVisibleRobots().filter((robotElement) => {
@@ -55,7 +56,7 @@ prophet.doAction = (self) => {
             //E = 1
             //S = 2
             //W = 3
-            const compass = nearbyDefenders % 4;
+            const compass = nearbyDefenders.length % 4;
 
             //Get the direction value from directions array
             let direction = movement.directions[compass*2];
@@ -92,7 +93,7 @@ prophet.doAction = (self) => {
         }
 
         //Guarding behavior, doesn't flee, doesn't check fuel before attempting to attack
-        const attackable = combat.getAttackableEnemies(self.me);
+        const attackable = combat.getAttackableEnemies(self);
 
         if(attackable.length > 0)
         {

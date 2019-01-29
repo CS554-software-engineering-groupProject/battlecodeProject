@@ -2,7 +2,7 @@ import {SPECS} from "battlecode";
 const movement = {}
 
 //Array for getting direction after rotation
-movement.directions = [{ x: 0, y: -1 }, { x: 1, y: -1 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }, { x: -1, y: 1 }, { x: -1, y: 0 }, { x: -1, y: -1 }]
+movement.directions = [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 0 }, { x: 1, y: -1 }, { x: 0, y: -1 }, { x: -1, y: -1 }, { x: -1, y: 0 }, { x: -1, y: 1 }]
 
 /*Checks whether the x and y values of position A and B are equivalent
 *Input: A - a 'position/ location' object {x, y}
@@ -399,12 +399,9 @@ movement.moveTowards = (self, destination) => {
 
     //Case 0: No movement
     if(distance <= 0) {
-        return {x: -1, y: -1};
-    //Case 1: Move to destination possible - do it
-    } else if(distance <= maxDist && movement.isPassable(destination, fullMap, robotMap)) {
-        return destination;   
+        return {x: self.me.x, y: self.me.y};
     }
-    //Case 2: move towards dest
+    //Case 1: Move to destination possible - do it
     let current = {
         x: self.me.x, 
         y: self.me.y

@@ -58,7 +58,7 @@ movement.getDirectionIndex = (direction) => {
 
     for(let i = 0; i < movement.directions.length; ++i)
     {
-        if(direction === directions[i])
+        if(direction === movement.directions[i])
             return i;
     }
     return -2;
@@ -123,7 +123,7 @@ movement.getDistanceXY = (A, B) => {
 *Output:    retVal - an integer value, the squared value of the distance from A to B
 */
 movement.getDistance = (A, B) => {
-    return ((A.x-B.x)*(A.y-B.y)+(A.y-B.y)*(A.y-B.y));
+    return ((A.x-B.x)*(A.x-B.x)+(A.y-B.y)*(A.y-B.y));
 }
 
 /*Checks in which map quadrant the given coordinate is in
@@ -308,12 +308,13 @@ movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous
 
     let dirA = direction;
     let dirB = direction;
+    let candidateA = {x : (x+dirA.x), y: (y+dirA.y)};
 
     do{
         dirA = movement.rotateDirection(dirA, 1);
         dirB = movement.rotateDirection(dirB, -1);
 
-        let candidateA = {x : (x+dirA.x), y: (y+dirA.y)}
+        candidateA = {x : (x+dirA.x), y: (y+dirA.y)}
         if(!(movement.positionsAreEqual(candidateA, previous)) && movement.isPassable(candidateA, fullMap, robotMap))
             return candidateA;
 
@@ -384,7 +385,7 @@ movement.pathfinding = (self, destination) => {
 *                   -   OR {-1, -1} if distance from robot location to destination <= 0
 */
 movement.moveTowards = (self, destination) => {
-    const maxDist = SPECS.UNITS[self.me.unit].SPEED;
+    let maxDist = SPECS.UNITS[self.me.unit].SPEED;
     let fullMap = self.map;
     let robotMap = self.getVisibleRobotMap();
     let distance = movement.getDistance(self.me, destination);
@@ -392,26 +393,41 @@ movement.moveTowards = (self, destination) => {
     const maxFuelCost = (distance * fuelCostPerMove);
 
     //Looking through 'API questions' discord channel, 'karbonite' and 'fuel' seems to be the way to get global team's karbonite and fuel
-    if(fuel < maxFuelCost)
-        maxDist = Math.floor(fuel/fuelCostPerMove);
+    if(self.fuel < maxFuelCost)
+        maxDist = Math.floor(self.fuel/fuelCostPerMove);
 
 
     //Case 0: No movement
-    if(distance <= 0)
+    if(distance <= 0) {
         return {x: -1, y: -1};
-
-    //Case 1: move towards dest
+    //Case 1: Move to destination possible - do it
+    } else if(distance <= maxDist && movement.isPassable(destination, fullMap, robotMap)) {
+        return destination;   
+    }
+    //Case 2: move towards dest
     let current = {
         x: self.me.x, 
         y: self.me.y
     };
     let previous = self.previous;
+    let distTravelled = 0;
 
-    for(let distTravelled = 0; distTravelled < maxDist; ++distTravelled)
+    while(distTravelled <= maxDist)
     {
         let temp = movement.dumberMoveTowards(current, fullMap, robotMap, destination, previous);
-        previous = current;
-        current = temp;
+        distTravelled = movement.getDistance(self.me, temp);
+        //If at furthest move in target direction, do it
+        if(distTravelled === maxDist) {
+            self.previous = current;
+            return temp;
+        //If not past maxDistance, make move to get closer to optimal move
+        } else if (movement.getDistance(self.me, temp) < maxDist) {
+            previous = current;
+            current = temp;
+        }        
+        //Move goes past maxDistance - don't do and do last best move
+        break;
+
     }
 
     self.previous = previous;
@@ -439,52 +455,5 @@ movement.findAdjacentBase = (self) => {
     }
 }
 
-/**
- * Returns array of all moveable positions in input direction
- */
-movement.filterMovesByDirection = (self, direction) => {
-    return self.myType.moveable.filter(loc => {
-        return movement.positionsAreEqual(movement.getRelativeDirection(loc), direction);
-    })
-}
-
-movement.getBestMoveByDirection = (direction, self, destination) => {
-    const fullMap = self.map;
-    const robotMap = self.getVisibleRobots();
-    let candidates = movement.filterMovesByDirection(self, direction);
-    let maxDist = 0;
-    let bestMove = null;
-    for(let j = 0; j < candidates.length; j++) {
-        let target = {x: location.x+candidates[j].x, y: location.y+candidates[j].y}
-        if(movement.isPassable(target, fullMap, robotMap)) {
-            //If destination viable, go to it
-            if(movement.positionsAreEqual(target, destination)) {
-                return target;
-            } else if (movement.getDistance(target, destination) > maxDist) {
-                bestMove = {x: target.x, y: target.y}
-            }
-        }
-    }
-    return bestMove;
-}
-
-
-movement.newMoreTowards = (self, destination) => {
-    let direction = movement.getRelativeDirection(self.me, destination);
-    let directionIndex = movement.getDirectionIndex(direction);
-    let rotations = 0;
-    let bestMove = movement.getBestMoveByDirection(direction, self, destination);
-
-    while(bestMove == null && rotations <= 4) {
-        const turnLeft = movement.directions[directionIndex+rotations];
-        const turnRight = movement.directions[directionIndex-rotations];
-        bestMove = movement.getBestMoveByDirection(turnLeft, self, destination);
-        if(bestMove != null) {
-            return bestMove;
-        }
-        bestMove = movement.getBestMoveByDirection(turnRight, self, destination);
-    }
-    return bestMove;
-}
 
 export default movement

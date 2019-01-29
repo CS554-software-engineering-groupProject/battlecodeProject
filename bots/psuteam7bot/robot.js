@@ -13,6 +13,7 @@ class MyRobot extends BCAbstractRobot {
         this.target = null;                              //Target destionation like {x: _, y: _}  
         this.base = null;                                //Closest (or original) castle/church like {x: _, y: _} 
         this.previous = {x: this.me.x, y: this.me.y};    //Previous tile traversed by unit like {x: _, y: _}, initialized to the spawning/ starting location
+        this.turnsAlive = 0;                             //Record the number of turns the robot has been alive for (Used in 'DEFENDER' prophets for naive guard behavior)
     }
     turn() {
         if (this.myType === undefined){

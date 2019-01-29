@@ -3,6 +3,8 @@ import{movement} from "./movement.js";
 
 const combat = {};
 
+combat.UNITTYPE = ["CASTLE", "CHURCH", "PILGRIM", "CRUSADER", "PROPHET" , "PREACHER"]
+
 /*Function to get a list of robots in a certain distance range from calling robot
 *Input: self        -   reference to the object of the calling robot, should be the value of self.me
 *       minRange    -   minimum distance of the range, should be in r^2
@@ -67,6 +69,14 @@ combat.getAttackableEnemies = (self) => {
         //Filter for only enemies && distance >= robot's minimum attack radius && distance <= robot's maximum attack radius
         return robotElement.team !== self.me.team && distance >= SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0] && distance <= SPECS.UNITS[self.me.unit].ATTACK_RADIUS[1];
     });
+}
+
+/*Function to check whether passed robot have enough fuel to attack
+*Input: self        -   reference to the object of the calling robot, should be the value of self.me
+*Output:    RetVal  -   true if it can attack, OR false otherwise
+*/
+combat.hasFuelToAttack = (self) => {
+    return self.fuel >= SPECS.UNITS[self.me.unit].ATTACK_FUEL_COST;
 }
 
 export default combat;

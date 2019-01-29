@@ -419,4 +419,72 @@ movement.moveTowards = (self, destination) => {
     return current;
 }
 
+/**
+ * Function that looks for a "base" (castle/church) within one tile of current position.
+ * Could be used by any newly created unit to find which unit built it, set self.base to coordinates
+ * 
+ * @param self MyRobot object passed in
+ */
+movement.findAdjacentBase = (self) => {
+    const bases = self.getVisibleRobots().filter(bot => {
+        const dx = Math.abs(bot.x - self.me.x);
+        const dy = Math.abs(bot.y - self.me.y);
+        const isTeamBase = (bot.unit === 0 || bot.unit === 1) && bot.team === self.me.team;
+        return isTeamBase && dx <= 1 && dy <= 1;
+    });
+    if (bases.length > 0) {
+        return {x: bases[0].x, y: bases[0].y};
+    } else {
+        return null;
+    }
+}
+
+/**
+ * Returns array of all moveable positions in input direction
+ */
+movement.filterMovesByDirection = (self, direction) => {
+    return self.myType.moveable.filter(loc => {
+        return movement.positionsAreEqual(movement.getRelativeDirection(loc), direction);
+    })
+}
+
+movement.getBestMoveByDirection = (direction, self, destination) => {
+    const fullMap = self.map;
+    const robotMap = self.getVisibleRobots();
+    let candidates = movement.filterMovesByDirection(self, direction);
+    let maxDist = 0;
+    let bestMove = null;
+    for(let j = 0; j < candidates.length; j++) {
+        let target = {x: location.x+candidates[j].x, y: location.y+candidates[j].y}
+        if(movement.isPassable(target, fullMap, robotMap)) {
+            //If destination viable, go to it
+            if(movement.positionsAreEqual(target, destination)) {
+                return target;
+            } else if (movement.getDistance(target, destination) > maxDist) {
+                bestMove = {x: target.x, y: target.y}
+            }
+        }
+    }
+    return bestMove;
+}
+
+
+movement.newMoreTowards = (self, destination) => {
+    let direction = movement.getRelativeDirection(self.me, destination);
+    let directionIndex = movement.getDirectionIndex(direction);
+    let rotations = 0;
+    let bestMove = movement.getBestMoveByDirection(direction, self, destination);
+
+    while(bestMove == null && rotations <= 4) {
+        const turnLeft = movement.directions[directionIndex+rotations];
+        const turnRight = movement.directions[directionIndex-rotations];
+        bestMove = movement.getBestMoveByDirection(turnLeft, self, destination);
+        if(bestMove != null) {
+            return bestMove;
+        }
+        bestMove = movement.getBestMoveByDirection(turnRight, self, destination);
+    }
+    return bestMove;
+}
+
 export default movement

@@ -4,18 +4,6 @@ import movement from './movement.js';
 const pilgrim = {};
 pilgrim.maxKarbonite = SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY;
 pilgrim.maxFuel = SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY;
-pilgrim.speed = SPECS.UNITS[SPECS.PILGRIM].SPEED;
-pilgrim.moveable = [];
-//Get all possible moveable tiles relative to current position
-for (let x = -1*Math.sqrt(pilgrim.speed); x <= Math.sqrt(pilgrim.speed); x++) {
-    for(let y = -1*Math.sqrt(pilgrim.speed); y <= Math.sqrt(pilgrim.speed); y++) {
-        let testMove = {x: x, y: y};
-        if(!movement.getDistance({x: 0, y:0}, testMove) > 0) {
-            pilgrim.moveable.push(testMove);
-        }
-    }
-}
-
 
 /**
  * Main action page for a pilgrim unit. Makes decisions and calls helper functions to take action 
@@ -62,7 +50,7 @@ pilgrim.takeMinerAction = (self) => {
             return self.give(adjacentBase.x-self.me.x, adjacentBase.y-self.me.y, self.me.karbonite, self.me.fuel)
         }
         self.target = self.base;
-        const {x, y} = movement.newMoveTowards(self, self.target);
+        const {x, y} = movement.moveTowards(self, self.target);
         self.log('pilgrim MINER ' + self.id + ' moving, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']')
         return self.move(x-self.me.x, y-self.me.y);
     } else {
@@ -70,7 +58,7 @@ pilgrim.takeMinerAction = (self) => {
             self.log("pilgrim MINER " + self.id + " mining resources at [" + self.me.x + "," + self.me.y + "]");
             return self.mine();
         } else {
-            const {x, y} = movement.newMoveTowards(self, self.target);
+            const {x, y} = movement.moveTowards(self, self.target);
             return self.move(x-self.me.x, y-self.me.y);
         }
     }
@@ -92,7 +80,7 @@ pilgrim.takePioneerAction = (self) => {
     }
     //Target set - if not at target, move towards
     if (self.target.x !== self.me.x || self.target.y !== self.me.y) {
-        const {x, y} = movement.newMoveTowards(self, self.target);
+        const {x, y} = movement.moveTowards(self, self.target);
         self.log('pilgrim PIONEER ' + self.id + ' moving, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']')
         return self.move(x-self.me.x, y-self.me.y);
     //If at target, become miner

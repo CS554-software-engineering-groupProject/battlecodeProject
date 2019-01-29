@@ -1,5 +1,5 @@
 import {SPECS} from "battlecode";
-import{movement} from "./movement.js";
+import movement from "./movement.js";
 
 const combat = {};
 

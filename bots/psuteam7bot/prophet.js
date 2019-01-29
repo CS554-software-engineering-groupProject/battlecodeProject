@@ -1,5 +1,7 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
-import {combat} from "./combat.js";
+import combat from './combat.js';
+import movement from './movement.js';
+
 const prophet = {};
 
 prophet.doAction = (self) => {

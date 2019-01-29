@@ -2,7 +2,7 @@ import {SPECS} from "battlecode";
 const movement = {}
 
 //Array for getting direction after rotation
-movement.directions = [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 0 }, { x: 1, y: -1 }, { x: 0, y: -1 }, { x: -1, y: -1 }, { x: -1, y: 0 }, { x: -1, y: 1 }]
+movement.directions = [{ x: 0, y: -1 }, { x: 1, y: -1 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }, { x: -1, y: 1 }, { x: -1, y: 0 }, { x: -1, y: -1 }]
 
 /*Checks whether the x and y values of position A and B are equivalent
 *Input: A - a 'position/ location' object {x, y}

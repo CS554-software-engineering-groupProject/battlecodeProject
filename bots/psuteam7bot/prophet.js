@@ -16,7 +16,7 @@ prophet.doAction = (self) => {
             }
         });
 
-        self.base = combat.getAdjacentBase(self);
+        self.base = movement.getAdjacentBase(self);
         self.log("Set base as " + JSON.stringify(self.base));
 
         //2 defenders per side, assigned as defender if it's less

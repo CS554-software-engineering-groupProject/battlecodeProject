@@ -126,7 +126,7 @@ prophet.doAction = (self) => {
 
         const attackable = combat.getAttackableEnemies(self);
         let minUnattackable = combat.getRobotsInRange(self, 0, SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0]-1);
-        minUnattackable = combat.getVisibleEnemies(self);
+        minUnattackable = combat.filterByTeam(self, minUnattackable, -1);
 
         //Set 'fleeing behavior?' (when not enough fuel to attack/ attack target < min attack range)
         if(minUnattackable.length > 0 || !combat.hasFuelToAttack(self))
@@ -150,6 +150,7 @@ prophet.doAction = (self) => {
 
         //Move towards potential enemy castle location
         const moveLocation = movement.moveTowards(self, self.target);
+        self.log("Moving to towards potential enemy castle, targeting " + JSON.stringify(moveLocation));
         self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);
     }
     //Should not fall through

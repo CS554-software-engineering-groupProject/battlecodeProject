@@ -140,7 +140,7 @@ movement.getDistance = (A, B) => {
 */
 movement.checkQuadrant = (location, fullmap) => {
     const {x, y} = location;
-    const midLength = fullmap.length/2;
+    const midLength = Math.ceil(fullmap.length/2);
     
     if(x < midLength)
     {
@@ -166,38 +166,12 @@ movement.checkQuadrant = (location, fullmap) => {
 *TODO: Have the team's castles communicate at start of game to potentially improve accuracy. 
 *Given the team's starting castles are in different quadrants, can accurately calculate location of enemy castle
 */
-movement.getPotentialEnemyCastleLocation = (myCastleLocation, fullmap) => {
+movement.getPotentialEnemyCastleLocation = (myCastleLocation, fullMap) => {
     const {x, y} = myCastleLocation;
+    const Ax = fullMap.length - x;
+    const Ay = fullMap.length - y;
 
-    const midLength = fullmap.length/2;
-    const distX = 2*(midLength-x);
-    const distY = 2*(midLength-y);
-    const quadrant = movement.checkQuadrant(myCastleLocation, fullmap);
-
-    let Ax = null;
-    let By = null;
-    if(quadrant === 1)  //Enemy in quadrant 2 or 3
-    {
-        Ax = (x+distX);
-        By = (y+distY);
-    }
-    if(quadrant === 2)  //Enemy in quadrant 1 or 4
-    {
-        Ax = (x-distX);
-        By = (y+distY);
-    }
-    if(quadrant === 3)  //Enemy in quadrant 1 or 4
-    {
-        Ax = (x+distX);
-        By = (y-distY);
-    }
-    if(quadrant === 4)  //Enemy in quadrant 2 or 3
-    {
-        Ax = (x-distX);
-        By = (y-distY);
-    }
-
-    return [{x: Ax, y: y}, {x: x, y: By}];
+    return [{x: Ax, y: y}, {x: x, y: Ay}];
 }
 
 /*Check and return whether tile at specified coordinate is passable

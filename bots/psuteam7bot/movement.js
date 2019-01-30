@@ -283,6 +283,7 @@ movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous
     let dirA = direction;
     let dirB = direction;
     let candidateA = {x : (x+dirA.x), y: (y+dirA.y)};
+    let candidateB = {x : (x+dirB.x), y: (y+dirB.y)}
 
     do{
         dirA = movement.rotateDirection(dirA, 1);
@@ -292,10 +293,10 @@ movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous
         if(!(movement.positionsAreEqual(candidateA, previous)) && movement.isPassable(candidateA, fullMap, robotMap))
             return candidateA;
 
-        let candidateB = {x : (x+dirB.x), y: (y+dirB.y)}
+        candidateB = {x : (x+dirB.x), y: (y+dirB.y)}
         if(!(movement.positionsAreEqual(candidateB, previous)) && movement.isPassable(candidateB, fullMap, robotMap))
             return candidateB;
-    }while(!movement.positionsAreEqual(candidateA, previous));
+    }while(!(movement.positionsAreEqual(candidateA, previous) && movement.positionsAreEqual(candidateB,previous)));
 
     return location;
 }

@@ -5,9 +5,9 @@ import movement from './movement.js';
 const prophet = {};
 
 prophet.doAction = (self) => {
-    self.log("prophet " + self.id + " taking turn");
-
+    
     if (self.role === 'UNASSIGNED') {
+        self.log("UNASSIGNED prophet " + self.id + " taking turn");
         self.base = movement.findAdjacentBase(self);
         self.log("Set base as " + JSON.stringify(self.base));
 
@@ -38,6 +38,7 @@ prophet.doAction = (self) => {
     //Main behavior of Prophet units
     if(self.role === "DEFENDER")
     {
+        self.log("DEFENDER prophet " + self.id + " taking turn");
         if(self.target === null)
         {
             self.log("prophet finding local defenders")
@@ -88,7 +89,7 @@ prophet.doAction = (self) => {
         {
             const moveLocation = movement.moveTowards(self, self.target);
 
-            self.log("Moving to towards guard post, targeting " + JSON.stringify(moveLocation));
+            self.log("Moving towards guard post, targeting " + JSON.stringify(moveLocation));
             return self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);
         }
 
@@ -107,18 +108,17 @@ prophet.doAction = (self) => {
     }
     else if(self.role === "ATTACKER")
     {
+        self.log("ATTACKER prophet " + self.id + " taking turn");
         if(self.target === null)
         {
             //TODO Set 'Potential enemy castle coordinates' for prophets that spawned/ created at a Church
             //Maybe need pioneer to 'hold' enemy castle locations and have Churches they built store the value and communicate it to ATTACKER?
             //Requires communication and modifying other units
 
-            if(self.target === null)
-            {
-                //Choose randomly from potential enemy castle location
-                const potentialTargets = movement.getPotentialEnemyCastleLocation(self.base, self.map);
-                self.target = potentialTargets[Math.floor(Math.random()*potentialTargets.length)];
-            }
+            //Choose randomly from potential enemy castle location
+            const potentialTargets = movement.getPotentialEnemyCastleLocation(self.base, self.map);
+            self.target = potentialTargets[Math.floor(Math.random()*potentialTargets.length)];
+
 
             //TODO Set 'Rally point?'? (For amassing friendly forces before attacking as a group  [future sprint obj])
         }
@@ -150,8 +150,8 @@ prophet.doAction = (self) => {
 
         //Move towards potential enemy castle location
         const moveLocation = movement.moveTowards(self, self.target);
-        self.log("Moving to towards potential enemy castle, targeting " + JSON.stringify(moveLocation));
-        self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);
+        self.log("Moving towards potential enemy castle, targeting " + JSON.stringify(moveLocation));
+        return self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);
     }
     //Should not fall through
     self.log('prophet ' + self.role + ' ' + self.me.id + ' doing nothing')

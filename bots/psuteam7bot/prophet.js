@@ -11,6 +11,12 @@ prophet.doAction = (self) => {
         self.base = movement.findAdjacentBase(self);
         self.log("Set base as " + JSON.stringify(self.base));
 
+        if(self.base == null)
+        {
+            self.role = "ATTACKER";
+            return;
+        }
+
         //TODO Change with addition of communication maybe have base record the number of defenders it built and have the prophet receive message from castle
         //Naive method of just filtering nearby prophets from base location, if passing by ATTACKER strays inside, messes with it
         const nearbyDefenders = self.getVisibleRobots().filter((robotElement) => {
@@ -105,19 +111,20 @@ prophet.doAction = (self) => {
         
         //TODO store 'reclaimed' resources if capacity full and no enemies [future sprint obj]
         //Otherwise, idle.
+        return;
     }
     else if(self.role === "ATTACKER")
     {
         self.log("ATTACKER prophet " + self.id + " taking turn");
-        if(self.target === null)
+        if(self.potentialEnemyCastleLocation === null)
         {
             //TODO Set 'Potential enemy castle coordinates' for prophets that spawned/ created at a Church
             //Maybe need pioneer to 'hold' enemy castle locations and have Churches they built store the value and communicate it to ATTACKER?
             //Requires communication and modifying other units
 
-            //Choose randomly from potential enemy castle location
-            const potentialTargets = movement.getPotentialEnemyCastleLocation(self.base, self.map);
-            self.target = potentialTargets[Math.floor(Math.random()*potentialTargets.length)];
+            //Get potential enemy castle locations
+            self.potentialEnemyCastleLocation = movement.getAttackerPatrolRoute(self.base, self.map);
+            self.target = self.potentialEnemyCastleLocation[[Math.floor(Math.random()*2)]];
 
 
             //TODO Set 'Rally point?'? (For amassing friendly forces before attacking as a group  [future sprint obj])
@@ -157,13 +164,48 @@ prophet.doAction = (self) => {
             return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
         }
 
-        //Repeated moveTowards also seems to use a lot of chess timer, at least at a rate more than is allocated per turn
-        //Move towards potential enemy castle location
-        const moveLocation = movement.moveTowards(self, self.target);
-        self.log("Moving towards potential enemy castle, targeting " + JSON.stringify(moveLocation));
-        return self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);
+        //No enemy castle at target and there are more waypoint to check
+        if(self.potentialEnemyCastleLocation.length > 0 && movement.getDistance(self.me, self.target) <= 49)
+        {
+            //Assign new target waypoint
+            self.potentialEnemyCastleLocation.shift();
+            self.potentialEnemyCastleLocation.shift();
+            self.target = self.potentialEnemyCastleLocation[0];
+        }
+
+        //No more patrol waypoint, TODO replace with smarter strat
+        if(self.potentialEnemyCastleLocation.length === 0)
+        {
+            //Should be in the quadrant opposite to base which is surely enemy quadrant, pick a random direction and move
+            const choices = [[0,-1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
+            let patrolQuadrant = movement.checkQuadrant(self.me, self.map);
+            let destQuadrant = -1;
+            let choice = null;
+
+
+            choice = choices[Math.floor(Math.random()*choices.length)];
+            destQuadrant = movement.checkQuadrant({x: self.me.x+choice.x, y: self.me.y+choice.y}, self.map);
+
+            //Choose opposite direction if trying to go outside patrol quadrant
+            if(destQuadrant !== patrolQuadrant)
+                choice = [choice[0]*-1, choice[1]*-1];
+            
+            self.log("Patrolling enemy quadrant " + patrolQuadrant);
+            return self.move(...choice);
+        }
+
+        //Move towards a patrol waypoint as a squad
+        let squad = combat.filterByTeam(self, visibleRobots, self.me.team);
+        squad = combat.filterByRange(squad, self.me, 0, 64);
+
+        if(squad.length >= 6) 
+        {
+            const moveLocation = movement.moveTowards(self, self.target);
+            self.log("Moving towards potential enemy castle, targeting " + JSON.stringify(moveLocation));
+            return self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);
+        }
     }
-    //Should not fall through
+    //Should not fall through unless attacker with no army
     self.log('prophet ' + self.role + ' ' + self.me.id + ' doing nothing')
     return;
 }

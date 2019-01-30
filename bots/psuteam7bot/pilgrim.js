@@ -45,13 +45,11 @@ pilgrim.takeMinerAction = (self) => {
     if(self.me.karbonite === pilgrim.maxKarbonite || self.me.fuel === pilgrim.maxFuel) {
         let adjacentBase = movement.findAdjacentBase(self);
         if(adjacentBase != null) {
-            self.target === null;
             self.log("pilgrim MINER " + self.id + " depositing resources with base at [" + adjacentBase.x + "," + adjacentBase.y + "]");
-            return self.give(adjacentBase.x-self.me.x, adjacentBase.y-self.me.y, self.me.karbonite, self.me.fuel)
+            return self.give(adjacentBase.x-self.me.x, adjacentBase.y-self.me.y, self.me.karbonite, self.me.fuel);
         }
-        self.target = self.base;
-        const {x, y} = movement.moveTowards(self, self.target);
-        self.log('pilgrim MINER ' + self.id + ' moving, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']')
+        const {x, y} = movement.moveTowards(self, self.base);
+        self.log('pilgrim MINER ' + self.id + ' moving towards base, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']')
         return self.move(x-self.me.x, y-self.me.y);
     } else {
         if(self.me.x === self.target.x && self.me.y === self.target.y) {
@@ -59,6 +57,7 @@ pilgrim.takeMinerAction = (self) => {
             return self.mine();
         } else {
             const {x, y} = movement.moveTowards(self, self.target);
+            self.log('pilgrim MINER ' + self.id + ' moving towards target, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']');
             return self.move(x-self.me.x, y-self.me.y);
         }
     }

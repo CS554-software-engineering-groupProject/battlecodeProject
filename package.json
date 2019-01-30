@@ -4,7 +4,7 @@
   "description": "Group 7's project for CS454/554",
   "main": "main.js",
   "dependencies": {
-    "bc19": "^0.4.4"
+    "bc19": "^0.4.7"
   },
   "devDependencies": {
     "chai": "^4.2.0",

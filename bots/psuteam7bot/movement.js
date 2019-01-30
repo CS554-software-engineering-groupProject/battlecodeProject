@@ -171,7 +171,7 @@ movement.getPotentialEnemyCastleLocation = (myCastleLocation, fullmap) => {
 
     const midLength = fullmap.length/2;
     const distX = 2*(midLength-x);
-    const distY = 2*(midlength-y);
+    const distY = 2*(midLength-y);
     const quadrant = movement.checkQuadrant(myCastleLocation, fullmap);
 
     let Ax = null;
@@ -197,7 +197,7 @@ movement.getPotentialEnemyCastleLocation = (myCastleLocation, fullmap) => {
         By = (y-distY);
     }
 
-    return [{x: Ax, y}, {x, y: By}];
+    return [{x: Ax, y: y}, {x: x, y: By}];
 }
 
 /*Check and return whether tile at specified coordinate is passable

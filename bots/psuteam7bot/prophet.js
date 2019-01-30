@@ -124,10 +124,17 @@ prophet.doAction = (self) => {
         }
         //TODO Set 'Potential enemy castle coordinates if allied group threshold is reached' [future sprint obj]
 
-        const attackable = combat.getAttackableEnemies(self);
-        let minUnattackable = combat.getRobotsInRange(self, 0, SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0]-1);
-        minUnattackable = combat.filterByTeam(self, minUnattackable, -1);
+        //Get visible robots seems expensive in performance, seems to use a lot of chess timer, especially when there are lots of robots nearby
+        //Possibly main cause of script timeout as the game goes on
+        //get it once and use filtered value
+        const visibleRobots = self.getVisibleRobots();
+        const attackable = combat.filterByAttackable(self, visibleRobots);
 
+        /* TODO Possible bug x of undefined inside the fleeing behavior conditional below
+        let minUnattackable = combat.filterByTeam(self, visibleRobots, -1);
+        minUnattackable = combat.filterByRange(minUnattackable, self.me, 0, SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0]-1);
+
+        
         //Set 'fleeing behavior?' (when not enough fuel to attack/ attack target < min attack range)
         if(minUnattackable.length > 0 || !combat.hasFuelToAttack(self))
         {
@@ -139,6 +146,8 @@ prophet.doAction = (self) => {
             self.log("Fleeing from " + combat.UNITTYPE[attacker.unit] + " at " + attacker.x + ", " +  attacker.y);
             return self.move(moveLocation);
         }
+        */
+
 
         //Attack visible enemies
         if(attackable.length > 0)
@@ -148,6 +157,7 @@ prophet.doAction = (self) => {
             return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
         }
 
+        //Repeated moveTowards also seems to use a lot of chess timer, at least at a rate more than is allocated per turn
         //Move towards potential enemy castle location
         const moveLocation = movement.moveTowards(self, self.target);
         self.log("Moving towards potential enemy castle, targeting " + JSON.stringify(moveLocation));

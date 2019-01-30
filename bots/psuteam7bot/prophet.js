@@ -83,8 +83,8 @@ prophet.doAction = (self) => {
             self.log("Assigned " + JSON.stringify(self.target) + " as guard post");
         }
         
-        //Movement to guard post should only take 3 turns
-        if(self.me.turn < 4)
+        //Movement to guard post should only take 5 turns (gave it a little more time to settle)
+        if(self.me.turn < 5)
         {
             const moveLocation = movement.moveTowards(self, self.target);
 
@@ -115,26 +115,27 @@ prophet.doAction = (self) => {
 
             if(self.target === null)
             {
-                //Choose randomly from 2 potential enemy castle location
-                self.target = movement.getPotentialEnemyCastleLocation(self.base, self.map)[Math.floor(Math.random()*choices.length)];
+                //Choose randomly from potential enemy castle location
+                const potentialTargets = movement.getPotentialEnemyCastleLocation(self.base, self.map);
+                self.target = potentialTargets[Math.floor(Math.random()*potentialTargets.length)];
             }
 
             //TODO Set 'Rally point?'? (For amassing friendly forces before attacking as a group  [future sprint obj])
         }
         //TODO Set 'Potential enemy castle coordinates if allied group threshold is reached' [future sprint obj]
 
-        const attackable = combat.getAttackableEnemies(self.me);
-        let minUnattackable = combat.getRobotsInRange(self.me, 0, SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0]-1);
-        minUnattackable = combat.getVisibleEnemies(self.me);
+        const attackable = combat.getAttackableEnemies(self);
+        let minUnattackable = combat.getRobotsInRange(self, 0, SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0]-1);
+        minUnattackable = combat.getVisibleEnemies(self);
 
         //Set 'fleeing behavior?' (when not enough fuel to attack/ attack target < min attack range)
-        if(minUnattackable.length > 0 || !combat.hasFuelToAttack(self.me))
+        if(minUnattackable.length > 0 || !combat.hasFuelToAttack(self))
         {
             const attacker = minUnattackable[0];
             const direction = movement.getRelativeDirection(self.me, attacker);
             const rDist =  Math.sqrt(SPECS.UNITS[self.me.unit].SPEED);
             let moveLocation = {x: self.me.x+rDist*direction.x, y: self.me.y+rDist*direction.y};
-            moveLocation = movement.moveTowards(self.me, moveLocation);
+            moveLocation = movement.moveTowards(self, moveLocation);
             self.log("Fleeing from " + combat.UNITTYPE[attacker.unit] + " at " + attacker.x + ", " +  attacker.y);
             return self.move(moveLocation);
         }
@@ -148,11 +149,11 @@ prophet.doAction = (self) => {
         }
 
         //Move towards potential enemy castle location
-        const moveLocation = movement.moveTowards(self.me, self.target);
-        self.move(moveLocation.x, moveLocation.y);
+        const moveLocation = movement.moveTowards(self, self.target);
+        self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);
     }
     //Should not fall through
-    self.log('prophet ' + self.me.id + ' doing nothing')
+    self.log('prophet ' + self.role + ' ' + self.me.id + ' doing nothing')
     return;
 }
 

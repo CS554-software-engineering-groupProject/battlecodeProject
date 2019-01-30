@@ -1,5 +1,6 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
-import movement from './movement.js'
+import movement from './movement.js';
+import combat from './combat.js';
 
 const castle = {};
 
@@ -9,7 +10,7 @@ castle.doAction = (self) => {
         const place = movement.directions[(3*self.me.turn)%8];
         self.log('castle ' + self.id + ' building pilgrim at [' + (self.me.x+place.x) + ',' + (self.me.y+place.y) +']');
         return self.buildUnit(2, place.x, place.y);
-    } else if (self.me.turn < 5) {
+    } else {
         const place = movement.directions[(3*self.me.turn)%8];
         self.log('castle ' + self.id + ' building prophet at [' + (self.me.x+place.x) + ',' + (self.me.y+place.y) +']');
         return self.buildUnit(4, place.x, place.y);

@@ -311,8 +311,8 @@ movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous
     if(movement.isPassable(candidate, fullMap, robotMap))
         return candidate;
 
-    let dirA = direction;
-    let dirB = direction;
+    let dirA = {x: direction.x, y: direction.y};
+    let dirB = {x: direction.x, y: direction.y};
     let candidateA = {x : (x+dirA.x), y: (y+dirA.y)};
     let candidateB = {x : (x+dirB.x), y: (y+dirB.y)}
 
@@ -432,7 +432,8 @@ movement.moveTowards = (self, destination) => {
             current = temp;
         }        
         //Move goes past maxDistance - don't do and do last best move
-        break;
+        if(distTravelled > maxDist)
+            break;
 
     }
 

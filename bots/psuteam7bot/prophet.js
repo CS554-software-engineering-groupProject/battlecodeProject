@@ -44,7 +44,7 @@ prophet.doAction = (self) => {
             //TODO Change with addition of communication maybe have base record the number of defenders it built and have the prophet receive message from castle
             //Naive method of just filtering nearby prophets from base location, if passing by ATTACKER strays inside, messes with it
             const nearbyDefenders = self.getVisibleRobots().filter((robotElement) => {
-                if(robotElement.team === self.me.team && robotElement.unit === self.me.unit)
+                if(robotElement.team === self.me.team && robotElement.unit === self.me.unit && self.me.id != robotElement.id)
                 {
                     const distance = movement.getDistance(self.base, robotElement);
                     return distance <= 16;
@@ -72,6 +72,7 @@ prophet.doAction = (self) => {
 
             x *= direction.x;
             y *= direction.y;
+            self.log('x: ' + x + ' y: ' + y)
 
             //Case for vertical movement
             if(compass === 0 || compass === 2)
@@ -87,8 +88,8 @@ prophet.doAction = (self) => {
         {
             const moveLocation = movement.moveTowards(self, self.target);
 
-            self.log("Moving to guard post " + JSON.stringify(self.target));
-            return self.move(moveLocation.x, moveLocation.y);
+            self.log("Moving to towards guard post, targeting " + JSON.stringify(moveLocation));
+            return self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);
         }
 
         //Guarding behavior, doesn't flee, doesn't check fuel before attempting to attack
@@ -151,6 +152,7 @@ prophet.doAction = (self) => {
         self.move(moveLocation.x, moveLocation.y);
     }
     //Should not fall through
+    self.log('prophet ' + self.me.id + ' doing nothing')
     return;
 }
 

@@ -83,12 +83,11 @@ prophet.doAction = (self) => {
         }
         
         //Movement to guard post should only take 3 turns
-        if(self.turnAlive < 3)
+        if(self.me.turn < 4)
         {
             const moveLocation = movement.moveTowards(self, self.target);
 
             self.log("Moving to guard post " + JSON.stringify(self.target));
-            self.turnAlive++;
             return self.move(moveLocation.x, moveLocation.y);
         }
 
@@ -99,7 +98,6 @@ prophet.doAction = (self) => {
         {
             let attacking = attackable[0];
             self.log("Attacking " + combat.UNITTYPE[attacking.unit] + " at " + attacking.x + ", " +  attacking.y);
-            self.turnAlive++;
             return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
         }
         
@@ -137,7 +135,6 @@ prophet.doAction = (self) => {
             let moveLocation = {x: self.me.x+rDist*direction.x, y: self.me.y+rDist*direction.y};
             moveLocation = movement.moveTowards(self.me, moveLocation);
             self.log("Fleeing from " + combat.UNITTYPE[attacker.unit] + " at " + attacker.x + ", " +  attacker.y);
-            self.turnAlive++;
             return self.move(moveLocation);
         }
 
@@ -146,7 +143,6 @@ prophet.doAction = (self) => {
         {
             let attacking = attackable[0];
             self.log("Attacking " + combat.UNITTYPE[attacking.unit] + " at " + attacking.x + ", " +  attacking.y);
-            self.turnAlive++;
             return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
         }
 
@@ -155,7 +151,6 @@ prophet.doAction = (self) => {
         self.move(moveLocation.x, moveLocation.y);
     }
     //Should not fall through
-    self.turnAlive++;
     return;
 }
 

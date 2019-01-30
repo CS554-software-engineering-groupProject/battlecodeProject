@@ -173,10 +173,14 @@ prophet.doAction = (self) => {
             self.target = self.potentialEnemyCastleLocation[0];
         }
 
-        //No more patrol waypoint, TODO replace with smarter strat
+        //No more patrol waypoint, 
+
         if(self.potentialEnemyCastleLocation.length === 0)
         {
+            //TODO replace with smarter strat
+            //Random movement cost a lot of fuel
             //Should be in the quadrant opposite to base which is surely enemy quadrant, pick a random direction and move
+            /*
             const choices = [[0,-1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
             let patrolQuadrant = movement.checkQuadrant(self.me, self.map);
             let destQuadrant = -1;
@@ -192,6 +196,8 @@ prophet.doAction = (self) => {
             
             self.log("Patrolling enemy quadrant " + patrolQuadrant);
             return self.move(...choice);
+            */
+           return;
         }
 
         //Move towards a patrol waypoint as a squad

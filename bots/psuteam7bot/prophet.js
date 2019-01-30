@@ -28,7 +28,7 @@ prophet.doAction = (self) => {
         });
 
         //2 defenders per side, assigned as defender if it's less
-        if(nearbyDefenders.length < 8)
+        if(nearbyDefenders.length < 0)
         {
             self.log("Base defenders = " + JSON.stringify(nearbyDefenders.length) + ", Assigned as a defender");
             self.role = "DEFENDER";
@@ -204,7 +204,7 @@ prophet.doAction = (self) => {
         let squad = combat.filterByTeam(self, visibleRobots, self.me.team);
         squad = combat.filterByRange(squad, self.me, 0, 64);
 
-        if(squad.length >= 6) 
+        if(squad.length >= 4) 
         {
             const moveLocation = movement.moveTowards(self, self.target);
             self.log("Moving towards potential enemy castle, targeting " + JSON.stringify(moveLocation));

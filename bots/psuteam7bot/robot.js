@@ -3,6 +3,8 @@ import pilgrim from './pilgrim.js';
 import prophet from './prophet.js';
 import castle from './castle.js';
 import church from './church.js';
+import combat from './combat.js';
+import movement from './movement.js';
 
 var step = -1;
 
@@ -12,7 +14,8 @@ class MyRobot extends BCAbstractRobot {
         this.role = "UNASSIGNED";                        //Role for unit (for strategy purposes)
         this.target = null;                              //Target destionation like {x: _, y: _}  
         this.base = null;                                //Closest (or original) castle/church like {x: _, y: _} 
-        this.previous = null;    //Previous tile traversed by unit like {x: _, y: _}, initialized to the spawning/ starting location
+        this.previous = null;                            //Previous tile traversed by unit like {x: _, y: _}, initialized to the spawning/ starting location
+        this.potentialEnemyCastleLocation = null;
     }
     turn() {
         if(this.previous == null) {

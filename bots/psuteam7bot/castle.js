@@ -1,11 +1,12 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
-import nav from './nav.js';
-import util from './util.js';
+import movement from './movement.js';
+import combat from './combat.js';
 
 const castle = {};
 
 
 castle.doAction = (self) => {
+
     self.log("castle" + self.id + "taking turn.");
     //Assume that there are enough resources to produce unit 'Pilgrim'
     if(self.me.turn < 3)

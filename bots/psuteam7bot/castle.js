@@ -4,8 +4,6 @@ import util from './util.js';
 
 const castle = {};
 
-//building units
-
 castle.takeTurn = (self) => {
     self.log('castle taking turn')
     const visible = self.getVisibleRobots();

@@ -4,7 +4,7 @@ import util from './util.js';
 
 const castle = {};
 
-castle.takeTurn = (self) => {
+/*castle.takeTurn = (self) => {
     self.log('castle taking turn')
     const visible = self.getVisibleRobots();
     const messagingRobots = visible.filter(robot => {
@@ -92,7 +92,7 @@ castle.takeTurn = (self) => {
         }
     }
 };
-
+*/
 
 castle.doAction = (self) => {
     self.log("castle" + self.id + "taking turn.");

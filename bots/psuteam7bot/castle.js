@@ -4,6 +4,7 @@ import util from './util.js';
 
 const castle = {};
 
+//building units
 
 castle.takeTurn = (self) => {
     self.log('castle taking turn')
@@ -104,4 +105,19 @@ castle.doAction = (self) => {
     return;
 }
 
+castle.doAction = (self) => {
+
+}
+
+castle.findUnitPlace = (self, unitType) => {
+    for(i= -1; i<= +1; i++){   
+        for(j = -1; j<= +1; j++){
+            const location = {x: (self.me.x + i), y: (self.me.y +j)} 
+           if(movement.isPassable(location, self.map, self.getVisibleRobotMap())){
+             return self.buildUnit(SPECS[unitType], i, j);       
+           }
+        }
+    }
+    return;
+}
 export default castle;

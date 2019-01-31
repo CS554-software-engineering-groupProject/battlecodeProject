@@ -9,7 +9,7 @@ pilgrim.maxFuel = SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY;
  * Main action page for a pilgrim unit. Makes decisions and calls helper functions to take action 
  */
 pilgrim.doAction = (self) => {
-    self.log("pilgrim " + self.id + " taking turn");
+    self.log("pilgrim " + self.id + " taking turn - occupied depots: " + JSON.stringify(self.occupiedResources));
     const onMap = (self, x, y) => {
         const mapSize = self.map.length;
         return (x < mapSize) && (x >= 0) && (y < mapSize) && (y >= 0)
@@ -34,10 +34,10 @@ pilgrim.doAction = (self) => {
 pilgrim.takeMinerAction = (self) => {
     if(self.target === null) {
         if(self.karbonite*5 <= self.fuel) {
-            self.target = pilgrim.findClosestResource(self.me, self.karbonite_map);
+            self.target = pilgrim.findClosestResource(self.me, self.karbonite_map, self.occupiedResources);
             self.log("pilgrim MINER " + self.id + " targeting karbonite depot at [" + self.target.x + "," + self.target.y + "]")
         } else {
-            self.target = pilgrim.findClosestResource(self.me, self.fuel_map);
+            self.target = pilgrim.findClosestResource(self.me, self.fuel_map, self.occupiedResources);
             self.log("pilgrim MINER " + self.id + " targeting fuel depot at [" + self.target.x + "," + self.target.y + "]")
         }
     }
@@ -56,6 +56,25 @@ pilgrim.takeMinerAction = (self) => {
             self.log("pilgrim MINER " + self.id + " mining resources at [" + self.me.x + "," + self.me.y + "]");
             return self.mine();
         } else {
+            //Check if there is a visible bot at target
+            self.log('Not on target: ' + JSON.stringify(self.target));
+            const possibleId = self.getVisibleRobotMap()[self.target.y][self.target.x];
+            if(possibleId > 0) {
+                self.log('Bot on target: ' + possibleId);
+                //If bot exists on target, check if it's a pilgrim from your team (probbaly mining)
+                const botOnTarget = self.getRobot(possibleId);
+                self.log(botOnTarget)
+                if(botOnTarget.team === self.me.team && botOnTarget.unit === self.me.unit) {
+                    self.log('Pilgrim teammate on target');
+                    //If teammate pilgrim already there mining, add target to occupiedResources and find new resource to target
+                    const depotMap = self.karbonite_map[self.target.y][self.target.x] == true ? self.karbonite_map : self.fuel_map;
+                    self.occupiedResources.push(self.target);
+                    self.log('new occupied resources: ' + JSON.stringify(self.occupiedResources));
+                    self.target = pilgrim.findClosestResource(self.me, depotMap, self.occupiedResources);
+                    self.log('resource depot at ' + JSON.stringify({x: botOnTarget.x, y: botOnTarget.y}) + ' occupied; switching target to ' + JSON.stringify(self.target));
+                    return self.takeMinerAction(self);
+                }
+            }
             const {x, y} = movement.moveTowards(self, self.target);
             self.log('pilgrim MINER ' + self.id + ' moving towards target, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']');
             return self.move(x-self.me.x, y-self.me.y);
@@ -70,10 +89,10 @@ pilgrim.takePioneerAction = (self) => {
             return bots.team === self.me.team && bots.unit === 2;
         });
         if(localPilgrims.length % 2 === 1) {
-            self.target = pilgrim.findClosestResource(self.me, self.karbonite_map);
+            self.target = pilgrim.findClosestResource(self.me, self.karbonite_map, self.occupiedResources);
             self.log("pilgrim PIONEER " + self.id + " targeting karbonite depot at [" + self.target.x + "," + self.target.y + "]")
         } else {
-            self.target = pilgrim.findClosestResource(self.me, self.fuel_map);
+            self.target = pilgrim.findClosestResource(self.me, self.fuel_map, self.occupiedResources);
             self.log("pilgrim PIONEER " + self.id + " targeting fuel depot at [" + self.target.x + "," + self.target.y + "]")
         }
     }
@@ -123,22 +142,28 @@ pilgrim.mine = (self) => {
  * 
  * @param position Object with x and y fields representing the bot's current position
  * @param depotMap The 2d boolean map, either `karbonite_map` or `fuel_map`
+ * @param occupiedResources Array of locations representing resource depots another bot has targeted.
+ * This bot therefore will avoid targeting anything on this location
  * @return Returns an object with the x and y position of the closet resource
  */
-pilgrim.findClosestResource = (position, depotMap) => {
+pilgrim.findClosestResource = (position, depotMap, occupiedResources) => {
     const mapSize = depotMap.length;
     let minDist = 2*Math.pow(mapSize, 2);
     let closest = { x: -1, y: -1}
-    const getR2 = (from, to) => {
-        return Math.pow(from.x-to.x, 2) + Math.pow(from.y-to.y, 2);
-    }
     for(let y = 0; y < mapSize; y++) {
         for(let x = 0; x < mapSize; x++) {
-            const currDist = getR2(position, {x: x, y: y});
-            if (depotMap[y][x] && (currDist<minDist)) {
-                closest.x = x;
-                closest.y = y;
-                minDist = currDist;
+            const currDist = movement.getDistance(position, {x: x, y: y});
+            if (depotMap[y][x] == true && (currDist<minDist)) {
+                //Check if occupiedResources has a match
+                const occupiedArray = occupiedResources.filter(depot => {
+                    return depot.x === x && depot.y === y;
+                });
+                //If no matches (occupiedArray is empty), set as potential position
+                if(occupiedArray.length === 0) {
+                    closest.x = x;
+                    closest.y = y;
+                    minDist = currDist;
+                }
             }
         }
     }

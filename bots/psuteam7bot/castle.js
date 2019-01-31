@@ -15,14 +15,19 @@ castle.doAction = (self) => {
     }
     else
     {
-        //Check if there are enough resources to produce this unit.
-       if(self.fuel >= SPECS.UNITS[SPECS.PROPHET].CONSTRUCTION_FUEL && self.karbonite >= SPECS.UNITS[SPECS.PROPHET].CONSTRUCTION_KARBONITE) {
-           return castle.findUnitPlace(self, 'PROPHET');
-       }
-       return;
-    }
-    return;
+        if(self.me.turn % 50 < 3) {
+            if(self.fuel >= SPECS.UNITS[SPECS.PILGRIM].CONSTRUCTION_FUEL && self.karbonite >= SPECS.UNITS[SPECS.PILGRIM].CONSTRUCTION_KARBONITE) {
+                return castle.findUnitPlace(self, 'PILGRIM');
+            }
+        } else {
+            //Check if there are enough resources to produce this unit.
+            if(self.fuel >= SPECS.UNITS[SPECS.PROPHET].CONSTRUCTION_FUEL && self.karbonite >= SPECS.UNITS[SPECS.PROPHET].CONSTRUCTION_KARBONITE) {
+                return castle.findUnitPlace(self, 'PROPHET');
+            }
+        }
+        return;
 
+    }
 }
 
 castle.findUnitPlace = (self, unitType) => {

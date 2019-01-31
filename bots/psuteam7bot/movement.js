@@ -327,7 +327,7 @@ movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous
         candidateB = {x : (x+dirB.x), y: (y+dirB.y)}
         if(!(movement.positionsAreEqual(candidateB, previous)) && movement.isPassable(candidateB, fullMap, robotMap))
             return candidateB;
-    }while(!(movement.positionsAreEqual(candidateA, previous) && movement.positionsAreEqual(candidateB,previous)));
+    }while(movement.positionsAreEqual(candidateA, previous) || movement.positionsAreEqual(candidateB,previous));
 
     return location;
 }
@@ -419,7 +419,7 @@ movement.moveTowards = (self, destination) => {
     let distTravelled = 0;
     let stepsAttempted = 0;
 
-    while(distTravelled <= maxDist && self.stepsAttempted <= maxDist)
+    while(distTravelled <= maxDist && stepsAttempted <= maxDist)
     {
         let temp = movement.dumberMoveTowards(current, fullMap, robotMap, destination, previous);
         distTravelled = movement.getDistance(self.me, temp);
@@ -436,7 +436,7 @@ movement.moveTowards = (self, destination) => {
         //Move goes past maxDistance - don't do and do last best move
         if(distTravelled > maxDist)
             break;
-
+        stepsAttempted++;
     }
 
     self.previous = previous;

@@ -417,8 +417,9 @@ movement.moveTowards = (self, destination) => {
     };
     let previous = self.previous;
     let distTravelled = 0;
+    let stepsAttempted = 0;
 
-    while(distTravelled <= maxDist)
+    while(distTravelled <= maxDist && self.stepsAttempted <= maxDist)
     {
         let temp = movement.dumberMoveTowards(current, fullMap, robotMap, destination, previous);
         distTravelled = movement.getDistance(self.me, temp);
@@ -427,9 +428,10 @@ movement.moveTowards = (self, destination) => {
             self.previous = current;
             return temp;
         //If not past maxDistance, make move to get closer to optimal move
-        } else if (movement.getDistance(self.me, temp) < maxDist) {
+        } else if (distTravelled < maxDist) {
             previous = current;
             current = temp;
+            stepsAttempted++;
         }        
         //Move goes past maxDistance - don't do and do last best move
         if(distTravelled > maxDist)

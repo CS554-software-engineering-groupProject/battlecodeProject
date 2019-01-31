@@ -106,6 +106,17 @@ castle.doAction = (self) => {
 }
 
 castle.doAction = (self) => {
+    if(self.me.turn < 3)
+    {
+        return castle.findUnitPlace(self, 'PILGRIM');
+    }
+    elseif(self.me.turn<100)
+    {
+       if(self.fuel >= SPECS['PROPHET'].CONSTRUCTION_FUEL && self.karbonite >= SPECS['PROPHET'].CONSTRUCTION_KARBONITE){
+           return findUnitPlace(self, 'PROPHET');
+       }
+       return;
+    }
 
 }
 

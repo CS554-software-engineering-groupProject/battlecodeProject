@@ -16,7 +16,7 @@ castle.doAction = (self) => {
     {
         //Check if there are enough resources to produce this unit.
        if(self.fuel >= SPECS['PROPHET'].CONSTRUCTION_FUEL && self.karbonite >= SPECS['PROPHET'].CONSTRUCTION_KARBONITE){
-           return findUnitPlace(self, 'PROPHET');
+           return castle.findUnitPlace(self, 'PROPHET');
        }
        return;
     }

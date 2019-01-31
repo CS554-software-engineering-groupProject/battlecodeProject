@@ -232,38 +232,39 @@ describe('Movement Helpers Unit Tests', function() {
         const robotMap = 
         [[0,0,0,0,0,0],
         [0,0,0,0,0,0],
-        [0,0,0,0,0,3005],
+        [0,0,404,0,0,3005],
         [0,0,0,0,0,0],
         [0,0,0,0,0,0],
         [0,0,0,0,0,0]];
 
         it('dumberMoveTowards move to destination', function(done) {
-            const A = {x: 2, y: 2};
+            const A = {x: 2, y: 4};
 
             const destA = {x: 2, y: 3};
 
             const previous = {x: 1, y: 2};
             
-            expect(movement.moveTowards(A, fullMap, robotMap, destA, previous)).equals(destA);
+            expect(movement.dumberMoveTowards(A, fullMap, robotMap, destA, previous)).equals(destA);
             done();
         });
+
         it('dumberMoveTowards gets best location to go around obstacle, and not previous location', function(done) {
             const B = {x: 0, y: 0};
             const C = {x: 3, y: 4};
-            
-            const destB = {x: 2, y: 5};
+            const D = {x: 1, y: 2};
 
-            const previousB = B
-            const previousC = {}
+            const destBC = {x: 2, y: 5};
+            const destD = {x: 3, y: 2};
 
-            expect(movement.isPassable(B, fullMap, robotMap)).equals(false);
-            expect(movement.isPassable(C, fullMap, robotMap)).equals(false);
+            const previousB = B;
+            const previousC = {x: 2, y: 4}
+            const previousD = {x: 2, y: 3}
+
+            expect(movement.dumberMoveTowards(B, fullMap, robotMap, destBC, previousB)).equals({x: 0, y: 1});
+            expect(movement.dumberMoveTowards(C, fullMap, robotMap, destBC, previousC)).equals({x: 2,y: 3});
+            expect(movement.dumberMoveTowards(D, fullMap, robotMap, destD, previousD)).equals({x: 2,y: 1});
             done();
         });
 
-        //TODO other cases
     });
-
-    //TODO movetowards
-
 });

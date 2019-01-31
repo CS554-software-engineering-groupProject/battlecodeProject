@@ -5,11 +5,17 @@ import movement from './movement.js';
 const prophet = {};
 
 prophet.doAction = (self) => {
-    self.log("prophet " + self.id + " taking turn");
-
+    
     if (self.role === 'UNASSIGNED') {
+        self.log("UNASSIGNED prophet " + self.id + " taking turn");
         self.base = movement.findAdjacentBase(self);
         self.log("Set base as " + JSON.stringify(self.base));
+
+        if(self.base == null)
+        {
+            self.role = "ATTACKER";
+            return;
+        }
 
         //TODO Change with addition of communication maybe have base record the number of defenders it built and have the prophet receive message from castle
         //Naive method of just filtering nearby prophets from base location, if passing by ATTACKER strays inside, messes with it
@@ -22,7 +28,7 @@ prophet.doAction = (self) => {
         });
 
         //2 defenders per side, assigned as defender if it's less
-        if(nearbyDefenders.length < 8)
+        if(nearbyDefenders.length < 0)
         {
             self.log("Base defenders = " + JSON.stringify(nearbyDefenders.length) + ", Assigned as a defender");
             self.role = "DEFENDER";
@@ -38,6 +44,7 @@ prophet.doAction = (self) => {
     //Main behavior of Prophet units
     if(self.role === "DEFENDER")
     {
+        self.log("DEFENDER prophet " + self.id + " taking turn");
         if(self.target === null)
         {
             self.log("prophet finding local defenders")
@@ -88,7 +95,7 @@ prophet.doAction = (self) => {
         {
             const moveLocation = movement.moveTowards(self, self.target);
 
-            self.log("Moving to towards guard post, targeting " + JSON.stringify(moveLocation));
+            self.log("Moving towards guard post, targeting " + JSON.stringify(moveLocation));
             return self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);
         }
 
@@ -104,30 +111,37 @@ prophet.doAction = (self) => {
         
         //TODO store 'reclaimed' resources if capacity full and no enemies [future sprint obj]
         //Otherwise, idle.
+        return;
     }
     else if(self.role === "ATTACKER")
     {
-        if(self.target === null)
+        self.log("ATTACKER prophet " + self.id + " taking turn");
+        if(self.potentialEnemyCastleLocation === null)
         {
             //TODO Set 'Potential enemy castle coordinates' for prophets that spawned/ created at a Church
             //Maybe need pioneer to 'hold' enemy castle locations and have Churches they built store the value and communicate it to ATTACKER?
             //Requires communication and modifying other units
 
-            if(self.target === null)
-            {
-                //Choose randomly from potential enemy castle location
-                const potentialTargets = movement.getPotentialEnemyCastleLocation(self.base, self.map);
-                self.target = potentialTargets[Math.floor(Math.random()*potentialTargets.length)];
-            }
+            //Get potential enemy castle locations
+            self.potentialEnemyCastleLocation = movement.getAttackerPatrolRoute(self.base, self.map);
+            self.target = self.potentialEnemyCastleLocation[[Math.floor(Math.random()*2)]];
+
 
             //TODO Set 'Rally point?'? (For amassing friendly forces before attacking as a group  [future sprint obj])
         }
         //TODO Set 'Potential enemy castle coordinates if allied group threshold is reached' [future sprint obj]
 
-        const attackable = combat.getAttackableEnemies(self);
-        let minUnattackable = combat.getRobotsInRange(self, 0, SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0]-1);
-        minUnattackable = combat.getVisibleEnemies(self);
+        //Get visible robots seems expensive in performance, seems to use a lot of chess timer, especially when there are lots of robots nearby
+        //Possibly main cause of script timeout as the game goes on
+        //get it once and use filtered value
+        const visibleRobots = self.getVisibleRobots();
+        const attackable = combat.filterByAttackable(self, visibleRobots);
 
+        /* TODO Possible bug x of undefined inside the fleeing behavior conditional below
+        let minUnattackable = combat.filterByTeam(self, visibleRobots, -1);
+        minUnattackable = combat.filterByRange(minUnattackable, self.me, 0, SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0]-1);
+
+        
         //Set 'fleeing behavior?' (when not enough fuel to attack/ attack target < min attack range)
         if(minUnattackable.length > 0 || !combat.hasFuelToAttack(self))
         {
@@ -139,6 +153,8 @@ prophet.doAction = (self) => {
             self.log("Fleeing from " + combat.UNITTYPE[attacker.unit] + " at " + attacker.x + ", " +  attacker.y);
             return self.move(moveLocation);
         }
+        */
+
 
         //Attack visible enemies
         if(attackable.length > 0)
@@ -148,11 +164,54 @@ prophet.doAction = (self) => {
             return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
         }
 
-        //Move towards potential enemy castle location
-        const moveLocation = movement.moveTowards(self, self.target);
-        self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);
+        //No enemy castle at target and there are more waypoint to check
+        if(self.potentialEnemyCastleLocation.length > 0 && movement.getDistance(self.me, self.target) <= 49)
+        {
+            //Assign new target waypoint
+            self.potentialEnemyCastleLocation.shift();
+            self.potentialEnemyCastleLocation.shift();
+            self.target = self.potentialEnemyCastleLocation[0];
+        }
+
+        //No more patrol waypoint, 
+
+        if(self.potentialEnemyCastleLocation.length === 0)
+        {
+            //TODO replace with smarter strat
+            //Random movement cost a lot of fuel
+            //Should be in the quadrant opposite to base which is surely enemy quadrant, pick a random direction and move
+            /*
+            const choices = [[0,-1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
+            let patrolQuadrant = movement.checkQuadrant(self.me, self.map);
+            let destQuadrant = -1;
+            let choice = null;
+
+
+            choice = choices[Math.floor(Math.random()*choices.length)];
+            destQuadrant = movement.checkQuadrant({x: self.me.x+choice.x, y: self.me.y+choice.y}, self.map);
+
+            //Choose opposite direction if trying to go outside patrol quadrant
+            if(destQuadrant !== patrolQuadrant)
+                choice = [choice[0]*-1, choice[1]*-1];
+            
+            self.log("Patrolling enemy quadrant " + patrolQuadrant);
+            return self.move(...choice);
+            */
+           return;
+        }
+
+        //Move towards a patrol waypoint as a squad
+        let squad = combat.filterByTeam(self, visibleRobots, self.me.team);
+        squad = combat.filterByRange(squad, self.me, 0, 64);
+
+        if(squad.length >= 4) 
+        {
+            const moveLocation = movement.moveTowards(self, self.target);
+            self.log("Moving towards potential enemy castle, targeting " + JSON.stringify(moveLocation));
+            return self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);
+        }
     }
-    //Should not fall through
+    //Should not fall through unless attacker with no army
     self.log('prophet ' + self.role + ' ' + self.me.id + ' doing nothing')
     return;
 }

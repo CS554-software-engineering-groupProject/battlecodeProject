@@ -140,7 +140,7 @@ movement.getDistance = (A, B) => {
 */
 movement.checkQuadrant = (location, fullmap) => {
     const {x, y} = location;
-    const midLength = fullmap.length/2;
+    const midLength = Math.ceil(fullmap.length/2);
     
     if(x < midLength)
     {
@@ -161,43 +161,18 @@ movement.checkQuadrant = (location, fullmap) => {
 /*Calculate and return enemy castle's potential starting location
 *Input:     myCastleLocation    -   the Castle's 'position/ location' object, should be self.me
 *           fullMap             -   the full map, Should be self.map or or self.getPassableMap()
-*Output:    RetVal  -   An array containing 2 {x, y} objects, which are the potential 'location' of enemy Castles
+*Output:    RetVal  -   An array containing 3 {x, y} objects, 2 of which are the potential 'location' of enemy Castle mirrorring base, 
+                        and the third a position of an enemy quadrant to check if the mirror castle is destroyed
 *
 *TODO: Have the team's castles communicate at start of game to potentially improve accuracy. 
 *Given the team's starting castles are in different quadrants, can accurately calculate location of enemy castle
 */
-movement.getPotentialEnemyCastleLocation = (myCastleLocation, fullmap) => {
+movement.getAttackerPatrolRoute = (myCastleLocation, fullMap) => {
     const {x, y} = myCastleLocation;
+    const Ax = fullMap.length - x;
+    const Ay = fullMap.length - y;
 
-    const midLength = fullmap.length/2;
-    const distX = 2*(midLength-x);
-    const distY = 2*(midLength-y);
-    const quadrant = movement.checkQuadrant(myCastleLocation, fullmap);
-
-    let Ax = null;
-    let By = null;
-    if(quadrant === 1)  //Enemy in quadrant 2 or 3
-    {
-        Ax = (x+distX);
-        By = (y+distY);
-    }
-    if(quadrant === 2)  //Enemy in quadrant 1 or 4
-    {
-        Ax = (x-distX);
-        By = (y+distY);
-    }
-    if(quadrant === 3)  //Enemy in quadrant 1 or 4
-    {
-        Ax = (x+distX);
-        By = (y-distY);
-    }
-    if(quadrant === 4)  //Enemy in quadrant 2 or 3
-    {
-        Ax = (x-distX);
-        By = (y-distY);
-    }
-
-    return [{x: Ax, y: y}, {x: x, y: By}];
+    return [{x: Ax, y: y}, {x: x, y: Ay}, {x: Ax, y: Ay}];
 }
 
 /*Check and return whether tile at specified coordinate is passable
@@ -298,6 +273,36 @@ movement.dumberMoveTowards = (self, destination) => {
 *Output:    retVal          -   A 'position/ location' object {x, y} which is adjacent to self.me 
 *                           -   OR the passed in location if they are all not passable
 */
+/*
+movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous, previousprevious) => {
+    let direction = movement.getRelativeDirection(location, destination);
+    let {x, y} = location;
+    let candidate = {x : (x+direction.x), y: (y+direction.y)}
+
+    do{
+        candidate = {x : (x+direction.x), y: (y+direction.y)};
+        if(movement.isPassable(candidate, fullMap, robotMap) && !(movement.positionsAreEqual(candidate, previous)) && !(movement.positionsAreEqual(candidate, previousprevious)))
+            return candidate;
+
+        direction = movement.rotateDirection(direction, 1);
+    }while(!(movement.positionsAreEqual(candidate, previous)));
+
+    return location;
+}
+*/
+
+/*The most simplest moveTowards, get location of a nearby passable adjacent tile, hopefully closer to destination
+*Input:     location            -   the robot's 'position/ location' object, should be self.me
+*           fullMap             -   the full map, should be self.map or self.getPassableMap()
+*           robotMap            -   robot map, should be self.getVisibleRobotMap()
+*           destination         -   The destination 'position/ location' object {x, y}
+*           previous            -   A 'position/ location' object {x, y}, should be self.previous/ the position the robot was in the previous turn
+*           previousprevious    -   A 'position/ location' object {x, y}, should be self.previousprevious/ the position the robot was in the previous turn
+*Output:    retVal          -   A 'position/ location' object {x, y} which is adjacent to self.me 
+*                           -   OR the passed in location if they are all not passable
+*TODO gets stuck in corners, Might need a different move towards for combat units to properly traverse obstacles
+*       Keeps on going to previous direction
+*/
 movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous) => {
     let direction = movement.getRelativeDirection(location, destination);
     let {x, y} = location;
@@ -306,9 +311,10 @@ movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous
     if(movement.isPassable(candidate, fullMap, robotMap))
         return candidate;
 
-    let dirA = direction;
-    let dirB = direction;
+    let dirA = {x: direction.x, y: direction.y};
+    let dirB = {x: direction.x, y: direction.y};
     let candidateA = {x : (x+dirA.x), y: (y+dirA.y)};
+    let candidateB = {x : (x+dirB.x), y: (y+dirB.y)}
 
     do{
         dirA = movement.rotateDirection(dirA, 1);
@@ -318,10 +324,10 @@ movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous
         if(!(movement.positionsAreEqual(candidateA, previous)) && movement.isPassable(candidateA, fullMap, robotMap))
             return candidateA;
 
-        let candidateB = {x : (x+dirB.x), y: (y+dirB.y)}
+        candidateB = {x : (x+dirB.x), y: (y+dirB.y)}
         if(!(movement.positionsAreEqual(candidateB, previous)) && movement.isPassable(candidateB, fullMap, robotMap))
             return candidateB;
-    }while(!movement.positionsAreEqual(candidateA, previous));
+    }while(!(movement.positionsAreEqual(candidateA, previous) && movement.positionsAreEqual(candidateB,previous)));
 
     return location;
 }
@@ -426,7 +432,8 @@ movement.moveTowards = (self, destination) => {
             current = temp;
         }        
         //Move goes past maxDistance - don't do and do last best move
-        break;
+        if(distTravelled > maxDist)
+            break;
 
     }
 

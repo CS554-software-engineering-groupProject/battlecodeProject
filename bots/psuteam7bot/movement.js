@@ -109,7 +109,7 @@ movement.rotateDirection = (direction, n) => {
 *Output:    retVal - an object {x, y}, where x is the difference between A.x and B.x and y is the difference between A.y and B.y
 */
 movement.getDistanceXY = (A, B) => {
-    const {x, y} = movement.getRelativePosition(A, B);
+    let {x, y} = movement.getRelativePosition(A, B);
 
     x = Math.abs(x);
     y = Math.abs(y);

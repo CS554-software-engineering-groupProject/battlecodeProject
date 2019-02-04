@@ -98,9 +98,9 @@ describe('Movement Helpers Unit Tests', function() {
             const B = {x: -1, y: -1};
             const C = {x: 1, y: 0};
             
-            expect(movement.DirectionIndex(A, 3)).equals({x: 1, y: -1});
-            expect(movement.DirectionIndex(B, -5)).equals({x: 0, y: 1});
-            expect(movement.DirectionIndex(C, 0)).equals(C);
+            expect(movement.rotateDirection(A, 3)).to.eql({x: 1, y: -1});
+            expect(movement.rotateDirection(B, -5)).to.eql({x: 0, y: 1});
+            expect(movement.rotateDirection(C, 0)).to.eql(C);
             done();
         });
     });
@@ -110,9 +110,9 @@ describe('Movement Helpers Unit Tests', function() {
             const A = {x: 5, y: 7};
             const B = {x: 2, y: 4};
             
-            expect(movement.getDistanceXY(A,B)).equals({x: 3, y: 3});
-            expect(movement.getDistanceXY(B,A)).equals({x: 3, y: 3});
-            expect(movement.getDistanceXY(A,A)).equals({x: 0, y: 0});
+            expect(movement.getDistanceXY(A,B)).to.eql({x: 3, y: 3});
+            expect(movement.getDistanceXY(B,A)).to.eql({x: 3, y: 3});
+            expect(movement.getDistanceXY(A,A)).to.eql({x: 0, y: 0});
             done();
         });
     });
@@ -123,9 +123,9 @@ describe('Movement Helpers Unit Tests', function() {
             const B = {x: 2, y: 4};
             const C = {x: 5, y: 8};
             
-            expect(movement.getDistanceXY(A,B)).equals(9);
-            expect(movement.getDistanceXY(B,A)).equals(9);
-            expect(movement.getDistanceXY(A,A)).equals(25);
+            expect(movement.getDistance(A,B)).equals(9);
+            expect(movement.getDistance(B,A)).equals(9);
+            expect(movement.getDistance(A,A)).equals(25);
             done();
         });
     });
@@ -167,10 +167,10 @@ describe('Movement Helpers Unit Tests', function() {
             [false,false,false,false,false,false],
             [false,false,false,false,false,false]]; 
 
-            expect(movement.getPotentialEnemyCastleLocation(A, fullMap)).equals([{x: 5,y: 1}, {x:0 ,y: 4}]);
-            expect(movement.getPotentialEnemyCastleLocation(B, fullMap)).equals([{x: 0,y: 2}, {x:5 ,y: 3}]);
-            expect(movement.getPotentialEnemyCastleLocation(C, fullMap)).equals([{x: 3,y: 5}, {x:2 ,y: 0}]);
-            expect(movement.getPotentialEnemyCastleLocation(D, fullMap)).equals([{x: 4,y: 1}, {x:1 ,y: 4}]);
+            expect(movement.getPotentialEnemyCastleLocation(A, fullMap)).to.eql([{x: 5,y: 1}, {x:0 ,y: 4}]);
+            expect(movement.getPotentialEnemyCastleLocation(B, fullMap)).to.eql([{x: 0,y: 2}, {x:5 ,y: 3}]);
+            expect(movement.getPotentialEnemyCastleLocation(C, fullMap)).to.eql([{x: 3,y: 5}, {x:2 ,y: 0}]);
+            expect(movement.getPotentialEnemyCastleLocation(D, fullMap)).to.eql([{x: 4,y: 1}, {x:1 ,y: 4}]);
             done();
         });
     });
@@ -244,7 +244,7 @@ describe('Movement Helpers Unit Tests', function() {
 
             const previous = {x: 1, y: 2};
             
-            expect(movement.dumberMoveTowards(A, fullMap, robotMap, destA, previous)).equals(destA);
+            expect(movement.dumberMoveTowards(A, fullMap, robotMap, destA, previous)).to.eql(destA);
             done();
         });
 
@@ -260,9 +260,9 @@ describe('Movement Helpers Unit Tests', function() {
             const previousC = {x: 2, y: 4}
             const previousD = {x: 2, y: 3}
 
-            expect(movement.dumberMoveTowards(B, fullMap, robotMap, destBC, previousB)).equals({x: 0, y: 1});
-            expect(movement.dumberMoveTowards(C, fullMap, robotMap, destBC, previousC)).equals({x: 2,y: 3});
-            expect(movement.dumberMoveTowards(D, fullMap, robotMap, destD, previousD)).equals({x: 2,y: 1});
+            expect(movement.dumberMoveTowards(B, fullMap, robotMap, destBC, previousB)).to.eql({x: 0, y: 1});
+            expect(movement.dumberMoveTowards(C, fullMap, robotMap, destBC, previousC)).to.eql({x: 2,y: 3});
+            expect(movement.dumberMoveTowards(D, fullMap, robotMap, destD, previousD)).to.eql({x: 2,y: 1});
             done();
         });
 

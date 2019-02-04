@@ -35,8 +35,8 @@ describe('Movement Helpers Unit Tests', function() {
             const A = {x: 1, y: 1};
             const B = {x: 0, y: 1};
             
-            expect(movement.positionsAreEqual(A,B)).equals(false);
-            expect(movement.positionsAreEqual(B,A)).equals(false);
+            expect(movement.positionsAreEqual(A,B)).to.eql(false);
+            expect(movement.positionsAreEqual(B,A)).to.eql(false);
             done();
         });
     });
@@ -46,9 +46,9 @@ describe('Movement Helpers Unit Tests', function() {
             const A = {x: 5, y: 7};
             const B = {x: 2, y: 4};
             
-            expect(movement.getRelativePosition(A,B)).equals({x: -3, y: -3});
-            expect(movement.getRelativePosition(B,A)).equals({x: 3, y: 3});
-            expect(movement.getRelativePosition(A,A)).equals({x: 0, y: 0});
+            expect(movement.getRelativePosition(A,B)).to.eql({x: -3, y: -3});
+            expect(movement.getRelativePosition(B,A)).to.eql({x: 3, y: 3});
+            expect(movement.getRelativePosition(A,A)).to.eql({x: 0, y: 0});
             done();
         });
     });
@@ -58,9 +58,9 @@ describe('Movement Helpers Unit Tests', function() {
             const A = {x: 2, y: 3};
             const B = {x: 4, y: 6};
             
-            expect(movement.getRelativeDirection(A,B)).equals({x: 1, y: 1});
-            expect(movement.getRelativeDirection(B,A)).equals({x: -1, y: -1});
-            expect(movement.getRelativeDirection(A,A)).equals({x: 0, y: 0});
+            expect(movement.getRelativeDirection(A,B)).to.eql({x: 1, y: 1});
+            expect(movement.getRelativeDirection(B,A)).to.eql({x: -1, y: -1});
+            expect(movement.getRelativeDirection(A,A)).to.eql({x: 0, y: 0});
             done();
         });
     });
@@ -71,9 +71,9 @@ describe('Movement Helpers Unit Tests', function() {
             const B = {x: -1, y: -1};
             const C = {x: 1, y: 0};
             
-            expect(movement.DirectionIndex(A)).equals(0);
-            expect(movement.DirectionIndex(B)).equals(5);
-            expect(movement.DirectionIndex(C)).equals(2);
+            expect(movement.getDirectionIndex(A)).equals(0);
+            expect(movement.getDirectionIndex(B)).equals(5);
+            expect(movement.getDirectionIndex(C)).equals(2);
             done();
         });
         it('getDirectionIndex Returns -1 Given Valid/ Invalid Direction Object With x Or y Not An Element Of {-1, 1}', function(done) {
@@ -83,11 +83,11 @@ describe('Movement Helpers Unit Tests', function() {
             const D = {x: 4};
             const E = {y: -4};
             
-            expect(movement.DirectionIndex(A)).equals(-1);
-            expect(movement.DirectionIndex(B)).equals(-1);
-            expect(movement.DirectionIndex(C)).equals(-1);
-            expect(movement.DirectionIndex(D)).equals(-1);
-            expect(movement.DirectionIndex(E)).equals(-1);
+            expect(movement.getDirectionIndex(A)).equals(-1);
+            expect(movement.getDirectionIndex(B)).equals(-1);
+            expect(movement.getDirectionIndex(C)).equals(-2);
+            expect(movement.getDirectionIndex(D)).equals(-1);
+            expect(movement.getDirectionIndex(E)).equals(-1);
             done();
         });
     });

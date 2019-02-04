@@ -58,7 +58,7 @@ movement.getDirectionIndex = (direction) => {
 
     for(let i = 0; i < movement.directions.length; ++i)
     {
-        if(direction === movement.directions[i])
+        if(movement.positionsAreEqual(direction, movement.directions[i]))
             return i;
     }
     return -2;

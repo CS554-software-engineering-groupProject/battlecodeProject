@@ -123,9 +123,9 @@ describe('Movement Helpers Unit Tests', function() {
             const B = {x: 2, y: 4};
             const C = {x: 5, y: 8};
             
-            expect(movement.getDistance(A,B)).equals(9);
-            expect(movement.getDistance(B,A)).equals(9);
-            expect(movement.getDistance(A,A)).equals(25);
+            expect(movement.getDistance(A,B)).equals(18);
+            expect(movement.getDistance(B,A)).equals(18);
+            expect(movement.getDistance(A,A)).equals(0);
             done();
         });
     });
@@ -137,7 +137,7 @@ describe('Movement Helpers Unit Tests', function() {
             let C = {x: 2, y: 5};
             let D = {x: 4, y: 4};
 
-            let fullmap =                         
+            let fullMap =                         
             [[0,0,0,0,0,0],
             [0,0,0,0,0,0],
             [0,0,0,0,0,0],
@@ -153,13 +153,13 @@ describe('Movement Helpers Unit Tests', function() {
         });
     });
 
-    describe('getPotentialEnemyCastleLocation Returns Values Correctly', function(done) {
-        it('getPotentialEnemyCastleLocation Returns Valid Value Given Valid Castle location And fullMap Objects With Valid Values', function(done) {
+    describe('getAttackerPatrolRoute Returns Values Correctly', function(done) {
+        it('getAttackerPatrolRoute Returns Valid Value Given Valid Castle location And fullMap Objects With Valid Values', function(done) {
             const A = {x: 0, y: 1};
             const B = {x: 5, y: 2};
             const C = {x: 2, y: 5};
             const D = {x: 4, y: 4};
-            const fullmap =                         
+            const fullMap =                         
             [[true,false,false,false,false,false],
             [true,false,false,false,false,false],
             [true,true,true,false,false,false],
@@ -167,16 +167,16 @@ describe('Movement Helpers Unit Tests', function() {
             [false,false,false,false,false,false],
             [false,false,false,false,false,false]]; 
 
-            expect(movement.getPotentialEnemyCastleLocation(A, fullMap)).to.eql([{x: 5,y: 1}, {x:0 ,y: 4}]);
-            expect(movement.getPotentialEnemyCastleLocation(B, fullMap)).to.eql([{x: 0,y: 2}, {x:5 ,y: 3}]);
-            expect(movement.getPotentialEnemyCastleLocation(C, fullMap)).to.eql([{x: 3,y: 5}, {x:2 ,y: 0}]);
-            expect(movement.getPotentialEnemyCastleLocation(D, fullMap)).to.eql([{x: 4,y: 1}, {x:1 ,y: 4}]);
+            expect(movement.getAttackerPatrolRoute(A, fullMap)).to.eql([{x: 5,y: 1}, {x:0 ,y: 4}, {x:5 ,y: 4}]);
+            expect(movement.getAttackerPatrolRoute(B, fullMap)).to.eql([{x: 0,y: 2}, {x:5 ,y: 3}, {x:0 ,y: 3}]);
+            expect(movement.getAttackerPatrolRoute(C, fullMap)).to.eql([{x: 3,y: 5}, {x:2 ,y: 0}, {x:3 ,y: 0}]);
+            expect(movement.getAttackerPatrolRoute(D, fullMap)).to.eql([{x: 1,y: 4}, {x: 4,y: 1}, {x:1 ,y: 1}]);
             done();
         });
     });
 
     describe('isPassable Returns Values Correctly', function(done) {                  
-        const fullmap =   
+        const fullMap =   
         [[true,false,false,false,false,false],
         [true,false,true,true,false,false],
         [true,true,true,true,true,true],
@@ -212,8 +212,8 @@ describe('Movement Helpers Unit Tests', function() {
             const D = {x: 4, y: 7};
             const E = {x: -1, y: 2};
 
-            expect(movement.getPotentialEnemyCastleLocation(D, fullMap, robotMap)).equals(false);
-            expect(movement.getPotentialEnemyCastleLocation(E, fullMap, robotMap)).equals(false);
+            expect(movement.isPassable(D, fullMap, robotMap)).equals(false);
+            expect(movement.isPassable(E, fullMap, robotMap)).equals(false);
             done();
         });
     });

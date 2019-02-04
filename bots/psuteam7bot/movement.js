@@ -169,8 +169,8 @@ movement.checkQuadrant = (location, fullmap) => {
 */
 movement.getAttackerPatrolRoute = (myCastleLocation, fullMap) => {
     const {x, y} = myCastleLocation;
-    const Ax = fullMap.length - x;
-    const Ay = fullMap.length - y;
+    const Ax = fullMap.length - x - 1;
+    const Ay = fullMap.length - y - 1;
 
     return [{x: Ax, y: y}, {x: x, y: Ay}, {x: Ax, y: Ay}];
 }

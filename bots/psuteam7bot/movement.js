@@ -503,7 +503,7 @@ movement.getMirrorCastle = (myCastleLocation, fullMap) => {
     const Ax = fullMap.length - x - 1;
     const Ay = fullMap.length - y - 1;
     const isHorizontal = movement.isHorizontalReflection(fullMap);
-    
+
     if(isHorizontal)
     {
         return {x: x, y: Ay}
@@ -512,6 +512,20 @@ movement.getMirrorCastle = (myCastleLocation, fullMap) => {
     {
         return {x: Ax, y: y};
     }
+}
+
+/*Calculate and return enemy castle's potential starting location
+*Input:     alliedCastleLocations       -   An array of 'position/ location' objects for the allied castles, should start with the calling castle's location followed by any allied castles
+*           fullMap                     -   the full map, Should be self.map or or self.getPassableMap()
+*Output:    RetVal  -   An array of {x, y} objects, which should be positions of enemy castles
+*/
+movement.getEnemyCastleLocations = (alliedCastleLocations, fullMap) => {
+    let enemyCastleLocations = [];
+    for(let i = 0; i < alliedCastleLocations.length; ++i)
+    {
+        enemyCastleLocations.push(movement.getMirrorCastle(alliedCastleLocations[i], fullMap));
+    }
+    return enemyCastleLocations;
 }
 
 export default movement

@@ -31,6 +31,9 @@ pilgrim.doAction = (self) => {
     return;
 }
 
+/**
+ * Method to dictate strategy for MINER pilgrims
+ */
 pilgrim.takeMinerAction = (self) => {
     if(self.target === null) {
         if(self.karbonite*5 <= self.fuel) {
@@ -52,29 +55,13 @@ pilgrim.takeMinerAction = (self) => {
         self.log('pilgrim MINER ' + self.id + ' moving towards base, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']')
         return self.move(x-self.me.x, y-self.me.y);
     } else {
+        //If at target, mine
         if(self.me.x === self.target.x && self.me.y === self.target.y) {
             self.log("pilgrim MINER " + self.id + " mining resources at [" + self.me.x + "," + self.me.y + "]");
             return self.mine();
+        //If not at target, make sure you aren't going to an occupied depot, then move towards target
         } else {
-            //Check if there is a visible bot at target
-            self.log('Not on target: ' + JSON.stringify(self.target));
-            const possibleId = self.getVisibleRobotMap()[self.target.y][self.target.x];
-            if(possibleId > 0) {
-                self.log('Bot on target: ' + possibleId);
-                //If bot exists on target, check if it's a pilgrim from your team (probbaly mining)
-                const botOnTarget = self.getRobot(possibleId);
-                self.log(botOnTarget)
-                if(botOnTarget.team === self.me.team && botOnTarget.unit === self.me.unit) {
-                    self.log('Pilgrim teammate on target');
-                    //If teammate pilgrim already there mining, add target to occupiedResources and find new resource to target
-                    const depotMap = self.karbonite_map[self.target.y][self.target.x] == true ? self.karbonite_map : self.fuel_map;
-                    self.occupiedResources.push(self.target);
-                    self.log('new occupied resources: ' + JSON.stringify(self.occupiedResources));
-                    self.target = pilgrim.findClosestResource(self.me, depotMap, self.occupiedResources);
-                    self.log('resource depot at ' + JSON.stringify({x: botOnTarget.x, y: botOnTarget.y}) + ' occupied; switching target to ' + JSON.stringify(self.target));
-                    return self.takeMinerAction(self);
-                }
-            }
+            pilgrim.updateResourceTarget(self);
             const {x, y} = movement.moveTowards(self, self.target);
             self.log('pilgrim MINER ' + self.id + ' moving towards target, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']');
             return self.move(x-self.me.x, y-self.me.y);
@@ -82,6 +69,9 @@ pilgrim.takeMinerAction = (self) => {
     }
 }
 
+/**
+ * Method to dictate strategy for PIONEER pilgrims
+ */
 pilgrim.takePioneerAction = (self) => {
     //If target not set, have pilgrims alternate between looking for karbonite or fuel
     if(self.target === null) {
@@ -96,8 +86,9 @@ pilgrim.takePioneerAction = (self) => {
             self.log("pilgrim PIONEER " + self.id + " targeting fuel depot at [" + self.target.x + "," + self.target.y + "]")
         }
     }
-    //Target set - if not at target, move towards
+    //Target set, if not at target make sure you aren't going to an occupied depot, then move towards target
     if (self.target.x !== self.me.x || self.target.y !== self.me.y) {
+        pilgrim.updateResourceTarget(self);
         const {x, y} = movement.moveTowards(self, self.target);
         self.log('pilgrim PIONEER ' + self.id + ' moving, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']')
         return self.move(x-self.me.x, y-self.me.y);
@@ -158,6 +149,7 @@ pilgrim.findClosestResource = (position, depotMap, occupiedResources) => {
                 const occupiedArray = occupiedResources.filter(depot => {
                     return depot.x === x && depot.y === y;
                 });
+                console.log(occupiedArray);
                 //If no matches (occupiedArray is empty), set as potential position
                 if(occupiedArray.length === 0) {
                     closest.x = x;
@@ -168,6 +160,45 @@ pilgrim.findClosestResource = (position, depotMap, occupiedResources) => {
         }
     }
     return closest;
+}
+
+/**
+ * Method to determine if a teammate pilgrim is already mining at a potential depot location.
+ * If depot is determined to be occupied, depot is added to `self.occupiedResources` list
+ * 
+ * @param self MyRobot object
+ * @param potentialDepot Location object to check for occpation
+ * @return Boolean where true represent a known occupied depot location. A false is anything else 
+ * and does not guarantee that no teammate pilgrim is assigned to that location
+ */
+pilgrim.isDepotOccupied = (self, potentialDepot) => {
+    const possibleId = self.getVisibleRobotMap()[potentialDepot.y][potentialDepot.x];
+    if(possibleId > 0) {
+        //If bot exists on target, check if it's a pilgrim from your team (probbaly mining)
+        const botOnTarget = self.getRobot(possibleId);
+        if(botOnTarget.team === self.me.team && botOnTarget.unit === self.me.unit) {
+            //If teammate pilgrim already there mining, add target to occupiedResources and find new resource to target
+            self.occupiedResources.push(potentialDepot);
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Method that checks if the current target is occupied or not. If so, changes `self.target` to next closest resource
+ * of the same type (i.e. if target was kryptonite, next target will be kryptonite)
+ * 
+ * @param self MyRobot object whose target value (and occupiedResources array) may be updated if necessary 
+ */
+pilgrim.updateResourceTarget = (self) => {
+    while(pilgrim.isDepotOccupied(self, self.target)) {
+        if(self.karbonite_map[self.target.y][self.target.x] == true) {
+            self.target = pilgrim.findClosestResource(self.me, self.karbonite_map, self.occupiedResources);
+        } else {
+            self.target = pilgrim.findClosestResource(self.me, self.fuel_map, self.occupiedResources);
+        }
+    }
 }
 
 

@@ -161,18 +161,27 @@ movement.checkQuadrant = (location, fullmap) => {
 /*Calculate and return enemy castle's potential starting location
 *Input:     myCastleLocation    -   the Castle's 'position/ location' object, should be self.me
 *           fullMap             -   the full map, Should be self.map or or self.getPassableMap()
-*Output:    RetVal  -   An array containing 3 {x, y} objects, 2 of which are the potential 'location' of enemy Castle mirrorring base, 
-                        and the third a position of an enemy quadrant to check if the mirror castle is destroyed
+*Output:    RetVal  -   An array containing 2 {x, y} objects, One is the enemy castle mirroring myCastleLocation, 
+                        and the second a position of an enemy quadrant to check if the mirror castle is destroyed
 *
 *TODO: Have the team's castles communicate at start of game to potentially improve accuracy. 
 *Given the team's starting castles are in different quadrants, can accurately calculate location of enemy castle
 */
 movement.getAttackerPatrolRoute = (myCastleLocation, fullMap) => {
     const {x, y} = myCastleLocation;
+    const isHorizontal = movement.isHorizontalReflection(fullMap);
     const Ax = fullMap.length - x - 1;
     const Ay = fullMap.length - y - 1;
 
-    return [{x: Ax, y: y}, {x: x, y: Ay}, {x: Ax, y: Ay}];
+    if(isHorizontal)
+    {
+        return [{x: x, y: Ay}, {x: Ax, y: Ay}];
+    }
+    else
+    {
+        return [{x: Ax, y: y}, {x: Ax, y: Ay}];
+    }
+    
 }
 
 /*Check and return whether tile at specified coordinate is passable
@@ -331,58 +340,6 @@ movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous
 
     return location;
 }
-
-/*More complex pathfinding algorithm to check passable path of a robot's current location/ position towards a destination and get the closest possible position to destination
-*
-*/
-/*
-movement.pathFinding = (self, destination) => {
-    return;
-}
-movement.pathfinding = (self, destination) => {
-    const maxDist = SPECS.UNITS[self.me.unit].SPEED;
-    let distance = getDistance(self.me, destination);
-    const maxFuelCost = (distance * SPECS.UNITS[self.me.unit].FUEL_PER_MOVE);
-
-    //Looking through 'API questions' discord channel, 'karbonite' and 'fuel' seems to be the way to get global team's karbonite and fuel
-    if(fuel < maxFuelCost)
-        distance = Math.floor(fuel/FUEL_PER_MOVE);
-
-    let {dx, dy} = destination;
-    let direction = getRelativeDirection(self.me, destination);
-    let x = -1;
-    let y = -1;
-
-    //Get number of XY tile moves to get to the location in moverange that is closest to destination
-    if(distance > maxDist)
-    {
-        let {distX, distY} = getDistanceXY(self.me, destination);
-        let rDist = Math.sqrt(maxDist);
-
-        if(distX > rDist && distY > rDist)
-        {
-            dx = rDist;
-            dy = rDist;
-        } 
-        else if(distX < rDist && distY > rDist)
-        {
-            dy = maxDist-dx;
-        }
-        else if(distX > rDist && distY < rDist)
-        {
-            dx = maxDist-dy;
-        }
-
-        x = dx * direction.x;
-        y = dy * direction.y;
-    }
-    x += self.me.x;
-    y += self.me.y;
-
-    //Goal is the location in moverange that is closest to destination, may be impassable
-    let goal = {x,y};
-}
-*/
 
 /*A simple movement function for robot movement from point A to Point B,
 *Input: self        -   The robot unit

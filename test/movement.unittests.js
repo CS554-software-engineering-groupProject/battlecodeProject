@@ -159,18 +159,32 @@ describe('Movement Helpers Unit Tests', function() {
             const B = {x: 5, y: 2};
             const C = {x: 2, y: 5};
             const D = {x: 4, y: 4};
-            const fullMap =                         
-            [[true,false,false,false,false,false],
-            [true,false,false,false,false,false],
-            [true,true,true,false,false,false],
-            [false,false,true,false,false,false],
-            [false,false,false,false,false,false],
-            [false,false,false,false,false,false]]; 
 
-            expect(movement.getAttackerPatrolRoute(A, fullMap)).to.eql([{x: 5,y: 1}, {x:0 ,y: 4}, {x:5 ,y: 4}]);
-            expect(movement.getAttackerPatrolRoute(B, fullMap)).to.eql([{x: 0,y: 2}, {x:5 ,y: 3}, {x:0 ,y: 3}]);
-            expect(movement.getAttackerPatrolRoute(C, fullMap)).to.eql([{x: 3,y: 5}, {x:2 ,y: 0}, {x:3 ,y: 0}]);
-            expect(movement.getAttackerPatrolRoute(D, fullMap)).to.eql([{x: 1,y: 4}, {x: 4,y: 1}, {x:1 ,y: 1}]);
+
+            const vertFullMap = 
+            [[true,true,true,true,true,true],
+            [true,true,true,true,true,true],
+            [true,false,true,true,false,true],
+            [true,true,true,true,true,true],
+            [true,true,true,true,true,true],
+            [true,true,true,true,true,true]];    
+
+            const horiFullMap = 
+            [[true,true,true,true,true,true],
+            [true,true,true,false,true,true],
+            [true,true,true,true,true,true],
+            [true,true,true,true,true,true],
+            [true,true,true,false,true,true],
+            [true,true,true,true,true,true]];    
+
+            expect(movement.getAttackerPatrolRoute(A, horiFullMap)).to.eql([{x: 0,y: 4}, {x: 5, y: 4}]);
+            expect(movement.getAttackerPatrolRoute(A, vertFullMap)).to.eql([{x: 5,y: 1}, {x: 5, y: 4}]);
+            expect(movement.getAttackerPatrolRoute(B, horiFullMap)).to.eql([{x: 5, y: 3}, {x: 0, y: 3}]);
+            expect(movement.getAttackerPatrolRoute(B, vertFullMap)).to.eql([{x: 0, y: 2}, {x: 0, y: 3}]);
+            expect(movement.getAttackerPatrolRoute(C, horiFullMap)).to.eql([{x: 2, y: 0}, {x: 3, y: 0}]);
+            expect(movement.getAttackerPatrolRoute(C, vertFullMap)).to.eql([{x: 3, y: 5}, {x: 3, y: 0}]);
+            expect(movement.getAttackerPatrolRoute(D, horiFullMap)).to.eql([{x: 4, y: 1}, {x: 1, y: 1}]);
+            expect(movement.getAttackerPatrolRoute(D, vertFullMap)).to.eql([{x: 1, y: 4}, {x: 1, y: 1}]);
             done();
         });
     });

@@ -468,6 +468,7 @@ movement.findAdjacentBase = (self) => {
 *Input: fullMap     -  the full map, should be self.map or self.getPassableMap()
 *Output:    retVal  -   false if the map is a horizontal reflection
 *                   -   OR true if it is a vertical reflection 
+* Not accounted for: Case for when the map is both horizontally and vertically reflected
 */
 movement.isHorizontalReflection = (fullMap) => {
     let y = 0;
@@ -477,7 +478,7 @@ movement.isHorizontalReflection = (fullMap) => {
 
     while(y < length)
     {
-        while(x != mirror)
+        while(x < mirror)
         {
             if(fullMap[y][x] !== fullMap[y][mirror])
             {

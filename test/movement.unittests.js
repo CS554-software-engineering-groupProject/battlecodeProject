@@ -266,5 +266,81 @@ describe('Movement Helpers Unit Tests', function() {
             done();
         });
 
+        describe('isHorizontalReflection Returns Values Correctly', function(done) {
+            it('isHorizontalReflection Returns Valid Values Given a horizontal or vertical reflection fullMap', function(done) {
+                const vertFullMap = 
+                [[true,true,true,true,true,true],
+                [true,true,true,true,true,true],
+                [true,false,true,true,false,true],
+                [true,true,true,true,true,true],
+                [true,true,true,true,true,true],
+                [true,true,true,true,true,true]];    
+
+                const horiFullMap = 
+                [[true,true,true,true,true,true],
+                [true,true,true,false,true,true],
+                [true,true,true,true,true,true],
+                [true,true,true,true,true,true],
+                [true,true,true,false,true,true],
+                [true,true,true,true,true,true]];    
+
+                expect(movement.isHorizontalReflection(vertFullMap)).equals(false);
+                expect(movement.isHorizontalReflection(horiFullMap)).equals(true);
+                done();
+            });
+        });
+
+        describe('getMirrorCastleLocations Returns Values Correctly', function(done) {
+            it('getMirrorCastleLocations Returns Valid Values Given a horizontal or vertical reflection fullMap and a castle location', function(done) {
+                const castleLocation = {x: 1,y: 1};
+
+                const vertFullMap = 
+                [[true,true,true,true,true,true],
+                [true,true,true,true,true,true],
+                [true,false,true,true,false,true],
+                [true,true,true,true,true,true],
+                [true,true,true,true,true,true],
+                [true,true,true,true,true,true]];    
+
+                const horiFullMap = 
+                [[true,true,true,true,true,true],
+                [true,true,true,false,true,true],
+                [true,true,true,true,true,true],
+                [true,true,true,true,true,true],
+                [true,true,true,false,true,true],
+                [true,true,true,true,true,true]];    
+
+                expect(movement.getMirrorCastle(castleLocation, vertFullMap)).to.eql({x: 4, y: 1});
+                expect(movement.getMirrorCastle(castleLocation, horiFullMap)).to.eql({x: 1,y: 4});
+                done();
+            });
+        });
+
+        describe('getEnemyCastleLocations Returns Values Correctly', function(done) {
+            it('getEnemyCastleLocations Returns Mirrored Castle Locations Given a horizontal or vertical reflection fullMap and an array of castle location', function(done) {
+                const castleLocation = [{x: 1,y: 1}, {x: 4, y: 4}, {x: 3, y: 2}];
+
+                const vertFullMap = 
+                [[true,true,true,true,true,true],
+                [true,true,true,true,true,true],
+                [true,false,true,true,false,true],
+                [true,true,true,true,true,true],
+                [true,true,true,true,true,true],
+                [true,true,true,true,true,true]];    
+
+                const horiFullMap = 
+                [[true,true,true,true,true,true],
+                [true,true,true,false,true,true],
+                [true,true,true,true,true,true],
+                [true,true,true,true,true,true],
+                [true,true,true,false,true,true],
+                [true,true,true,true,true,true]];    
+
+                expect(movement.getEnemyCastleLocations(castleLocation, vertFullMap)).to.eql([{x: 4,y: 1}, {x: 1, y: 4}, {x: 2, y: 2}]);
+                expect(movement.getEnemyCastleLocations(castleLocation, horiFullMap)).to.eql([{x: 1,y: 4}, {x: 4, y: 1}, {x: 3, y: 3}]);
+                done();
+            });
+        });
+
     });
 });

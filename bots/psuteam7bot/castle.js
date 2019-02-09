@@ -39,21 +39,34 @@ castle.findUnitPlace = (self, unitType) => {
     return;
 }
 
-castle.findPosition = (self, friendlyCastle) => {
+/** Input: self = this is the reference to the object to the calling method. 
+ * Output: returnPosition = return value containing the position sof the friendly castle       
+ *  */
+
+castle.findPosition = (self) => {
     //each castle will try to locate and record the positions of the friendly castles at the start of the game
-    
+   return 
 }
 
-castle.checkMessage = (self, robots) => {
-    // each castle should be able to check for messages from their friendly castles
-    for(i= -1; i<=+1; i++){
-        for(j = -1; j<=+1;j++){
-            //use of this.getVisibleRobots() to see the robots in the vicinity 
-            const visibleRobots = this.getVisibleRobotMap();
-            const value = 0;
-            self.castle_talk(value);
-            return castle.checkMessage(self, visibleRobots)
+/** Each castle should be able to check for messages from their friendly castles 
+ * Use of this.getVisibleRobots() to see the robots in the vicinity 
+ * 
+ * Input: self, this is the reference to the object to the calling method.
+ * Output: message from 
+ */
+castle.checkMessage = (self) => {
+    const visibleRobots = this.getVisibleRobotMap().filter(bots =>{
+        return bots.team === self.me.team && bots.unit === 0;
+        const filterdCastle;
+
+        for(i = 0; i< filterdCastle ; i ++)
+        {  
+           const id = 0;
+           this.castle_talk(id);
+           return castle.checkMessage(self)
         }
-    }
+    })
+    return;
 }
+
 export default castle;

@@ -466,8 +466,8 @@ movement.findAdjacentBase = (self) => {
 
 /*Function to check whether map is created using horizontal or vertical reflection,
 *Input: fullMap     -  the full map, should be self.map or self.getPassableMap()
-*Output:    retVal  -   false if the map is a vertical reflection
-*                   -   OR true if it is a horizontal reflection 
+*Output:    retVal  -   false if the map is a horizontal reflection
+*                   -   OR true if it is a vertical reflection 
 */
 movement.isHorizontalReflection = (fullMap) => {
     let y = 0;
@@ -481,7 +481,7 @@ movement.isHorizontalReflection = (fullMap) => {
         {
             if(fullMap[y][x] !== fullMap[y][mirror])
             {
-                return false
+                return true
             }
             ++x;
             --mirror;
@@ -490,7 +490,7 @@ movement.isHorizontalReflection = (fullMap) => {
         mirror = length - 1;
         x = 0;
     }
-    return true;
+    return false;
 }
 
 /*Calculate and return enemy castle's potential starting location

@@ -493,4 +493,25 @@ movement.isHorizontalReflection = (fullMap) => {
     return true;
 }
 
+/*Calculate and return enemy castle's potential starting location
+*Input:     myCastleLocation    -   the Castle's 'position/ location' object, should be self.me/ location of unit's base
+*           fullMap             -   the full map, Should be self.map or or self.getPassableMap()
+*Output:    RetVal  -   An {x, y} object, which should be the position of the mirror enemy castle to myCastleLocation
+*/
+movement.getMirrorCastle = (myCastleLocation, fullMap) => {
+    const {x, y} = myCastleLocation;
+    const Ax = fullMap.length - x - 1;
+    const Ay = fullMap.length - y - 1;
+    const isHorizontal = movement.isHorizontalReflection(fullMap);
+    
+    if(isHorizontal)
+    {
+        return {x: x, y: Ay}
+    }
+    else
+    {
+        return {x: Ax, y: y};
+    }
+}
+
 export default movement

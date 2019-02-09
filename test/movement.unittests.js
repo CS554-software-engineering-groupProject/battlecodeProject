@@ -35,8 +35,8 @@ describe('Movement Helpers Unit Tests', function() {
             const A = {x: 1, y: 1};
             const B = {x: 0, y: 1};
             
-            expect(movement.positionsAreEqual(A,B)).equals(false);
-            expect(movement.positionsAreEqual(B,A)).equals(false);
+            expect(movement.positionsAreEqual(A,B)).to.eql(false);
+            expect(movement.positionsAreEqual(B,A)).to.eql(false);
             done();
         });
     });
@@ -46,9 +46,9 @@ describe('Movement Helpers Unit Tests', function() {
             const A = {x: 5, y: 7};
             const B = {x: 2, y: 4};
             
-            expect(movement.getRelativePosition(A,B)).equals({x: -3, y: -3});
-            expect(movement.getRelativePosition(B,A)).equals({x: 3, y: 3});
-            expect(movement.getRelativePosition(A,A)).equals({x: 0, y: 0});
+            expect(movement.getRelativePosition(A,B)).to.eql({x: -3, y: -3});
+            expect(movement.getRelativePosition(B,A)).to.eql({x: 3, y: 3});
+            expect(movement.getRelativePosition(A,A)).to.eql({x: 0, y: 0});
             done();
         });
     });
@@ -58,9 +58,9 @@ describe('Movement Helpers Unit Tests', function() {
             const A = {x: 2, y: 3};
             const B = {x: 4, y: 6};
             
-            expect(movement.getRelativeDirection(A,B)).equals({x: 1, y: 1});
-            expect(movement.getRelativeDirection(B,A)).equals({x: -1, y: -1});
-            expect(movement.getRelativeDirection(A,A)).equals({x: 0, y: 0});
+            expect(movement.getRelativeDirection(A,B)).to.eql({x: 1, y: 1});
+            expect(movement.getRelativeDirection(B,A)).to.eql({x: -1, y: -1});
+            expect(movement.getRelativeDirection(A,A)).to.eql({x: 0, y: 0});
             done();
         });
     });
@@ -71,9 +71,9 @@ describe('Movement Helpers Unit Tests', function() {
             const B = {x: -1, y: -1};
             const C = {x: 1, y: 0};
             
-            expect(movement.DirectionIndex(A)).equals(0);
-            expect(movement.DirectionIndex(B)).equals(5);
-            expect(movement.DirectionIndex(C)).equals(2);
+            expect(movement.getDirectionIndex(A)).equals(0);
+            expect(movement.getDirectionIndex(B)).equals(5);
+            expect(movement.getDirectionIndex(C)).equals(2);
             done();
         });
         it('getDirectionIndex Returns -1 Given Valid/ Invalid Direction Object With x Or y Not An Element Of {-1, 1}', function(done) {
@@ -83,11 +83,11 @@ describe('Movement Helpers Unit Tests', function() {
             const D = {x: 4};
             const E = {y: -4};
             
-            expect(movement.DirectionIndex(A)).equals(-1);
-            expect(movement.DirectionIndex(B)).equals(-1);
-            expect(movement.DirectionIndex(C)).equals(-1);
-            expect(movement.DirectionIndex(D)).equals(-1);
-            expect(movement.DirectionIndex(E)).equals(-1);
+            expect(movement.getDirectionIndex(A)).equals(-1);
+            expect(movement.getDirectionIndex(B)).equals(-1);
+            expect(movement.getDirectionIndex(C)).equals(-2);
+            expect(movement.getDirectionIndex(D)).equals(-1);
+            expect(movement.getDirectionIndex(E)).equals(-1);
             done();
         });
     });
@@ -98,9 +98,9 @@ describe('Movement Helpers Unit Tests', function() {
             const B = {x: -1, y: -1};
             const C = {x: 1, y: 0};
             
-            expect(movement.DirectionIndex(A, 3)).equals({x: 1, y: -1});
-            expect(movement.DirectionIndex(B, -5)).equals({x: 0, y: 1});
-            expect(movement.DirectionIndex(C, 0)).equals(C);
+            expect(movement.rotateDirection(A, 3)).to.eql({x: 1, y: -1});
+            expect(movement.rotateDirection(B, -5)).to.eql({x: 0, y: 1});
+            expect(movement.rotateDirection(C, 0)).to.eql(C);
             done();
         });
     });
@@ -110,9 +110,9 @@ describe('Movement Helpers Unit Tests', function() {
             const A = {x: 5, y: 7};
             const B = {x: 2, y: 4};
             
-            expect(movement.getDistanceXY(A,B)).equals({x: 3, y: 3});
-            expect(movement.getDistanceXY(B,A)).equals({x: 3, y: 3});
-            expect(movement.getDistanceXY(A,A)).equals({x: 0, y: 0});
+            expect(movement.getDistanceXY(A,B)).to.eql({x: 3, y: 3});
+            expect(movement.getDistanceXY(B,A)).to.eql({x: 3, y: 3});
+            expect(movement.getDistanceXY(A,A)).to.eql({x: 0, y: 0});
             done();
         });
     });
@@ -123,9 +123,9 @@ describe('Movement Helpers Unit Tests', function() {
             const B = {x: 2, y: 4};
             const C = {x: 5, y: 8};
             
-            expect(movement.getDistanceXY(A,B)).equals(9);
-            expect(movement.getDistanceXY(B,A)).equals(9);
-            expect(movement.getDistanceXY(A,A)).equals(25);
+            expect(movement.getDistance(A,B)).equals(18);
+            expect(movement.getDistance(B,A)).equals(18);
+            expect(movement.getDistance(A,A)).equals(0);
             done();
         });
     });
@@ -137,7 +137,7 @@ describe('Movement Helpers Unit Tests', function() {
             let C = {x: 2, y: 5};
             let D = {x: 4, y: 4};
 
-            let fullmap =                         
+            let fullMap =                         
             [[0,0,0,0,0,0],
             [0,0,0,0,0,0],
             [0,0,0,0,0,0],
@@ -153,13 +153,13 @@ describe('Movement Helpers Unit Tests', function() {
         });
     });
 
-    describe('getPotentialEnemyCastleLocation Returns Values Correctly', function(done) {
-        it('getPotentialEnemyCastleLocation Returns Valid Value Given Valid Castle location And fullMap Objects With Valid Values', function(done) {
+    describe('getAttackerPatrolRoute Returns Values Correctly', function(done) {
+        it('getAttackerPatrolRoute Returns Valid Value Given Valid Castle location And fullMap Objects With Valid Values', function(done) {
             const A = {x: 0, y: 1};
             const B = {x: 5, y: 2};
             const C = {x: 2, y: 5};
             const D = {x: 4, y: 4};
-            const fullmap =                         
+            const fullMap =                         
             [[true,false,false,false,false,false],
             [true,false,false,false,false,false],
             [true,true,true,false,false,false],
@@ -167,16 +167,16 @@ describe('Movement Helpers Unit Tests', function() {
             [false,false,false,false,false,false],
             [false,false,false,false,false,false]]; 
 
-            expect(movement.getPotentialEnemyCastleLocation(A, fullMap)).equals([{x: 5,y: 1}, {x:0 ,y: 4}]);
-            expect(movement.getPotentialEnemyCastleLocation(B, fullMap)).equals([{x: 0,y: 2}, {x:5 ,y: 3}]);
-            expect(movement.getPotentialEnemyCastleLocation(C, fullMap)).equals([{x: 3,y: 5}, {x:2 ,y: 0}]);
-            expect(movement.getPotentialEnemyCastleLocation(D, fullMap)).equals([{x: 4,y: 1}, {x:1 ,y: 4}]);
+            expect(movement.getAttackerPatrolRoute(A, fullMap)).to.eql([{x: 5,y: 1}, {x:0 ,y: 4}, {x:5 ,y: 4}]);
+            expect(movement.getAttackerPatrolRoute(B, fullMap)).to.eql([{x: 0,y: 2}, {x:5 ,y: 3}, {x:0 ,y: 3}]);
+            expect(movement.getAttackerPatrolRoute(C, fullMap)).to.eql([{x: 3,y: 5}, {x:2 ,y: 0}, {x:3 ,y: 0}]);
+            expect(movement.getAttackerPatrolRoute(D, fullMap)).to.eql([{x: 1,y: 4}, {x: 4,y: 1}, {x:1 ,y: 1}]);
             done();
         });
     });
 
     describe('isPassable Returns Values Correctly', function(done) {                  
-        const fullmap =   
+        const fullMap =   
         [[true,false,false,false,false,false],
         [true,false,true,true,false,false],
         [true,true,true,true,true,true],
@@ -212,8 +212,8 @@ describe('Movement Helpers Unit Tests', function() {
             const D = {x: 4, y: 7};
             const E = {x: -1, y: 2};
 
-            expect(movement.getPotentialEnemyCastleLocation(D, fullMap, robotMap)).equals(false);
-            expect(movement.getPotentialEnemyCastleLocation(E, fullMap, robotMap)).equals(false);
+            expect(movement.isPassable(D, fullMap, robotMap)).equals(false);
+            expect(movement.isPassable(E, fullMap, robotMap)).equals(false);
             done();
         });
     });
@@ -244,7 +244,7 @@ describe('Movement Helpers Unit Tests', function() {
 
             const previous = {x: 1, y: 2};
             
-            expect(movement.dumberMoveTowards(A, fullMap, robotMap, destA, previous)).equals(destA);
+            expect(movement.dumberMoveTowards(A, fullMap, robotMap, destA, previous)).to.eql(destA);
             done();
         });
 
@@ -260,9 +260,9 @@ describe('Movement Helpers Unit Tests', function() {
             const previousC = {x: 2, y: 4}
             const previousD = {x: 2, y: 3}
 
-            expect(movement.dumberMoveTowards(B, fullMap, robotMap, destBC, previousB)).equals({x: 0, y: 1});
-            expect(movement.dumberMoveTowards(C, fullMap, robotMap, destBC, previousC)).equals({x: 2,y: 3});
-            expect(movement.dumberMoveTowards(D, fullMap, robotMap, destD, previousD)).equals({x: 2,y: 1});
+            expect(movement.dumberMoveTowards(B, fullMap, robotMap, destBC, previousB)).to.eql({x: 0, y: 1});
+            expect(movement.dumberMoveTowards(C, fullMap, robotMap, destBC, previousC)).to.eql({x: 2,y: 3});
+            expect(movement.dumberMoveTowards(D, fullMap, robotMap, destD, previousD)).to.eql({x: 2,y: 1});
             done();
         });
 

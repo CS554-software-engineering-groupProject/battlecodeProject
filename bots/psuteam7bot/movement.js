@@ -58,7 +58,7 @@ movement.getDirectionIndex = (direction) => {
 
     for(let i = 0; i < movement.directions.length; ++i)
     {
-        if(direction === movement.directions[i])
+        if(movement.positionsAreEqual(direction, movement.directions[i]))
             return i;
     }
     return -2;
@@ -109,7 +109,7 @@ movement.rotateDirection = (direction, n) => {
 *Output:    retVal - an object {x, y}, where x is the difference between A.x and B.x and y is the difference between A.y and B.y
 */
 movement.getDistanceXY = (A, B) => {
-    const {x, y} = movement.getRelativePosition(A, B);
+    let {x, y} = movement.getRelativePosition(A, B);
 
     x = Math.abs(x);
     y = Math.abs(y);
@@ -169,8 +169,8 @@ movement.checkQuadrant = (location, fullmap) => {
 */
 movement.getAttackerPatrolRoute = (myCastleLocation, fullMap) => {
     const {x, y} = myCastleLocation;
-    const Ax = fullMap.length - x;
-    const Ay = fullMap.length - y;
+    const Ax = fullMap.length - x - 1;
+    const Ay = fullMap.length - y - 1;
 
     return [{x: Ax, y: y}, {x: x, y: Ay}, {x: Ax, y: Ay}];
 }

@@ -11,7 +11,8 @@
     "mocha": "^5.2.0"
   },
   "scripts": {
-    "test": "./projectUtils/test_script.sh"
+    "test": "./projectUtils/test_script.sh",
+    "wintest": "projectUtils\\wintest.bat"
   },
   "repository": {
     "type": "git",

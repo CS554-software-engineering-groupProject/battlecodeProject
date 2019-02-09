@@ -11,6 +11,8 @@ prophet.doAction = (self) => {
         self.base = movement.findAdjacentBase(self);
         self.log("Set base as " + JSON.stringify(self.base));
 
+        //TODO Check message from base and record enemy castle location
+
         if(self.base == null)
         {
             self.role = "ATTACKER";
@@ -124,7 +126,7 @@ prophet.doAction = (self) => {
 
             //Get potential enemy castle locations
             self.potentialEnemyCastleLocation = movement.getAttackerPatrolRoute(self.base, self.map);
-            self.target = self.potentialEnemyCastleLocation[[Math.floor(Math.random()*2)]];
+            self.target = self.potentialEnemyCastleLocation[0];
 
 
             //TODO Set 'Rally point?'? (For amassing friendly forces before attacking as a group  [future sprint obj])
@@ -169,35 +171,14 @@ prophet.doAction = (self) => {
         {
             //Assign new target waypoint
             self.potentialEnemyCastleLocation.shift();
-            self.potentialEnemyCastleLocation.shift();
             self.target = self.potentialEnemyCastleLocation[0];
         }
 
         //No more patrol waypoint, 
-
         if(self.potentialEnemyCastleLocation.length === 0)
         {
-            //TODO replace with smarter strat
-            //Random movement cost a lot of fuel
-            //Should be in the quadrant opposite to base which is surely enemy quadrant, pick a random direction and move
-            /*
-            const choices = [[0,-1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
-            let patrolQuadrant = movement.checkQuadrant(self.me, self.map);
-            let destQuadrant = -1;
-            let choice = null;
-
-
-            choice = choices[Math.floor(Math.random()*choices.length)];
-            destQuadrant = movement.checkQuadrant({x: self.me.x+choice.x, y: self.me.y+choice.y}, self.map);
-
-            //Choose opposite direction if trying to go outside patrol quadrant
-            if(destQuadrant !== patrolQuadrant)
-                choice = [choice[0]*-1, choice[1]*-1];
             
-            self.log("Patrolling enemy quadrant " + patrolQuadrant);
-            return self.move(...choice);
-            */
-           return;
+            return;
         }
 
         //Move towards a patrol waypoint as a squad

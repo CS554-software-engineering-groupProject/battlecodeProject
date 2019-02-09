@@ -1,5 +1,5 @@
 import {SPECS} from "battlecode";
-const movement = {}
+const movement = {};
 
 //Array for getting direction after rotation
 movement.directions = [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 0 }, { x: 1, y: -1 }, { x: 0, y: -1 }, { x: -1, y: -1 }, { x: -1, y: 0 }, { x: -1, y: 1 }]
@@ -486,4 +486,4 @@ movement.getEnemyCastleLocations = (alliedCastleLocations, fullMap) => {
     return enemyCastleLocations;
 }
 
-export default movement
+export default movement;

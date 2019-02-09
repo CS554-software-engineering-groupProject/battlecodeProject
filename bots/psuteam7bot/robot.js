@@ -5,6 +5,7 @@ import castle from './castle.js';
 import church from './church.js';
 import combat from './combat.js';
 import movement from './movement.js';
+import communication from './communication.js';
 
 var step = -1;
 

@@ -355,6 +355,5 @@ describe('Movement Helpers Unit Tests', function() {
                 done();
             });
         });
-
     });
 });

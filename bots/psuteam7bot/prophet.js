@@ -1,6 +1,7 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
 import combat from './combat.js';
 import movement from './movement.js';
+import communication from './communication.js';
 
 const prophet = {};
 
@@ -11,12 +12,16 @@ prophet.doAction = (self) => {
         self.base = movement.findAdjacentBase(self);
         self.log("Set base as " + JSON.stringify(self.base));
 
-        //TODO Check message from base and record enemy castle location
-
         if(self.base == null)
         {
             self.role = "ATTACKER";
             return;
+        }
+
+        //TODO Check message from base and record enemy castle location
+        if(true)
+        {
+            communication.signalToPosition(0);
         }
 
         //TODO Change with addition of communication maybe have base record the number of defenders it built and have the prophet receive message from castle

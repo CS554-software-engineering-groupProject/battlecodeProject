@@ -245,61 +245,6 @@ movement.getSortedResourceList(location, resourceMap)
 }
 */
 
-/*A more simple moveTowards, move to a nearby passable adjacent tile, hopefully closer to destination
-*Input: self        -   The robot unit
-*       destination -   The destination 'position/ location' object {x, y}
-*Output:    retVal  -   A 'position/ location' object {x, y} which is adjacent to self.me 
-*                   -   OR self.me if they are all not passable
-*version of dumberMoveTowards with robot not recording a previous, might get stuck in corner
-*/
-/*
-movement.dumberMoveTowards = (self, destination) => {
-    let fullMap = self.map;
-    let robotMap = self.getVisibleRobotMap();
-    let direction = getRelativeDirection(self.me, destination);
-    let {x, y} = self.me;
-    let candidate = {x : (x+direction.x), y: (y+direction.y)}
-
-
-    let initDirection = initDirection;
-    do{
-        if(isPassable(candidate, fullMap, robotMap))
-            return candidate;
-
-        direction = movement.rotateDirection(direction, 1);
-    }while(direction !== initDirection);
-
-    return self.me;
-}
-*/
-
-/*The most simplest moveTowards, get location of a nearby passable adjacent tile, hopefully closer to destination
-*Input:     location    -   the robot's 'position/ location' object, should be self.me
-*           fullMap     -   the full map, should be self.map or self.getPassableMap()
-*           robotMap    -   robot map, should be self.getVisibleRobotMap()
-*           destination -   The destination 'position/ location' object {x, y}
-*           previous    -   A 'position/ location' object {x, y}, should be self.previous/ the position the robot was in the previous turn
-*Output:    retVal          -   A 'position/ location' object {x, y} which is adjacent to self.me 
-*                           -   OR the passed in location if they are all not passable
-*/
-/*
-movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous, previousprevious) => {
-    let direction = movement.getRelativeDirection(location, destination);
-    let {x, y} = location;
-    let candidate = {x : (x+direction.x), y: (y+direction.y)}
-
-    do{
-        candidate = {x : (x+direction.x), y: (y+direction.y)};
-        if(movement.isPassable(candidate, fullMap, robotMap) && !(movement.positionsAreEqual(candidate, previous)) && !(movement.positionsAreEqual(candidate, previousprevious)))
-            return candidate;
-
-        direction = movement.rotateDirection(direction, 1);
-    }while(!(movement.positionsAreEqual(candidate, previous)));
-
-    return location;
-}
-*/
-
 /*The most simplest moveTowards, get location of a nearby passable adjacent tile, hopefully closer to destination
 *Input:     location            -   the robot's 'position/ location' object, should be self.me
 *           fullMap             -   the full map, should be self.map or self.getPassableMap()

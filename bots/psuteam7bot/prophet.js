@@ -12,6 +12,7 @@ prophet.doAction = (self) => {
         self.base = movement.findAdjacentBase(self);
         self.log("Set base as " + JSON.stringify(self.base));
 
+        //If for some unknown reason can't find base (e.g. created by base, but then base is destroyed on enemy turn before this bot's turn)
         if(self.base == null)
         {
             self.role = "ATTACKER";
@@ -99,6 +100,7 @@ prophet.takeDefenderAction = (self) =>  {
     //Movement to guard post should only take 5 turns (gave it a little more time to settle)
     if(self.me.turn < 5)
     {
+        //TODO Update to A*
         const moveLocation = movement.moveTowards(self, self.target);
 
         self.log("Moving towards guard post, targeting " + JSON.stringify(moveLocation));
@@ -125,7 +127,15 @@ prophet.takeDefenderAction = (self) =>  {
 prophet.takeAttackerAction = (self) => {
     self.log("ATTACKER prophet " + self.id + " taking turn");
 
-    //If didn't receive message from castle
+    //If no base
+    if(self.base == null)
+    {
+        //Set opposite of current coord as target
+        self.potentialEnemyCastleLocation = movement.getAttackerPatrolRoute(self.me, self.map);
+    }
+
+
+    //If no target
     if(self.potentialEnemyCastleLocation === null)
     {
         //Get potential enemy castle locations if Castle didn't send signal
@@ -140,7 +150,7 @@ prophet.takeAttackerAction = (self) => {
     const visibleRobots = self.getVisibleRobots();
     const attackable = combat.filterByAttackable(self, visibleRobots);
 
-    /*TODO Possible bug x of undefined inside the fleeing behavior conditional below
+
     let minUnattackable = combat.filterByTeam(self, visibleRobots, -1);
     minUnattackable = combat.filterByRange(minUnattackable, self.me, 0, SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0]-1);
 
@@ -150,7 +160,9 @@ prophet.takeAttackerAction = (self) => {
     {
         const attacker = minUnattackable[0];
         const direction = movement.getRelativeDirection(self.me, attacker);
-        const rDist =  Math.sqrt(SPECS.UNITS[self.me.unit].SPEED);
+
+        //TODO replace with A*?
+        const rDist =  Math.floor(Math.sqrt(SPECS.UNITS[self.me.unit].SPEED));
         let moveLocation = {x: self.me.x+rDist*direction.x, y: self.me.y+rDist*direction.y};
         moveLocation = movement.moveTowards(self, moveLocation);
 
@@ -158,7 +170,6 @@ prophet.takeAttackerAction = (self) => {
 
         return self.move(moveLocation);
     }
-    */
 
     //Attack visible enemies
     if(attackable.length > 0)
@@ -176,10 +187,9 @@ prophet.takeAttackerAction = (self) => {
         self.target = self.potentialEnemyCastleLocation[0];
     }
 
-    //TODO No more patrol waypoint, listen to base for new waypoint
+    //TODO No more patrol waypoint, do nothing
     if(self.potentialEnemyCastleLocation.length === 0)
     {
-
         return;
     }
 
@@ -189,6 +199,7 @@ prophet.takeAttackerAction = (self) => {
 
     if(squad.length >= 4) 
     {
+        //TODO update for A*
         const moveLocation = movement.moveTowards(self, self.target);
         self.log("Moving towards potential enemy castle, targeting " + JSON.stringify(moveLocation));
         return self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);

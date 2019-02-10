@@ -431,4 +431,17 @@ movement.getEnemyCastleLocations = (alliedCastleLocations, fullMap) => {
     return enemyCastleLocations;
 }
 
+/*Calculate and return enemy castle's potential starting location
+*Input:     myCastleLocation    -   the Castle's 'position/ location' object, should be self.me/ self.base
+*           fullMap             -   the full map, Should be self.map or or self.getPassableMap()
+*Output:    RetVal  -   The diagonal mirror of myCastleLocation, should be in an enemy quadrant
+*Standalone helper function, to obtain the diagonal mirror patrol position
+*/
+movement.getDiagonalPatrolPosition = (myCastleLocation, fullMap) => {
+    const {x, y} = myCastleLocation;
+    const Ax = fullMap.length - x - 1;
+    const Ay = fullMap.length - y - 1;
+
+    return  {x: Ax, y: Ay};
+}
 export default movement;

@@ -26,7 +26,8 @@ prophet.doAction = (self) => {
         if(self.isRadioing(baseRobot))  //Check if base has broadcasted a signal on it's turn
         {
             //Get the message using baseRobot.signal and translate to position using helper function
-            self.potentialEnemyCastleLocation = [communication.signalToPosition(baseRobot.signal)]; 
+            self.potentialEnemyCastleLocation = [communication.signalToPosition(baseRobot.signal)];
+            self.potentialEnemyCastleLocation.push(movement.getDiagonalPatrolPosition(self.base, self.map));
         }
         else
         {
@@ -68,7 +69,7 @@ prophet.doAction = (self) => {
     return;
 }
 
-   //Main behavior of Prophet units
+//DEFENDER Behavior
 prophet.takeDefenderAction = (self) =>  {
     self.log("DEFENDER prophet " + self.id + " taking turn");
     if(self.target === null)
@@ -119,12 +120,20 @@ prophet.takeDefenderAction = (self) =>  {
     return;
 }
 
+
+//ATTACKER Behavior
 prophet.takeAttackerAction = (self) => {
     self.log("ATTACKER prophet " + self.id + " taking turn");
+
+    //If didn't receive message from castle
     if(self.potentialEnemyCastleLocation === null)
     {
         //Get potential enemy castle locations if Castle didn't send signal
         self.potentialEnemyCastleLocation = movement.getAttackerPatrolRoute(self.base, self.map);
+    }
+
+    if(self.target === null)
+    {     
         self.target = self.potentialEnemyCastleLocation[0];
     }
 
@@ -167,9 +176,10 @@ prophet.takeAttackerAction = (self) => {
         self.target = self.potentialEnemyCastleLocation[0];
     }
 
-    //No more patrol waypoint, do nothing
+    //TODO No more patrol waypoint, listen to base for new waypoint
     if(self.potentialEnemyCastleLocation.length === 0)
     {
+
         return;
     }
 
@@ -183,7 +193,7 @@ prophet.takeAttackerAction = (self) => {
         self.log("Moving towards potential enemy castle, targeting " + JSON.stringify(moveLocation));
         return self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);
     }
-    //Should not fall through unless attacker with no army
+    //Should not fall through unless attacker with no nearby teammates/ squad
     self.log('prophet ' + self.role + ' ' + self.me.id + ' doing nothing')
     return;
 }

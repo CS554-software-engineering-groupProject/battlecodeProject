@@ -10,6 +10,7 @@ pilgrim.maxFuel = SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY;
  */
 pilgrim.doAction = (self) => {
     self.log("pilgrim " + self.id + " taking turn");
+    self.log("Time: " + self.me.time);
     const onMap = (self, x, y) => {
         const mapSize = self.map.length;
         return (x < mapSize) && (x >= 0) && (y < mapSize) && (y >= 0)
@@ -47,18 +48,22 @@ pilgrim.takeMinerAction = (self) => {
         if(adjacentBase != null) {
             self.log("pilgrim MINER " + self.id + " depositing resources with base at [" + adjacentBase.x + "," + adjacentBase.y + "]");
             return self.give(adjacentBase.x-self.me.x, adjacentBase.y-self.me.y, self.me.karbonite, self.me.fuel);
+        } else if (self.path.length === 0) {
+            if(movement.aStarPathfinding(self, self.me, self.base, false)) {
+                self.log(self.path)
+            } else {
+                self.log('Cannot get path back to base')
+            }
         }
-        const {x, y} = movement.moveTowards(self, self.base);
-        self.log('pilgrim MINER ' + self.id + ' moving towards base, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']')
-        return self.move(x-self.me.x, y-self.me.y);
+        self.log('pilgrim MINER ' + self.id + ' moving towards base, Current: [' + self.me.x + ',' + self.me.y + ']')
+        return movement.moveAlongPath(self);
     } else {
         if(self.me.x === self.target.x && self.me.y === self.target.y) {
             self.log("pilgrim MINER " + self.id + " mining resources at [" + self.me.x + "," + self.me.y + "]");
             return self.mine();
         } else {
-            const {x, y} = movement.moveTowards(self, self.target);
-            self.log('pilgrim MINER ' + self.id + ' moving towards target, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']');
-            return self.move(x-self.me.x, y-self.me.y);
+            self.log('pilgrim MINER ' + self.id + ' moving towards target, Current: [' + self.me.x + ',' + self.me.y + ']')
+            return movement.moveAlongPath(self);
         }
     }
 }
@@ -76,12 +81,15 @@ pilgrim.takePioneerAction = (self) => {
             self.target = pilgrim.findClosestResource(self.me, self.fuel_map);
             self.log("pilgrim PIONEER " + self.id + " targeting fuel depot at [" + self.target.x + "," + self.target.y + "]")
         }
+        if(movement.aStarPathfinding(self, self.me, self.target, false)) {
+            self.log(self.me);
+            self.log(self.path)
+        }
     }
     //Target set - if not at target, move towards
     if (self.target.x !== self.me.x || self.target.y !== self.me.y) {
-        const {x, y} = movement.moveTowards(self, self.target);
-        self.log('pilgrim PIONEER ' + self.id + ' moving, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']')
-        return self.move(x-self.me.x, y-self.me.y);
+        self.log('pilgrim PIONEER ' + self.id + ' moving towards target, Current: [' + self.me.x + ',' + self.me.y + ']')
+        return movement.moveAlongPath(self);
     //If at target, become miner
     } else {
         self.role = 'MINER';

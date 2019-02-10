@@ -465,16 +465,81 @@ movement.findAdjacentBase = (self) => {
 }
 
 /**
+ * Method to move bot according to `self.path`. Checks if next move on path is viable; if so does it,
+ * if not adjusts path. If path adjustment successful, makes new move. Otherwise, does nothing in hopes
+ * path will reopen later
  * 
+ * @param self MyRobot object to do moving
+ * @return Call to `self.move()` with apppriate move if possible, or nothing if no move can be made. This
+ *         method thus needs to be returned by the action of whatever bot is calling it in order to make move.
  */
 movement.moveAlongPath = (self) => {
-    return self.path.pop();
+    self.log("me: [" + self.me.x + "," + self.me.y + "]")
+    let nextMove = self.path.pop();
+    self.log("nextMove: [" + nextMove.x + "," + nextMove.y + "]")
+
+    //If next move is viable, do it
+    if(movement.isPassable(nextMove, self.map, self.getVisibleRobotMap())) {
+        self.log("Unit " + self.me.id + " moving to: [" + nextMove.x + "," + nextMove.y + "]")
+        return self.move(nextMove.x-self.me.x, nextMove.y-self.me.y);
+    //If nextMove is destination (because path is empty), readd destination to path and wait to be moveable
+    } else if (self.path.length === 0) {
+        self.log("Final path position occupied - wait until unoccupied")
+        self.path.push(nextMove);
+        return;
+    //If next move not viable, reset path by readding next move, attempt to adjust path accounting for bots
+    } else {
+        self.path.push(nextMove);
+        //If adjustment successful, pop of new next move and go to it
+        if(movement.adjustPath(self, self.me)) {
+            nextMove = self.path.pop();
+            self.log("Unit " + self.me.id + " moving to: [" + nextMove.x + "," + nextMove.y + "]")
+            return self.move(nextMove.x-self.me.x, nextMove.y-self.me.y);
+        //Otherwise, just dont move (may want to fix)
+        } else {
+            self.log("bot " + self.me.id + " not moving due to path conflict");
+            return;
+        }
+    }
 }
 
 
 /**
+ * Method to update path to account for possible
  * 
+ * @param self MyRobot object whose path needs adjusting, likely due to bots in way
+ * @param newOrigin New starting destination. Can be `self.me` if issue with bot in way of
+ *                  optimal path, or some other location if bot needs to move off path and
+ *                  then readjust target path accordingly (i.e. if attackers moving to fight
+ *                  a visible enemy)
+ * @return Boolean indicating whether `self.path` was changed or not
  */
+movement.adjustPath = (self, newOrigin) => {
+    self.log('ADJUSTING PATH')
+    //Pop off next move, as this will be unused now
+    const oldNextMove = self.path.pop();
+    //Get coordinates of point to couple, then save remainder of path
+    const reconnectionPoint = self.path.pop();
+    const savedPath = self.path;
+    
+    /*
+        Make path from newOrigin to reconnectionPoint with A* pathfinding accounting for bots.
+        If successful, self.path will be set to optimal path between newOrigin and reconnectionPoint,
+        so splice onto end of old savedPath to form new self.path. If pathfinding unsuccessful, I
+        honestly don't know what to do, so I'll just reset self.path to original path without adjustment
+    */
+    if(movement.aStarPathfinding(self, newOrigin, reconnectionPoint, true)) {
+        self.path = savedPath.splice(savedPath.length, 0, ...self.path);
+        return true;
+    } else {
+        self.log('MOVMENT ADJUSTMENT UNNEEDED OR IMPOSSIBLE');
+        self.path = savedPath;
+        self.path.push(reconnectionPoint);
+        self.path.push(oldNextMove);
+        return false;
+    }
+
+}
 
 /**
  * Method that returns an array of all relative moveable positions which also includes r2 distance and index
@@ -502,12 +567,23 @@ movement.getMoveablePositions = (unit) => {
 }
 
 /**
- * A* pathfinding method - follow algorithm to find an optimal path for `self` from its current
- * position to a destination
+ * A* pathfinding method - follow algorithm to find an optimal path from a location to a destination. Updates
+ * self's path accordingly (meaning that if `location` is not the position in `self.me`, need to handle!!!)
+ * 
+ * @param self MyRobot object to be using path
+ * @param location Starting location of path. May or may not be current position of `self`
+ * @param destination Ending location of path.
+ * @param accountForBots Boolean indicating whether bots should be considered when building path. False indicates
+ *                       finding optimal path based on terrain and not on whether collisions with bots may occur;
+ *                       true accounts for current position of bots. The 'false' option should be used when creating
+ *                       an original path; 'true' should be used when adjusting a path due to possible bot collision.
  */
-movement.aStarPathfinding = (self, destination) => {
+movement.aStarPathfinding = (self, location, destination, accountForBots) => {
     if(!destination) {
         self.log('Error - cannot do A* with no target')
+        return false;
+    } else if (movement.positionsAreEqual(location, destination)) {
+        self.log("Don't use pathfinding when destination obvious")
         return false;
     }
     let foundDest = false;
@@ -529,32 +605,34 @@ movement.aStarPathfinding = (self, destination) => {
                     y: -1
                 }
             };
-            if(self.map[y][x]) {
-                closedMap[y][x] = false;
+            //If accounting for bots, set closedMap cell to false if passible
+            if(accountForBots) {
+                closedMap[y][x] = !movement.isPassable({x: x, y: y}, self.map, self.getVisibleRobotMap());
+            //If just looking at map, set closedMap cell to false if passible terrain
             } else {
-                closedMap[y][x] = true;
+                closedMap[y][x] = !self.map[y][x];
             }
         }
     }
     //Init current position
-    infoMap[self.me.y][self.me.x] = {
+    infoMap[location.y][location.x] = {
         f: 0,
         g: 0,
         h: 0,
         parent: {
-            x: self.me.x,
-            y: self.me.y
+            x: location.x,
+            y: location.y
         }
     };
 
-    openQueue.push({x: self.me.x, y: self.me.y});
+    openQueue.push({x: location.x, y: location.y});
 
     while(openQueue.length > 0 && !foundDest) {
         foundDest = movement.processAStarCell(self, destination, infoMap, openQueue, closedMap);
     }
 
     if(foundDest) {
-        self.path = movement.createPathFromInfoMap(self, destination, infoMap);
+        self.path = movement.createPathFromInfoMap(location, destination, infoMap);
         self.log(self.path);
         return true;
     } else {
@@ -614,6 +692,7 @@ movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) =
             continue;
         }
         if(!closedMap[nextCoordinates.y][nextCoordinates.x]) {
+            console.log(nextCoordinates);
             const nextCell = infoMap[nextCoordinates.y][nextCoordinates.x];
             if(movement.positionsAreEqual(nextCoordinates, destination)) {
                 nextCell.parent = current;
@@ -639,18 +718,21 @@ movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) =
  * A* helper ethod that takes an info map and works backwards from destination to the current position of self,
  * pushing each pair of coordiantes on the path into an array.
  * 
- * @param self MyRobot object
+ * @param location Starting position (to know when to stop creating path)
  * @param destination Target destination (to know where to start creating the path)
  * @param infoMap 2D array created by A* method `aStarPathFinding`. 
+ * @return Returns an array where the first element is the destination coordinates and the last element is the
+ *         coordinates of the next move on the path to the destination (i.e. NOT location, just next place to move
+ *         from location)
  */
-movement.createPathFromInfoMap = (self, destination, infoMap) => {
+movement.createPathFromInfoMap = (location, destination, infoMap) => {
     const pathArray = [];
     let current = destination;
     let traversedPath = false;
     while(!traversedPath) {
         pathArray.push({x: current.x, y: current.y});
         current = infoMap[current.y][current.x].parent;
-        if (movement.positionsAreEqual(current, self.me)) {
+        if (movement.positionsAreEqual(location, current)) {
             traversedPath = true;
         }
     }

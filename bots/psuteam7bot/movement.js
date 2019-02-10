@@ -465,6 +465,18 @@ movement.findAdjacentBase = (self) => {
 }
 
 /**
+ * 
+ */
+movement.moveAlongPath = (self) => {
+    return self.path.pop();
+}
+
+
+/**
+ * 
+ */
+
+/**
  * Method that returns an array of all relative moveable positions which also includes r2 distance and index
  * of the relative direction (these can be used to filter or sort entire list as desired).
  * 
@@ -491,11 +503,12 @@ movement.getMoveablePositions = (unit) => {
 
 /**
  * A* pathfinding method - follow algorithm to find an optimal path for `self` from its current
- * position to it's target
+ * position to a destination
  */
-movement.aStarPathfinding = (self) => {
-    if(!self.target) {
+movement.aStarPathfinding = (self, destination) => {
+    if(!destination) {
         self.log('Error - cannot do A* with no target')
+        return false;
     }
     let foundDest = false;
     const openQueue = [];
@@ -537,11 +550,11 @@ movement.aStarPathfinding = (self) => {
     openQueue.push({x: self.me.x, y: self.me.y});
 
     while(openQueue.length > 0 && !foundDest) {
-        foundDest = movement.processAStarCell(self, infoMap, openQueue, closedMap);
+        foundDest = movement.processAStarCell(self, destination, infoMap, openQueue, closedMap);
     }
 
     if(foundDest) {
-        self.path = movement.createPathFromInfoMap(self, infoMap);
+        self.path = movement.createPathFromInfoMap(self, destination, infoMap);
         self.log(self.path);
         return true;
     } else {
@@ -557,17 +570,18 @@ movement.aStarPathfinding = (self) => {
  * Optimizations include avoiding coordinatse on closedMap, prioritizing move positions by distance and then matching
  * the target direction
  * 
- * @param self MyRobot object doing moving, which provides a unit type and target destination
+ * @param self MyRobot object doing moving, which provides a unit type and other info like map length
+ * @param destination Location to find path towards from the position in `self.me`
  * @param infoMap Intermediate results grid tracking optimal path
  * @param openQueue Queue of coordinates to still be processed as part of pathfinding
  * @param closedMap Boolean 2D grid of coordinates where true means the coordinate is immovable or already checked by A* process
  * @return Boolean indicating whether cell matches destination, indicating end of A* process
  */
-movement.processAStarCell = (self, infoMap, openQueue, closedMap) => {
+movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) => {
     const moveablePositions = movement.getMoveablePositions(self.me.unit);
     const current = openQueue.shift();
     const currCell = infoMap[current.y][current.x];
-    const targetDirIndex = movement.getDirectionIndex(movement.getRelativeDirection(current, self.target));
+    const targetDirIndex = movement.getDirectionIndex(movement.getRelativeDirection(current, destination));
     closedMap[current.y][current.x] = true;
     //Sort list by distance and then potentially direction - small optimization?
     moveablePositions.sort((a, b) => {
@@ -601,12 +615,12 @@ movement.processAStarCell = (self, infoMap, openQueue, closedMap) => {
         }
         if(!closedMap[nextCoordinates.y][nextCoordinates.x]) {
             const nextCell = infoMap[nextCoordinates.y][nextCoordinates.x];
-            if(movement.positionsAreEqual(nextCoordinates, self.target)) {
+            if(movement.positionsAreEqual(nextCoordinates, destination)) {
                 nextCell.parent = current;
                 return true;
             } else {
                 gNext = currCell.g + movement.getDistance(current, nextCoordinates);
-                hNext = movement.getDistance(nextCoordinates, self.target);
+                hNext = movement.getDistance(nextCoordinates, destination);
                 fNext = gNext+hNext;
                 if(nextCell.f > fNext) {
                     nextCell.parent = current;
@@ -622,15 +636,16 @@ movement.processAStarCell = (self, infoMap, openQueue, closedMap) => {
     return false;
 }
 /**
- * A* helper ethod that takes an info map and works backwards from `self.target` to the current position of self,
+ * A* helper ethod that takes an info map and works backwards from destination to the current position of self,
  * pushing each pair of coordiantes on the path into an array.
  * 
  * @param self MyRobot object
+ * @param destination Target destination (to know where to start creating the path)
  * @param infoMap 2D array created by A* method `aStarPathFinding`. 
  */
-movement.createPathFromInfoMap = (self, infoMap) => {
+movement.createPathFromInfoMap = (self, destination, infoMap) => {
     const pathArray = [];
-    let current = self.target;
+    let current = destination;
     let traversedPath = false;
     while(!traversedPath) {
         pathArray.push({x: current.x, y: current.y});

@@ -267,4 +267,29 @@ describe('Movement Helpers Unit Tests', function() {
         });
 
     });
+
+    describe.only('A* tests', function() {
+        it('should do things', function(done) {
+            const fullMap =   
+            [[true,false,false,false,false,false],
+            [true,false,true,true,false,false],
+            [true,true,true,true,true,true],
+            [false,false,true,true,false,false],
+            [false,false,true,true,false,false],
+            [false,false,false,true,true,true]];
+            const myBot = new MyRobot();
+            myBot.map = fullMap;
+            myBot.target = {x: 5, y: 5};
+            myBot.me = {
+                id: 1,
+                unit: 2,
+                x: 0, 
+                y: 0
+            }
+
+            movement.aStarPathfinding(myBot, myBot.target);
+            console.log(myBot.path);
+            done();
+        });
+    });
 });

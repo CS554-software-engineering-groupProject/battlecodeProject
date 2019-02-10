@@ -21,8 +21,6 @@ castle.doAction = (self) => {
        }
        return;
     }
-    return;
-
 }
 
 castle.findUnitPlace = (self, unitType) => {

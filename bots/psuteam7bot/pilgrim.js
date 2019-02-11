@@ -205,6 +205,8 @@ pilgrim.updateResourceTarget = (self) => {
             self.target = pilgrim.findClosestResource(self.me, self.fuel_map, self.occupiedResources);
         }
     }
+    //Update path accordingly
+    movement.aStarPathfinding(self, self.me, self.target, false);
 }
 
 

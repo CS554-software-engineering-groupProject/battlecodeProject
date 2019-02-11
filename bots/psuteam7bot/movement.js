@@ -490,8 +490,9 @@ movement.moveAlongPath = (self) => {
     //If next move not viable, reset path by readding next move, attempt to adjust path accounting for bots
     } else {
         self.path.push(nextMove);
-        //If adjustment successful, pop of new next move and go to it
+        //If adjustment successful, pop off new next move and go to it
         if(movement.adjustPath(self, self.me)) {
+            self.log(self.path);
             nextMove = self.path.pop();
             self.log("Unit " + self.me.id + " moving to: [" + nextMove.x + "," + nextMove.y + "]")
             return self.move(nextMove.x-self.me.x, nextMove.y-self.me.y);
@@ -521,6 +522,7 @@ movement.adjustPath = (self, newOrigin) => {
     //Get coordinates of point to couple, then save remainder of path
     const reconnectionPoint = self.path.pop();
     const savedPath = self.path;
+    self.log(savedPath);
     
     /*
         Make path from newOrigin to reconnectionPoint with A* pathfinding accounting for bots.
@@ -529,10 +531,12 @@ movement.adjustPath = (self, newOrigin) => {
         honestly don't know what to do, so I'll just reset self.path to original path without adjustment
     */
     if(movement.aStarPathfinding(self, newOrigin, reconnectionPoint, true)) {
-        self.path = savedPath.splice(savedPath.length, 0, ...self.path);
+        self.path = savedPath.concat(self.path);
+        self.log('GENERATED NEW PATH')
+        self.log(self.path);
         return true;
     } else {
-        self.log('MOVMENT ADJUSTMENT UNNEEDED OR IMPOSSIBLE');
+        self.log('MOVEMENT ADJUSTMENT UNNEEDED OR IMPOSSIBLE');
         self.path = savedPath;
         self.path.push(reconnectionPoint);
         self.path.push(oldNextMove);
@@ -601,6 +605,7 @@ movement.aStarPathfinding = (self, location, destination, accountForBots) => {
 
     if(foundDest) {
         self.path = movement.createPathFromInfoMap(location, destination, infoMap);
+        self.log("New path set:")
         self.log(self.path);
         return true;
     } else {

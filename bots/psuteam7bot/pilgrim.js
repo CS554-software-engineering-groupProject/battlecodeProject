@@ -16,7 +16,9 @@ pilgrim.doAction = (self) => {
     }
     
     if (self.role === 'UNASSIGNED') {
-        self.base = movement.findAdjacentBase(self);
+        //self.base = movement.findAdjacentBase(self);
+        //Tweaking to set base not directly on top of castle, because causing pathfinding issues
+        self.base = {x: self.me.x, y: self.me.y};
         self.log("Set base as " + JSON.stringify(self.base));
         //Gets nearby base, checks turn
         self.role = 'PIONEER'
@@ -50,10 +52,15 @@ pilgrim.takeMinerAction = (self) => {
         if(adjacentBase != null) {
             self.log("pilgrim MINER " + self.id + " depositing resources with base at [" + adjacentBase.x + "," + adjacentBase.y + "]");
             return self.give(adjacentBase.x-self.me.x, adjacentBase.y-self.me.y, self.me.karbonite, self.me.fuel);
+        } else if (self.path.length === 0) {
+            if(movement.aStarPathfinding(self, self.me, self.base, false)) {
+                self.log(self.path)
+            } else {
+                self.log('Cannot get path back to base')
+            }
         }
-        const {x, y} = movement.moveTowards(self, self.base);
-        self.log('pilgrim MINER ' + self.id + ' moving towards base, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']')
-        return self.move(x-self.me.x, y-self.me.y);
+        self.log('pilgrim MINER ' + self.id + ' moving towards base, Current: [' + self.me.x + ',' + self.me.y + ']')
+        return movement.moveAlongPath(self);
     } else {
         //If at target, mine
         if(self.me.x === self.target.x && self.me.y === self.target.y) {
@@ -62,9 +69,8 @@ pilgrim.takeMinerAction = (self) => {
         //If not at target, make sure you aren't going to an occupied depot, then move towards target
         } else {
             pilgrim.updateResourceTarget(self);
-            const {x, y} = movement.moveTowards(self, self.target);
-            self.log('pilgrim MINER ' + self.id + ' moving towards target, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']');
-            return self.move(x-self.me.x, y-self.me.y);
+            self.log('pilgrim MINER ' + self.id + ' moving towards target, Current: [' + self.me.x + ',' + self.me.y + ']')
+            return movement.moveAlongPath(self);
         }
     }
 }
@@ -85,13 +91,16 @@ pilgrim.takePioneerAction = (self) => {
             self.target = pilgrim.findClosestResource(self.me, self.fuel_map, self.occupiedResources);
             self.log("pilgrim PIONEER " + self.id + " targeting fuel depot at [" + self.target.x + "," + self.target.y + "]")
         }
+        if(movement.aStarPathfinding(self, self.me, self.target, false)) {
+            self.log(self.me);
+            self.log(self.path)
+        }
     }
     //Target set, if not at target make sure you aren't going to an occupied depot, then move towards target
     if (self.target.x !== self.me.x || self.target.y !== self.me.y) {
         pilgrim.updateResourceTarget(self);
-        const {x, y} = movement.moveTowards(self, self.target);
-        self.log('pilgrim PIONEER ' + self.id + ' moving, Current: [' + self.me.x + ',' + self.me.y + ']  Target: ['+ x + ',' + y + ']')
-        return self.move(x-self.me.x, y-self.me.y);
+        self.log('pilgrim PIONEER ' + self.id + ' moving towards target, Current: [' + self.me.x + ',' + self.me.y + ']')
+        return movement.moveAlongPath(self);
     //If at target, become miner
     } else {
         self.role = 'MINER';
@@ -149,7 +158,6 @@ pilgrim.findClosestResource = (position, depotMap, occupiedResources) => {
                 const occupiedArray = occupiedResources.filter(depot => {
                     return depot.x === x && depot.y === y;
                 });
-                console.log(occupiedArray);
                 //If no matches (occupiedArray is empty), set as potential position
                 if(occupiedArray.length === 0) {
                     closest.x = x;
@@ -199,6 +207,8 @@ pilgrim.updateResourceTarget = (self) => {
             self.target = pilgrim.findClosestResource(self.me, self.fuel_map, self.occupiedResources);
         }
     }
+    //Update path accordingly
+    movement.aStarPathfinding(self, self.me, self.target, false);
 }
 
 

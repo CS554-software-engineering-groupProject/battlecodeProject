@@ -101,6 +101,7 @@ describe('Pilgrim Unit Tests', function() {
                               [1,0,0,0,0],
                               [0,0,0,0,0]];
 
+            //console.log(myBot.getVisibleRobots());
 
             done();
         });
@@ -141,6 +142,8 @@ describe('Pilgrim Unit Tests', function() {
                               [0,0,1,0,0],
                               [1,0,0,0,0],
                               [0,0,0,0,0]];
+
+            //console.log(myBot.getVisibleRobots());
 
             done();
         });

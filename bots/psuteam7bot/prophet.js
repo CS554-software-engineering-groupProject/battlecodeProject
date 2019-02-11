@@ -20,7 +20,7 @@ prophet.doAction = (self) => {
         }
 
         //Receive location of enemy base from Castle, if they are signaling to its adjacent square
-        const baseID = self.getVisibleRobotMap()[self.base[y]][self.base[x]];   //Get ID of the base Castle robot
+        const baseID = self.getVisibleRobotMap()[self.base.y][self.base.x];   //Get ID of the base Castle robot
         const baseRobot = self.getRobot(baseID);    //Get robot reference of the base castle robot
 
         //Receive signal just in case
@@ -32,7 +32,8 @@ prophet.doAction = (self) => {
         }
         else
         {
-            self.potentialEnemyCastleLocation = [movement.getAttackerPatrolRoute(self.base, self.map)];
+            self.log("UNASSIGNED prophet didn't receive signal from base, using getAttackerPatrolRoute");
+            self.potentialEnemyCastleLocation = movement.getAttackerPatrolRoute(self.base, self.map);
         }
 
         //TODO Change with addition of communication maybe have base record the number of defenders it built and have the prophet receive message from castle

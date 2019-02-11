@@ -16,7 +16,9 @@ pilgrim.doAction = (self) => {
     }
     
     if (self.role === 'UNASSIGNED') {
-        self.base = movement.findAdjacentBase(self);
+        //self.base = movement.findAdjacentBase(self);
+        //Tweaking to set base not directly on top of castle, because causing pathfinding issues
+        self.base = {x: self.me.x, y: self.me.y};
         self.log("Set base as " + JSON.stringify(self.base));
         //Gets nearby base, checks turn
         self.role = 'PIONEER'

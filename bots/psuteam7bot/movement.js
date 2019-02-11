@@ -517,29 +517,38 @@ movement.moveAlongPath = (self) => {
  */
 movement.adjustPath = (self, newOrigin) => {
     self.log('ADJUSTING PATH')
-    //Pop off next move, as this will be unused now
-    const oldNextMove = self.path.pop();
-    //Get coordinates of point to couple, then save remainder of path
-    const reconnectionPoint = self.path.pop();
-    const savedPath = self.path;
-    self.log(savedPath);
+    const oldPath = self.path.slice(0);
+    let remainingPath;
+    let reconnectionPoint// = self.path.pop();
+    let oldMoves = [];
+
+    /*
+        Repeatedly pop off list until a passible point in path is found. reconnectionPoint will be set to this
+        passible location to reconnect design path from current location to reconnectionPoint 
+    */
+    self.log(self.path)
+    do {
+        //oldMoves.push(reconnectionPoint);
+        reconnectionPoint = self.path.pop();
+
+        self.log("reconnectionPoint: [" + reconnectionPoint.x + "," + reconnectionPoint.y + "]");
+    } while(!movement.isPassable(reconnectionPoint, self.map, self.getVisibleRobotMap()) && self.path.length > 0);
     
     /*
-        Make path from newOrigin to reconnectionPoint with A* pathfinding accounting for bots.
-        If successful, self.path will be set to optimal path between newOrigin and reconnectionPoint,
-        so splice onto end of old savedPath to form new self.path. If pathfinding unsuccessful, I
-        honestly don't know what to do, so I'll just reset self.path to original path without adjustment
+        Make path from newOrigin to reconnectionPoint with A* pathfinding accounting for bots and reconnect with rest
+        of original path. If successful, self.path will be set to optimal path between newOrigin and reconnectionPoint,
+        so concat with remainingPath to form new self.path. If pathfinding unsuccessful, I honestly don't know what
+        to do, so I'll just reset self.path to original path without adjustment
     */
+    remainingPath = self.path;
     if(movement.aStarPathfinding(self, newOrigin, reconnectionPoint, true)) {
-        self.path = savedPath.concat(self.path);
+        self.path = remainingPath.concat(self.path);
         self.log('GENERATED NEW PATH')
         self.log(self.path);
         return true;
     } else {
         self.log('MOVEMENT ADJUSTMENT UNNEEDED OR IMPOSSIBLE');
-        self.path = savedPath;
-        self.path.push(reconnectionPoint);
-        self.path.push(oldNextMove);
+        self.path = oldPath;
         return false;
     }
 

@@ -21,8 +21,8 @@ church.doAction = (self)=> {
 }
 
 church.doAction = (self)=> {
-    self.log("depositing fuel to"+ this.karbonite +" global storage.");
-    self.log("depositing fuel to"+ this.fuel +" global storage.")
+    self.log("depositing fuel to "+ self.karbonite +" global storage.");
+    self.log("depositing fuel to "+ self.fuel +" global storage.")
     //
 }
 

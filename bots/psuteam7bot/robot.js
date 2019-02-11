@@ -19,6 +19,7 @@ class MyRobot extends BCAbstractRobot {
         this.previous = null;                            //Previous tile traversed by unit like {x: _, y: _}, initialized to the spawning/ starting location
         this.potentialEnemyCastleLocation = null;
         this.occupiedResources = [];
+        this.squadSize = null;                           //Squad size for squad movements
     }
     turn() {
         if(this.previous == null) {

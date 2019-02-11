@@ -15,6 +15,7 @@ prophet.doAction = (self) => {
         //If for some unknown reason can't find base (e.g. created by base, but then base is destroyed on enemy turn before this bot's turn)
         if(self.base == null)
         {
+            self.squadSize = 0;
             self.role = "ATTACKER";
             return;
         }
@@ -36,8 +37,6 @@ prophet.doAction = (self) => {
             self.potentialEnemyCastleLocation = movement.getAttackerPatrolRoute(self.base, self.map);
         }
 
-        //TODO Change with addition of communication maybe have base record the number of defenders it built and have the prophet receive message from castle
-        //Naive method of just filtering nearby prophets from base location, if passing by ATTACKER strays inside, messes with it
         const nearbyDefenders = self.getVisibleRobots().filter((robotElement) => {
             if(robotElement.team === self.me.team && robotElement.unit === self.me.unit)
             {
@@ -56,6 +55,7 @@ prophet.doAction = (self) => {
         else
         {
             self.log("Base defenders = " + JSON.stringify(nearbyDefenders.length) + ", Assigned as an attacker");
+            self.squadSize = 4;
             self.role = "ATTACKER";
         }
     }
@@ -74,46 +74,22 @@ prophet.doAction = (self) => {
 //DEFENDER Behavior
 prophet.takeDefenderAction = (self) =>  {
     self.log("DEFENDER prophet " + self.id + " taking turn");
-    if(self.target === null)
-    {
-        self.log("DEFENDER prophet calculating target")
-
-        const nearbyDefenders = self.getVisibleRobots().filter((robotElement) => {
-            if(robotElement.team === self.me.team && robotElement.unit === self.me.unit)
-            {
-                const distance = movement.getDistance(self.base, robotElement);
-                return distance <= 16;
-            }
-        });
-
-        //Get the direction towards enemy castle
-        const direction = movement.getRelativeDirection(self.base, self.potentialEnemyCastleLocation[0]);
-        const compass = movement.getDirectionIndex(direction)/2;
-
-        let x = 1;  //movement amount for North East
-        let y = 3;
-
-        x *= direction.x;
-        y *= direction.y;
-        self.log('x: ' + x + ' y: ' + y)
-
-        //Case for vertical movement
-        if(compass === 0 || compass === 2)
-            self.target = {x: self.base.x + x + nearbyDefenders.length -1, y: self.base.y + y};
-        else
-            self.target = {x: self.base.x + y, y: self.base.y + x + nearbyDefenders.length -1};
-
-        self.log("Assigned " + JSON.stringify(self.target) + " as guard post");
-    }
     
-    //Movement to guard post should only take 5 turns (gave it a little more time to settle)
+    //Limited movement towards enemy castle
     if(self.me.turn < 5)
     {
-        //TODO Update to A*
-        const moveLocation = movement.moveTowards(self, self.target);
+        if(self.path.length === 0)
+        {
+            if(movement.aStarPathfinding(self, self.me, self.potentialEnemyCastleLocation[0], false)) {
+                self.log(self.path)
+            } else {
+                self.log('Cannot get path to guard post')
+                return;
+            }
+        }
 
-        self.log("Moving towards guard post, targeting " + JSON.stringify(moveLocation));
-        return self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);
+        self.log('DEFENDER prophet ' + self.id + ' moving towards guard post, Current: [' + self.me.x + ',' + self.me.y + ']')
+        return movement.moveAlongPath(self);
     }
 
     //Guarding behavior, doesn't flee, doesn't check fuel before attempting to attack
@@ -126,8 +102,7 @@ prophet.takeDefenderAction = (self) =>  {
         return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
     }
     
-    //TODO store 'reclaimed' resources if capacity full and no enemies [future sprint obj]
-    //Otherwise, idle.
+    self.log("DEFENDER prophet guarding at x: " + self.me.x + ", y: " + self.me.y);
     return;
 }
 
@@ -159,25 +134,9 @@ prophet.takeAttackerAction = (self) => {
     const visibleRobots = self.getVisibleRobots();
     const attackable = combat.filterByAttackable(self, visibleRobots);
 
-
-    let minUnattackable = combat.filterByTeam(self, visibleRobots, -1);
-    minUnattackable = combat.filterByRange(minUnattackable, self.me, 0, SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0]-1);
-
-    
-    //Set 'fleeing behavior?' (whenattack target < min attack range)
-    if(minUnattackable.length > 0)
+    if(prophet.fleeBehavior(self, visibleRobots))
     {
-        const attacker = minUnattackable[0];
-        const direction = movement.getRelativeDirection(self.me, attacker);
-
-        //TODO replace with A*?
-        const rDist =  Math.floor(Math.sqrt(SPECS.UNITS[self.me.unit].SPEED));
-        let moveLocation = {x: self.me.x+rDist*direction.x, y: self.me.y+rDist*direction.y};
-        moveLocation = movement.moveTowards(self, moveLocation);
-
-        self.log("Fleeing from " + combat.UNITTYPE[attacker.unit] + " at " + attacker.x + ", " +  attacker.y);
-
-        return self.move(moveLocation);
+        return movement.moveAlongPath(self);
     }
 
     //Attack visible enemies
@@ -206,16 +165,62 @@ prophet.takeAttackerAction = (self) => {
     let squad = combat.filterByTeam(self, visibleRobots, self.me.team);
     squad = combat.filterByRange(squad, self.me, 0, 64);
 
-    if(squad.length >= 4) 
+    if(squad.length >= self.squadSize) 
     {
-        //TODO update for A*
-        const moveLocation = movement.moveTowards(self, self.target);
-        self.log("Moving towards potential enemy castle, targeting " + JSON.stringify(moveLocation));
-        return self.move(moveLocation.x-self.me.x, moveLocation.y-self.me.y);
+        if(self.path.length === 0)
+        {
+            if(movement.aStarPathfinding(self, self.me, self.target, false)) 
+            {
+                self.log(self.path);
+            } 
+            else 
+            {
+                self.log('Cannot get path to enemy base');
+                return;
+            }
+        }
+        self.log('ATTACKER prophet ' + self.id + ' moving towards enemy base, Current: [' + self.me.x + ',' + self.me.y + ']')
+        return movement.moveAlongPath(self);
     }
     //Should not fall through unless attacker with no nearby teammates/ squad
     self.log('prophet ' + self.role + ' ' + self.me.id + ' doing nothing')
     return;
 }
+
+
+prophet.fleeBehavior = (self, visibleRobots) => {
+    let minUnattackable = combat.filterByTeam(self, visibleRobots, -1);
+    minUnattackable = combat.filterByRange(minUnattackable, self.me, 0, SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0]-1);
+
+    
+    //Set 'fleeing behavior?' (whenattack target < min attack range)
+    if(minUnattackable.length > 0)
+    {
+        const attacker = minUnattackable[0];
+        const direction = movement.getRelativeDirection(self.me, attacker);
+        const directionIndex = movement.getDirectionIndex(direction);
+        const moveablePositions = movement.getMoveablePositions(self);
+
+        //TODO check for other potential tile at dirIndex+1, dirIndex-1
+        moveablePositions.filter((location) => {
+            if(directionIndex === location.dirIndex && location.r2 === SPECS.UNITS[self.me.unit].SPEED)
+                return true;
+
+            return false;
+        });
+
+        if(moveablePositions.length > 0)
+        {
+            //There is a fleeing coord
+            //Store retreat position and current position in path (for backtrack after fleeing behavior is done)
+            self.path.unshift(moveablePositions[0], self.me);
+            self.log("Prophet " + self.id + "Fleeing from attacker" + attacker.unit + " " + attacker.id + " to x: " + moveablePositions[0].x + ", y: " + moveablePositions[0].y);
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
+
 
 export default prophet;

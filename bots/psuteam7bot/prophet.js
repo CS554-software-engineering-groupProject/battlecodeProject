@@ -47,7 +47,7 @@ prophet.doAction = (self) => {
         });
 
         //2 defenders towards mirror castle
-        if(nearbyDefenders.length < 2)
+        if(nearbyDefenders.length < 3)
         {
             self.log("Base defenders = " + JSON.stringify(nearbyDefenders.length) + ", Assigned as a defender");
             self.role = "DEFENDER";
@@ -78,6 +78,14 @@ prophet.takeDefenderAction = (self) =>  {
     {
         self.log("DEFENDER prophet calculating target")
 
+        const nearbyDefenders = self.getVisibleRobots().filter((robotElement) => {
+            if(robotElement.team === self.me.team && robotElement.unit === self.me.unit)
+            {
+                const distance = movement.getDistance(self.base, robotElement);
+                return distance <= 16;
+            }
+        });
+
         //Get the direction towards enemy castle
         const direction = movement.getRelativeDirection(self.base, self.potentialEnemyCastleLocation[0]);
         const compass = movement.getDirectionIndex(direction)/2;
@@ -91,9 +99,9 @@ prophet.takeDefenderAction = (self) =>  {
 
         //Case for vertical movement
         if(compass === 0 || compass === 2)
-            self.target = {x: self.base.x + x, y: self.base.y + y};
+            self.target = {x: self.base.x + x + nearbyDefenders.length -1, y: self.base.y + y};
         else
-            self.target = {x: self.base.x + y, y: self.base.y + x};
+            self.target = {x: self.base.x + y, y: self.base.y + x + nearbyDefenders.length -1};
 
         self.log("Assigned " + JSON.stringify(self.target) + " as guard post");
     }

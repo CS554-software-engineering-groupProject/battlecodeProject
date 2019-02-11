@@ -590,6 +590,29 @@ movement.aStarPathfinding = (self, location, destination, accountForBots) => {
     const openQueue = [];
     const closedMap = [];
     const infoMap = [];
+    
+    movement.initAStarMaps(self, location, accountForBots, closedMap, infoMap);
+
+    openQueue.push({x: location.x, y: location.y});
+
+    while(openQueue.length > 0 && !foundDest) {
+        foundDest = movement.processAStarCell(self, destination, infoMap, openQueue, closedMap);
+    }
+
+    if(foundDest) {
+        self.path = movement.createPathFromInfoMap(location, destination, infoMap);
+        self.log(self.path);
+        return true;
+    } else {
+        self.log('Cannot get to target');
+        return false;
+    }
+}
+
+/**
+ * Helper method for `aStarPathFinding` to initialize the `closedMap` and `infoMap` parts of the algorithm
+ */
+movement.initAStarMaps = (self, location, accountForBots, closedMap, infoMap) => {
     const maxDist = 2*Math.pow(self.map.length,2);
     //Init infoMap with unusable/max values, init closedMap opposite of self.map so impassibe is "closed"
     for(let y = 0; y < self.map.length; y++) {
@@ -624,23 +647,8 @@ movement.aStarPathfinding = (self, location, destination, accountForBots) => {
             y: location.y
         }
     };
-
-    openQueue.push({x: location.x, y: location.y});
-
-    while(openQueue.length > 0 && !foundDest) {
-        foundDest = movement.processAStarCell(self, destination, infoMap, openQueue, closedMap);
-    }
-
-    if(foundDest) {
-        self.path = movement.createPathFromInfoMap(location, destination, infoMap);
-        self.log(self.path);
-        return true;
-    } else {
-        self.log('Cannot get to target');
-        return false;
-    }
-
 }
+
 
 /**
  * Helper function for A* pathfinding. Takes first cell coordinates off open queue as current coordinate, 
@@ -660,6 +668,7 @@ movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) =
     const current = openQueue.shift();
     const currCell = infoMap[current.y][current.x];
     const targetDirIndex = movement.getDirectionIndex(movement.getRelativeDirection(current, destination));
+    //Add to closedMap, as it is now being processed
     closedMap[current.y][current.x] = true;
     //Sort list by distance and then potentially direction - small optimization?
     moveablePositions.sort((a, b) => {
@@ -691,12 +700,14 @@ movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) =
            nextCoordinates.y < 0) {
             continue;
         }
+        //If coordinates not already processed, do stuff
         if(!closedMap[nextCoordinates.y][nextCoordinates.x]) {
-            console.log(nextCoordinates);
             const nextCell = infoMap[nextCoordinates.y][nextCoordinates.x];
+            //If destination found, we found a path! Update this last parent and return true to indicate successful completion
             if(movement.positionsAreEqual(nextCoordinates, destination)) {
                 nextCell.parent = current;
                 return true;
+            //Otherwise, update cell information and push onto openQueue if possible improvement on path
             } else {
                 gNext = currCell.g + movement.getDistance(current, nextCoordinates);
                 hNext = movement.getDistance(nextCoordinates, destination);

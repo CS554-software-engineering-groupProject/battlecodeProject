@@ -268,28 +268,382 @@ describe('Movement Helpers Unit Tests', function() {
 
     });
 
-    describe.only('A* tests', function() {
-        it('should do things', function(done) {
-            const fullMap =   
-            [[true,false,false,false,false,false],
-            [true,false,true,true,false,false],
-            [true,true,true,true,true,true],
-            [false,false,true,true,false,false],
-            [false,false,true,true,false,false],
-            [false,false,false,true,true,true]];
-            const myBot = new MyRobot();
-            myBot.map = fullMap;
-            myBot.target = {x: 5, y: 5};
-            myBot.me = {
-                id: 1,
-                unit: 2,
-                x: 0, 
-                y: 0
-            }
+    describe('A* Movement Tests', function() {
+        describe('initAStarMaps() tests', function() {
+            it('should set defaults for infoMap except for at starting location', function(done) {
+                let returnValue;
+                const closedMap = [];
+                const infoMap = [];
+                const fullMap =   
+                [[true,false,false,false,false,false],
+                [true,false,false,false,false,false],
+                [true,false,false,false,true,true],
+                [true,false,false,false,false,false],
+                [true,false,false,true,false,false],
+                [true,true,true,true,true,true]];
+                const expectedMaxDist = 2*Math.pow(fullMap.length, 2);
+                const expectedInfoCell = {
+                    f: expectedMaxDist,
+                    g: expectedMaxDist,
+                    h: expectedMaxDist,
+                    parent: {
+                        x: -1,
+                        y: -1
+                    }
+                }
+                const myBot = new MyRobot();
+                myBot.map = fullMap;
+                myBot.target = {x: 5, y: 5};
+                myBot.me = {
+                    id: 1,
+                    unit: 2,
+                    x: 0, 
+                    y: 0
+                }
 
-            movement.aStarPathfinding(myBot, myBot.target);
-            console.log(myBot.path);
-            done();
+
+
+                movement.initAStarMaps(myBot, myBot.me, false, closedMap, infoMap);
+
+                expect(infoMap.length).equals(fullMap.length);
+                for(let i = 0; i < infoMap.length; i++) {
+                    for(let j = 0; j < infoMap.length; j++) {
+                        if(i == myBot.me.x && j == myBot.me.y) {
+                            expect(infoMap[i][j]).to.not.eql(expectedInfoCell);
+                        } else {
+                            expect(infoMap[i][j]).to.eql(expectedInfoCell);
+                        }
+                        
+                    }
+                }
+
+                done();
+            });
+
+            it('should initialize closedMap properly depending on accountForBots value', function(done) {
+                let infoMap = [];
+                const closedMapJustTerrain = [];
+                const closedMapWithBots = [];
+                const fullMap =   
+                [[true,false,false,false,false,false],
+                [true,false,false,false,false,false],
+                [true,false,false,false,true,true],
+                [true,false,false,false,false,false],
+                [true,false,false,true,false,false],
+                [true,true,true,true,true,true]];
+                const myBot = new MyRobot();
+                myBot._bc_game_state = {shadow: null};
+                myBot._bc_game_state.shadow =
+                [[1,0,0,0,0,0],
+                [0,0,0,3,0,0],
+                [2,0,0,0,0,0],
+                [0,0,0,4,0,0],
+                [0,5,0,0,0,0],
+                [0,0,0,0,0,10]];
+                myBot.map = fullMap;
+                myBot.target = {x: 5, y: 5};
+                myBot.me = {
+                    id: 1,
+                    unit: 2,
+                    x: 0, 
+                    y: 0
+                }
+
+                movement.initAStarMaps(myBot, myBot.me, false, closedMapJustTerrain, infoMap);
+                expect(closedMapJustTerrain.length).equals(fullMap.length);
+                infoMap = [];
+                movement.initAStarMaps(myBot, myBot.me, true, closedMapWithBots, infoMap);
+                expect(closedMapJustTerrain.length).equals(fullMap.length);
+
+                for(let i = 0; i < infoMap.length; i++) {
+                    for(let j = 0; j < infoMap.length; j++) {
+                        const mapCell = fullMap[i][j];
+                        const botsCell = myBot._bc_game_state.shadow[i][j];
+                        expect(infoMap[i][j]).not.equals(mapCell);
+                        expect(infoMap[i][j]).not.equals(mapCell && botsCell === 0);     
+                    }
+                }
+
+                done();
+            });
+        });
+
+        describe.only('processAStarCell() tests', function() {  
+            it('should only add cells that are reachable, on map, and not on closedMap', function(done) {
+                const fullMap =   
+                [[true,false,true],
+                [true,true,false],
+                [false,true,true]]
+                const botMap =
+                [[1,0,0],
+                [2,0,0],
+                [0,0,0]];
+                const myBot = new MyRobot();
+                myBot._bc_game_state = {shadow: null};
+                myBot._bc_game_state.shadow = botMap;
+                myBot.map = fullMap;
+                myBot.target = {x: 2, y: 2};
+                myBot.me = {
+                    id: 1,
+                    unit: 2,
+                    x: 0, 
+                    y: 0
+                }
+                const reachable = movement.getMoveablePositions(myBot.me.unit);
+                const startLoc = {x: myBot.me.x, y: myBot.me.y}
+                const openQueue = [startLoc]
+                const infoMap = [];
+                const closedMap = []; 
+                movement.initAStarMaps(myBot, myBot.me, true, closedMap, infoMap)
+                returnValue = movement.processAStarCell(myBot, myBot.target, infoMap, openQueue, closedMap);
+
+                for(let i = 0; i < openQueue.length; i++) {
+                    const current = openQueue[i];
+                    const reachableMatches = reachable.filter(obj => {
+                        return obj.x === current.x && obj.y === current.y;
+                    })
+                    expect(reachableMatches.length).equals(1);
+                    expect(movement.isPassable(current, fullMap, botMap)).to.be.true;
+                    expect(closedMap[current.y][current.x]).to.be.false;
+                }
+
+                done();
+            });     
+            
+            it('next cells should be inserted in proper order', function(done) {
+                let returnValue;
+                const fullMap =   
+                [[true,false,false,false,false,false],
+                [true,true,true,false,false,false],
+                [true,false,false,false,true,true],
+                [false,false,false,false,false,false],
+                [false,false,true,true,false,false],
+                [false,false,false,true,true,true]];
+                const myBot = new MyRobot();
+                myBot.map = fullMap;
+                myBot.target = {x: 5, y: 5};
+                myBot.me = {
+                    id: 1,
+                    unit: 2,
+                    x: 0, 
+                    y: 0
+                }
+                const startLoc = {x: myBot.me.x, y: myBot.me.y}
+                const openQueue = [startLoc]
+                const infoMap = [];
+                const closedMap = [];
+
+                movement.initAStarMaps(myBot, myBot.me, false, closedMap, infoMap)
+                returnValue = movement.processAStarCell(myBot, myBot.target, infoMap, openQueue, closedMap);
+                expect(openQueue).to.not.include(startLoc);
+                for(let i = 1; i < openQueue.length; i++) {
+                    const first = openQueue[i-1];
+                    const second = openQueue[i];
+                    expect(movement.getDistance(startLoc, first)).to.be.at.least(movement.getDistance(startLoc, second));
+                }
+                
+                done();
+            });
+
+            it('closedMap and infoMap should be updated properly', function(done) {
+                let returnValue;
+                const fullMap =   
+                [[true,false,false,false,false,false],
+                [true,false,false,false,false,false],
+                [true,false,false,false,true,true],
+                [true,false,false,false,false,false],
+                [true,false,false,true,false,false],
+                [true,true,true,true,true,true]];
+                const myBot = new MyRobot();
+                myBot.map = fullMap;
+                myBot.target = {x: 5, y: 5};
+                myBot.me = {
+                    id: 1,
+                    unit: 2,
+                    x: 0, 
+                    y: 0
+                }
+
+                const startLoc = {x: myBot.me.x, y: myBot.me.y}
+                const openQueue = [startLoc]
+                const infoMap = [];
+                const closedMap = [];
+
+                movement.initAStarMaps(myBot, startLoc, false, closedMap, infoMap);
+                expect(closedMap[startLoc.y][startLoc.x]).to.be.false;
+                returnValue = movement.processAStarCell(myBot, myBot.target, infoMap, openQueue, closedMap);
+                //closedMap should be updated to add startLoc as true, indicating that it's been processed
+                expect(closedMap[startLoc.y][startLoc.x]).to.be.true;
+                for(let i = 0; i < openQueue.length; i++) {
+                    const current = openQueue[i];
+                    const gNew = movement.getDistance(startLoc, current);
+                    const hNew = movement.getDistance(current, myBot.target);
+                    const fNew = gNew+hNew;
+                    const expectedCell = {
+                        f: fNew,
+                        g: gNew,
+                        h: hNew,
+                        parent: startLoc
+                    }
+                    expect(infoMap[current.y][current.x]).to.eql(expectedCell)
+                }
+
+                done();
+            });
+
+            it('should return boolean indicating if destination found', function(done) {
+                let returnValue;
+                const fullMap =   
+                [[true,false,false,false,false,false],
+                [true,false,false,false,false,false],
+                [true,false,false,false,true,true],
+                [true,false,false,false,false,false],
+                [true,false,false,true,false,false],
+                [true,true,true,true,true,true]];
+                const myBot = new MyRobot();
+                myBot.map = fullMap;
+                myBot.target = {x: 5, y: 5};
+                myBot.me = {
+                    id: 1,
+                    unit: 2,
+                    x: 0, 
+                    y: 0
+                }
+
+                const startLoc = {x: myBot.me.x, y: myBot.me.y}
+                const openQueue = [startLoc]
+                let infoMap = [];
+                let closedMap = [];
+
+                movement.initAStarMaps(myBot, startLoc, false, closedMap, infoMap);
+                returnValue = movement.processAStarCell(myBot, {x: 0, y: 1}, infoMap, openQueue, closedMap);
+                expect(returnValue).to.be.true;
+
+                infoMap = [];
+                closedMap = [];
+                movement.initAStarMaps(myBot, startLoc, false, closedMap, infoMap);
+                returnValue = movement.processAStarCell(myBot, myBot.target, infoMap, openQueue, closedMap);
+                expect(returnValue).to.be.false;
+
+                done();
+            });
+        });
+
+        describe('aStarPathfinding() tests', function() {
+            it('should return false location and destination are identical', function(done) {
+                let returnValue;
+                const myBot = new MyRobot();
+                myBot.target = {x: 0, y: 0};
+                myBot.me = {
+                    id: 1,
+                    unit: 2,
+                    x: 0, 
+                    y: 0
+                }
+
+                returnValue = movement.aStarPathfinding(myBot, myBot.me, myBot.target, false);
+                expect(returnValue).to.be.false;
+                expect(myBot.path).to.eql([]);
+                done();
+            });
+
+            
+            
+            it('should return false if no path possible', function(done) {
+                let returnValue;
+                const fullMap =   
+                [[true,false,false,false,false,false],
+                [false,false,false,false,false,false],
+                [false,false,false,false,true,true],
+                [false,false,false,false,false,false],
+                [false,false,true,true,false,false],
+                [false,false,false,true,true,true]];
+                const myBot = new MyRobot();
+                myBot.map = fullMap;
+                myBot.target = {x: 5, y: 5};
+                myBot.me = {
+                    id: 1,
+                    unit: 2,
+                    x: 0, 
+                    y: 0
+                }
+
+                returnValue = movement.aStarPathfinding(myBot, myBot.me, myBot.target, false);
+                expect(returnValue).to.be.false;
+                expect(myBot.path).to.eql([]);
+                done();
+            });
+
+            it('should have different paths if accounting for bots', function(done) {
+                let returnValue;
+                let pathJustTerrain;
+                let pathWithBots;
+                const fullMap =   
+                [[true,false,false,false,false,false],
+                [true,false,false,false,false,false],
+                [true,false,false,false,true,true],
+                [true,false,false,false,false,false],
+                [true,false,false,true,false,false],
+                [true,true,true,true,true,true]];
+                const myBot = new MyRobot();
+                const anotherBot = new MyRobot();
+                myBot._bc_game_state = anotherBot._bc_game_state = {shadow: null};
+                myBot._bc_game_state.shadow = anotherBot._bc_game_state.shadow =  
+                [[1,0,0,0,0,0],
+                [0,0,0,0,0,0],
+                [2,0,0,0,0,0],
+                [0,0,0,0,0,0],
+                [0,0,0,0,0,0],
+                [0,0,0,0,0,0]];
+                myBot.map = fullMap;
+                myBot.target = {x: 5, y: 5};
+                myBot.me = {
+                    id: 1,
+                    unit: 2,
+                    x: 0, 
+                    y: 0
+                }
+                anotherBot.me = {
+                    id: 2,
+                    unit: 2,
+                    x: 0, 
+                    y: 2
+                }
+
+                returnValue = movement.aStarPathfinding(myBot, myBot.me, myBot.target, false);
+                expect(returnValue).to.be.true;
+                pathJustTerrain = myBot.path.splice(0);
+                returnValue = movement.aStarPathfinding(myBot, myBot.me, myBot.target, true);
+                expect(returnValue).to.be.true;
+                pathWithBots = myBot.path.splice(0);
+                expect(pathJustTerrain).to.eql(pathJustTerrain)
+                expect(pathJustTerrain).to.not.eql(pathWithBots);
+
+                done();
+            });
+
+
+            it('should find optimal path in minimal moves', function(done) {
+                const fullMap =   
+                [[true,false,false,false,false,false],
+                [true,false,true,true,false,false],
+                [true,true,true,true,true,true],
+                [false,false,true,true,false,false],
+                [false,false,true,true,false,false],
+                [false,false,false,true,true,true]];
+                const myBot = new MyRobot();
+                myBot.map = fullMap;
+                myBot.target = {x: 5, y: 5};
+                myBot.me = {
+                    id: 1,
+                    unit: 2,
+                    x: 0, 
+                    y: 0
+                }
+
+                movement.aStarPathfinding(myBot, myBot.me, myBot.target, false);
+                done();
+            });
         });
     });
 });

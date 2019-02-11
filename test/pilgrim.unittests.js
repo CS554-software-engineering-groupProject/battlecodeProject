@@ -7,7 +7,7 @@ const expect = chai.expect;
 
 describe('Pilgrim Unit Tests', function() {
     describe('Role objectives tests', function(done) {
-        it('MINERS without a target should identify and move towards a resource', function(done) {
+        it.skip('MINERS without a target should identify and move towards a resource', function(done) {
             let returnValue;
             let target;
             const myBot = new MyRobot();
@@ -64,7 +64,7 @@ describe('Pilgrim Unit Tests', function() {
             done();
         });
 
-        it.only('MINERS at capacity for either karbonite or fuel should be able to deposit resources', function(done) {
+        it('MINERS at capacity for either karbonite or fuel should be able to deposit resources', function(done) {
             let returnValue;
             let target;
             const myBot = new MyRobot();
@@ -101,7 +101,7 @@ describe('Pilgrim Unit Tests', function() {
                               [1,0,0,0,0],
                               [0,0,0,0,0]];
 
-            console.log(myBot.getVisibleRobots());
+            //console.log(myBot.getVisibleRobots());
 
             done();
         });
@@ -143,7 +143,7 @@ describe('Pilgrim Unit Tests', function() {
                               [1,0,0,0,0],
                               [0,0,0,0,0]];
 
-            console.log(myBot.getVisibleRobots());
+            //console.log(myBot.getVisibleRobots());
 
             done();
         });

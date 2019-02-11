@@ -149,7 +149,6 @@ pilgrim.findClosestResource = (position, depotMap, occupiedResources) => {
                 const occupiedArray = occupiedResources.filter(depot => {
                     return depot.x === x && depot.y === y;
                 });
-                console.log(occupiedArray);
                 //If no matches (occupiedArray is empty), set as potential position
                 if(occupiedArray.length === 0) {
                     closest.x = x;

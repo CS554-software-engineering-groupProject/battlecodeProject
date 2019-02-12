@@ -1,10 +1,11 @@
 import {SPECS} from "battlecode";
-const movement = {}
+const movement = {};
 
 //Array for getting direction after rotation
 movement.directions = [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 0 }, { x: 1, y: -1 }, { x: 0, y: -1 }, { x: -1, y: -1 }, { x: -1, y: 0 }, { x: -1, y: 1 }]
 
-/*Checks whether the x and y values of position A and B are equivalent
+/**
+*Checks whether the x and y values of position A and B are equivalent
 *Input: A - a 'position/ location' object {x, y}
 *       B - a 'position/ location' object {x, y}
 *Output:    retVal - true if x and y matches, false otherwise
@@ -13,7 +14,8 @@ movement.positionsAreEqual = (A, B) =>{
     return (A.x === B.x && A.y === B.y);
 }
 
-/*Return relative position of point B from point A
+/**
+*Return relative position of point B from point A
 *Input: A - a 'position/ location' object {x, y}
 *       B - a 'position/ location' object {x, y}
 *Output:    retVal - an object {x, y}, containing how many x and y steps needed from A to reach B
@@ -24,7 +26,8 @@ movement.getRelativePosition = (A, B) => {
     return {x, y};
 }
 
-/*Return relative direction of B from point A
+/**
+*Return relative direction of B from point A
 *Input: A - a 'position/ location' object {x, y}
 *       B - a 'position/ location' object {x, y}    
 *Output:    retVal - an object {x, y}, which is the relative direction of B from point A
@@ -45,7 +48,8 @@ movement.getRelativeDirection = (A, B) => {
     return {x, y};
 }
 
-/*Get index of the element matching direction in directions
+/**
+*Get index of the element matching direction in directions
 *Input: direction   - a 'direction' object {x, y}
 *Output:    retVal  - the index of the element matching direction in directions 
 *                   - OR -1 if direction has invalid x, y values
@@ -64,7 +68,8 @@ movement.getDirectionIndex = (direction) => {
     return -2;
 }
 
-/*Get result of n-times rotation of the direction passed in
+/**
+*Get result of n-times rotation of the direction passed in
 *Input: direction   - a 'direction' object {x, y}
 *       n           - number of rotations can be clockwise (+ value), counter-clockwise (-value), or 0 (no movement)
 *Output:    retVal  - an object {x, y}, which is one of the 'direction' element in movement.directions
@@ -103,7 +108,8 @@ movement.rotateDirection = (direction, n) => {
     return (movement.directions[currIndex]);
 }
 
-/*Return difference of x-coord and y-coord between A and B
+/**
+*Return difference of x-coord and y-coord between A and B
 *Input: A - a 'position/ location' object {x, y}
 *       B - a 'position/ location' object {x, y}
 *Output:    retVal - an object {x, y}, where x is the difference between A.x and B.x and y is the difference between A.y and B.y
@@ -116,7 +122,8 @@ movement.getDistanceXY = (A, B) => {
     return {x, y};
 }
 
-/*Return squared straight line distance between coord A and coord B
+/**
+*Return squared straight line distance between coord A and coord B
 *Squared distance as to not introduce inaccuracy, use it as relative distance
 *Input: A - a 'position/ location' object {x, y}
 *       B - a 'position/ location' object {x, y}
@@ -126,8 +133,8 @@ movement.getDistance = (A, B) => {
     return ((A.x-B.x)*(A.x-B.x)+(A.y-B.y)*(A.y-B.y));
 }
 
-/*Checks in which map quadrant the given coordinate is in
-
+/**
+*Checks in which map quadrant the given coordinate is in
 *Used for guessing starting/ spawning location of enemy castle, and (Advanced) influence 'Pioneer Pilgrims' decision 
 *e.g. prefer building churches in enemy quadrant (steal resource, proxy church for building units closer to enemy base) or friendly quadrant (safer) - in case castle is close to midline
 *Input: location    - a 'position/ location' object {x, y}
@@ -158,24 +165,35 @@ movement.checkQuadrant = (location, fullmap) => {
     }
 }
 
-/*Calculate and return enemy castle's potential starting location
+/**
+*Calculate and return enemy castle's potential starting location
 *Input:     myCastleLocation    -   the Castle's 'position/ location' object, should be self.me
 *           fullMap             -   the full map, Should be self.map or or self.getPassableMap()
-*Output:    RetVal  -   An array containing 3 {x, y} objects, 2 of which are the potential 'location' of enemy Castle mirrorring base, 
-                        and the third a position of an enemy quadrant to check if the mirror castle is destroyed
+*Output:    RetVal  -   An array containing 2 {x, y} objects, One is the enemy castle mirroring myCastleLocation, 
+                        and the second a position of an enemy quadrant to check if the mirror castle is destroyed
 *
 *TODO: Have the team's castles communicate at start of game to potentially improve accuracy. 
 *Given the team's starting castles are in different quadrants, can accurately calculate location of enemy castle
 */
 movement.getAttackerPatrolRoute = (myCastleLocation, fullMap) => {
     const {x, y} = myCastleLocation;
+    const isHorizontal = movement.isHorizontalReflection(fullMap);
     const Ax = fullMap.length - x - 1;
     const Ay = fullMap.length - y - 1;
 
-    return [{x: Ax, y: y}, {x: x, y: Ay}, {x: Ax, y: Ay}];
+    if(isHorizontal)
+    {
+        return [{x: x, y: Ay}, {x: Ax, y: Ay}];
+    }
+    else
+    {
+        return [{x: Ax, y: y}, {x: Ax, y: Ay}];
+    }
+    
 }
 
-/*Check and return whether tile at specified coordinate is passable
+/**
+*Check and return whether tile at specified coordinate is passable
 *Used for movement, placing built/ spawned units
 *Input:     location    -   the robot's 'position/ location' object, should be self.me
 *           fullMap     -   the full map, should be self.map or self.getPassableMap()
@@ -193,7 +211,8 @@ movement.isPassable = (location, fullMap, robotMap) => {
     return((robotMap[y][x] === 0) && (fullMap[y][x])); //Returns true only if tile is empty and is passable
 }
 
-/*Return an array of resource depot locations sorted by distance from location passed as parameter
+/**
+*Return an array of resource depot locations sorted by distance from location passed as parameter
 *Use Case: for pioneers?
 *Might exceed chess clock? remove if so...
 *TODO: Might be unnecessary
@@ -236,62 +255,8 @@ movement.getSortedResourceList(location, resourceMap)
 }
 */
 
-/*A more simple moveTowards, move to a nearby passable adjacent tile, hopefully closer to destination
-*Input: self        -   The robot unit
-*       destination -   The destination 'position/ location' object {x, y}
-*Output:    retVal  -   A 'position/ location' object {x, y} which is adjacent to self.me 
-*                   -   OR self.me if they are all not passable
-*version of dumberMoveTowards with robot not recording a previous, might get stuck in corner
-*/
-/*
-movement.dumberMoveTowards = (self, destination) => {
-    let fullMap = self.map;
-    let robotMap = self.getVisibleRobotMap();
-    let direction = getRelativeDirection(self.me, destination);
-    let {x, y} = self.me;
-    let candidate = {x : (x+direction.x), y: (y+direction.y)}
-
-
-    let initDirection = initDirection;
-    do{
-        if(isPassable(candidate, fullMap, robotMap))
-            return candidate;
-
-        direction = movement.rotateDirection(direction, 1);
-    }while(direction !== initDirection);
-
-    return self.me;
-}
-*/
-
-/*The most simplest moveTowards, get location of a nearby passable adjacent tile, hopefully closer to destination
-*Input:     location    -   the robot's 'position/ location' object, should be self.me
-*           fullMap     -   the full map, should be self.map or self.getPassableMap()
-*           robotMap    -   robot map, should be self.getVisibleRobotMap()
-*           destination -   The destination 'position/ location' object {x, y}
-*           previous    -   A 'position/ location' object {x, y}, should be self.previous/ the position the robot was in the previous turn
-*Output:    retVal          -   A 'position/ location' object {x, y} which is adjacent to self.me 
-*                           -   OR the passed in location if they are all not passable
-*/
-/*
-movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous, previousprevious) => {
-    let direction = movement.getRelativeDirection(location, destination);
-    let {x, y} = location;
-    let candidate = {x : (x+direction.x), y: (y+direction.y)}
-
-    do{
-        candidate = {x : (x+direction.x), y: (y+direction.y)};
-        if(movement.isPassable(candidate, fullMap, robotMap) && !(movement.positionsAreEqual(candidate, previous)) && !(movement.positionsAreEqual(candidate, previousprevious)))
-            return candidate;
-
-        direction = movement.rotateDirection(direction, 1);
-    }while(!(movement.positionsAreEqual(candidate, previous)));
-
-    return location;
-}
-*/
-
-/*The most simplest moveTowards, get location of a nearby passable adjacent tile, hopefully closer to destination
+/**
+*The most simplest moveTowards, get location of a nearby passable adjacent tile, hopefully closer to destination
 *Input:     location            -   the robot's 'position/ location' object, should be self.me
 *           fullMap             -   the full map, should be self.map or self.getPassableMap()
 *           robotMap            -   robot map, should be self.getVisibleRobotMap()
@@ -332,59 +297,8 @@ movement.dumberMoveTowards = (location, fullMap, robotMap, destination, previous
     return location;
 }
 
-/*More complex pathfinding algorithm to check passable path of a robot's current location/ position towards a destination and get the closest possible position to destination
-*
-*/
-/*
-movement.pathFinding = (self, destination) => {
-    return;
-}
-movement.pathfinding = (self, destination) => {
-    const maxDist = SPECS.UNITS[self.me.unit].SPEED;
-    let distance = getDistance(self.me, destination);
-    const maxFuelCost = (distance * SPECS.UNITS[self.me.unit].FUEL_PER_MOVE);
-
-    //Looking through 'API questions' discord channel, 'karbonite' and 'fuel' seems to be the way to get global team's karbonite and fuel
-    if(fuel < maxFuelCost)
-        distance = Math.floor(fuel/FUEL_PER_MOVE);
-
-    let {dx, dy} = destination;
-    let direction = getRelativeDirection(self.me, destination);
-    let x = -1;
-    let y = -1;
-
-    //Get number of XY tile moves to get to the location in moverange that is closest to destination
-    if(distance > maxDist)
-    {
-        let {distX, distY} = getDistanceXY(self.me, destination);
-        let rDist = Math.sqrt(maxDist);
-
-        if(distX > rDist && distY > rDist)
-        {
-            dx = rDist;
-            dy = rDist;
-        } 
-        else if(distX < rDist && distY > rDist)
-        {
-            dy = maxDist-dx;
-        }
-        else if(distX > rDist && distY < rDist)
-        {
-            dx = maxDist-dy;
-        }
-
-        x = dx * direction.x;
-        y = dy * direction.y;
-    }
-    x += self.me.x;
-    y += self.me.y;
-
-    //Goal is the location in moverange that is closest to destination, may be impassable
-    let goal = {x,y};
-}
-*/
-
-/*A simple movement function for robot movement from point A to Point B,
+/**
+*A simple movement function for robot movement from point A to Point B,
 *Input: self        -   The robot unit
 *       destination -   The destination 'position/ location' object {x, y}, assumes passable
 *Output:    retVal  -   A 'position/ location' object {x, y} within moverange of robot location, which is passable and closest to destination
@@ -462,6 +376,89 @@ movement.findAdjacentBase = (self) => {
     } else {
         return null;
     }
+}
+
+/**
+*Function to check whether map is created using horizontal or vertical reflection,
+*Input: fullMap     -  the full map, should be self.map or self.getPassableMap()
+*Output:    retVal  -   false if the map is a horizontal reflection
+*                   -   OR true if it is a vertical reflection 
+* Not accounted for: Case for when the map is both horizontally and vertically reflected
+*/
+movement.isHorizontalReflection = (fullMap) => {
+    let y = 0;
+    let x = 0;
+    const length = fullMap.length;
+    let mirror = length-1;
+
+    while(y < length)
+    {
+        while(x < mirror)
+        {
+            if(fullMap[y][x] !== fullMap[y][mirror])
+            {
+                return true
+            }
+            ++x;
+            --mirror;
+        }
+        ++y;
+        mirror = length - 1;
+        x = 0;
+    }
+    return false;
+}
+
+/**
+*Calculate and return enemy castle's potential starting location
+*Input:     myCastleLocation    -   the Castle's 'position/ location' object, should be self.me/ location of unit's base
+*           fullMap             -   the full map, Should be self.map or or self.getPassableMap()
+*Output:    RetVal  -   An {x, y} object, which should be the position of the mirror enemy castle to myCastleLocation
+*/
+movement.getMirrorCastle = (myCastleLocation, fullMap) => {
+    const {x, y} = myCastleLocation;
+    const Ax = fullMap.length - x - 1;
+    const Ay = fullMap.length - y - 1;
+    const isHorizontal = movement.isHorizontalReflection(fullMap);
+
+    if(isHorizontal)
+    {
+        return {x: x, y: Ay}
+    }
+    else
+    {
+        return {x: Ax, y: y};
+    }
+}
+
+/**
+* Calculate and return enemy castle's potential starting location
+*Input:     alliedCastleLocations       -   An array of 'position/ location' objects for the allied castles, should start with the calling castle's location followed by any allied castles
+*           fullMap                     -   the full map, Should be self.map or or self.getPassableMap()
+*Output:    RetVal  -   An array of {x, y} objects, which should be positions of enemy castles
+*/
+movement.getEnemyCastleLocations = (alliedCastleLocations, fullMap) => {
+    let enemyCastleLocations = [];
+    for(let i = 0; i < alliedCastleLocations.length; ++i)
+    {
+        enemyCastleLocations.push(movement.getMirrorCastle(alliedCastleLocations[i], fullMap));
+    }
+    return enemyCastleLocations;
+}
+
+/**
+*Calculate and return enemy castle's potential starting location
+*Input:     myCastleLocation    -   the Castle's 'position/ location' object, should be self.me/ self.base
+*           fullMap             -   the full map, Should be self.map or or self.getPassableMap()
+*Output:    RetVal  -   The diagonal mirror of myCastleLocation, should be in an enemy quadrant
+*Standalone helper function, to obtain the diagonal mirror patrol position
+*/
+movement.getDiagonalPatrolPosition = (myCastleLocation, fullMap) => {
+    const {x, y} = myCastleLocation;
+    const Ax = fullMap.length - x - 1;
+    const Ay = fullMap.length - y - 1;
+
+    return  {x: Ax, y: Ay};
 }
 
 /**
@@ -551,7 +548,6 @@ movement.adjustPath = (self, newOrigin) => {
         self.path = oldPath;
         return false;
     }
-
 }
 
 /**
@@ -764,5 +760,4 @@ movement.createPathFromInfoMap = (location, destination, infoMap) => {
     return pathArray;
 }
 
-
-export default movement
+export default movement;

@@ -201,20 +201,45 @@ prophet.fleeBehavior = (self, visibleRobots) => {
         const directionIndex = movement.getDirectionIndex(direction);
         const moveablePositions = movement.getMoveablePositions(self);
 
-        //TODO check for other potential tile at dirIndex+1, dirIndex-1
+        //Filter for opposite directions perpendicular/ away potential moveable position and is passable
         moveablePositions.filter((location) => {
-            if(directionIndex === location.dirIndex && location.r2 === SPECS.UNITS[self.me.unit].SPEED)
+            if((directionIndex <= location.dirIndex + 2 && directionIndex >= location.dirIndex - 2) 
+                && location.r2 <= SPECS.UNITS[self.me.unit].SPEED
+                && movement.isPassable(location))
                 return true;
 
             return false;
         });
 
-        if(moveablePositions.length > 0)
+        //No possible location to flee to, return false
+        if(moveablePositions.length === 0)
+        {
+            return false;
+        }
+
+        let minDiffDir = 3;
+        let maxDist = 0;
+        let bestLoc = null;
+
+        //Get moveable position with lower than minDiffDir and greater than maxDist
+        for(let i = 0; i < moveablePositions.length; ++i)
+        {
+            const current = moveablePositions[i];
+            const diffDir = Math.abs(current.dirIndex-directionIndex);
+            if(diffDir <= minDiffDir && current.r2 >= maxDist)
+            {
+                bestLoc = {x: current.x, y: current.y};
+                minDiffDir = diffDir;
+                maxDist = current.r2;
+            }
+        }
+
+        if(bestLoc != null)
         {
             //There is a fleeing coord
             //Store retreat position and current position in path (for backtrack after fleeing behavior is done)
-            self.path.unshift(moveablePositions[0], self.me);
-            self.log("Prophet " + self.id + "Fleeing from attacker" + attacker.unit + " " + attacker.id + " to x: " + moveablePositions[0].x + ", y: " + moveablePositions[0].y);
+            self.path.unshift(bestLoc, self.me);
+            self.log("Prophet " + self.id + "Fleeing from attacker" + attacker.unit + " " + attacker.id + " to x: " + bestLoc.x + ", y: " + bestLoc[0].y);
             return true;
         }
         return false;

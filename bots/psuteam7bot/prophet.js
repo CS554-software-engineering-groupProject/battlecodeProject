@@ -41,12 +41,13 @@ prophet.doAction = (self) => {
             if(robotElement.team === self.me.team && robotElement.unit === self.me.unit)
             {
                 const distance = movement.getDistance(self.base, robotElement);
-                return distance <= 16;
+                //30, assuming defender moved at max speed (r^2= 4) for 5 turns (4*5 = 20), + 10 to account for the possibility of prophet spawning in different starting tiles
+                return distance < 30;
             }
         });
 
-        //2 defenders towards mirror castle
-        if(nearbyDefenders.length < 3)
+        //2 defenders towards mirror castle, should be enough to kill a crusader in 2 turns before it gets to attack range
+        if(nearbyDefenders.length < 2)
         {
             self.log("Base defenders = " + JSON.stringify(nearbyDefenders.length) + ", Assigned as a defender");
             self.role = "DEFENDER";
@@ -75,7 +76,24 @@ prophet.doAction = (self) => {
 prophet.takeDefenderAction = (self) =>  {
     self.log("DEFENDER prophet " + self.id + " taking turn");
     
-    //Limited movement towards enemy castle
+    //Guarding behavior, doesn't flee, doesn't check fuel before attempting to attack
+    const attackable = combat.getAttackableEnemies(self);
+
+    if(attackable.length > 0)
+    {
+        //Compensate guard post movement turn loss due to attacking
+        if(self.me.turn < 5)
+        {
+            --self.me.turn;
+        }
+
+        let attacking = attackable[0];
+        self.log("Attacking " + combat.UNITTYPE[attacking.unit] + " at " + attacking.x + ", " +  attacking.y);
+        return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
+    }
+
+
+    //Limited movement towards enemy castle (movement towards guard post)
     if(self.me.turn < 5)
     {
         if(self.path.length === 0)
@@ -90,16 +108,6 @@ prophet.takeDefenderAction = (self) =>  {
 
         self.log('DEFENDER prophet ' + self.id + ' moving towards guard post, Current: [' + self.me.x + ',' + self.me.y + ']')
         return movement.moveAlongPath(self);
-    }
-
-    //Guarding behavior, doesn't flee, doesn't check fuel before attempting to attack
-    const attackable = combat.getAttackableEnemies(self);
-
-    if(attackable.length > 0)
-    {
-        let attacking = attackable[0];
-        self.log("Attacking " + combat.UNITTYPE[attacking.unit] + " at " + attacking.x + ", " +  attacking.y);
-        return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
     }
     
     self.log("DEFENDER prophet guarding at x: " + self.me.x + ", y: " + self.me.y);

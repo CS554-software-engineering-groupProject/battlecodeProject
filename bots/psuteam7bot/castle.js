@@ -74,12 +74,13 @@ castle.findPosition = (self) => {
         //store y co-ordinate of the castle
         return {y : this.me.y}
     }
+    return;
 }
-/** Castle should calculate the locations of the enemy castles using the recorded postions
+/** Castle should calculate the locations of the enemy castles using the recorded postions. Use mirror castle method. 
  * Input : the location of the friendly castles
  * Output: mirrored images of the enemy castles
  */
-castle.calculateLocation = () => {
+castle.mirrorCastle = (myLocation, fullMap) => {
 
 }
 

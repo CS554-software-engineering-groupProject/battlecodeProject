@@ -15,11 +15,14 @@ class MyRobot extends BCAbstractRobot {
         this.role = "UNASSIGNED";                        //Role for unit (for strategy purposes)
         this.target = null;                              //Target destionation like {x: _, y: _}  
         this.base = null;                                //Closest (or original) castle/church like {x: _, y: _} 
+        this.teamCastles = [];                           //Array to hold info about friendly castles
+        this.enemyCastles = [];                          //Array to hold info about identified enemy castles
         this.path = [];                                  //Array representing sequence of moves towards target. `path.pop()` gets next move
         this.previous = null;                            //Previous tile traversed by unit like {x: _, y: _}, initialized to the spawning/ starting location
         this.potentialEnemyCastleLocation = null;
         this.occupiedResources = [];
         this.squadSize = null;                           //Squad size for squad movements
+        this.castleBuildQueue = [];                      //Queue for what units the castle should build. NOT related to which castles should build when
     }
     turn() {
         if(this.previous == null) {

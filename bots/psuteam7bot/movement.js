@@ -212,48 +212,39 @@ movement.isPassable = (location, fullMap, robotMap) => {
 }
 
 /**
-*Return an array of resource depot locations sorted by distance from location passed as parameter
-*Use Case: for pioneers?
-*Might exceed chess clock? remove if so...
-*TODO: Might be unnecessary
-*/
-/*
-movement.getSortedResourceList(location, resourceMap)
-{
-    const length = resourceMap.length;
-    var sortedArr = [];
-    var distArr = [];
-    var currentDist;
+ * Method to get an array of resource locations within a specified distance, sorted by distance.
+ * 
+ * @param location Position to check from
+ * @param maxDistance Maximum allowed distance from location
+ * @param resourceMap Either `karbonite_map` or `fuel_map`
+ * @return Array of resource locations sorted by distance (i.e. targets[0] will be closest)
+ */
+movement.getResourcesInRange = (location, maxDistance, resourceMap) => {
+    const targets = [];
+    let currentDist;
 
-    for (let y = 0; y < length; ++y) 
+    for (let y = 0; y < resourceMap.length; ++y) 
     {
-        for (let x = 0; x < length; ++x) 
+        for (let x = 0; x < resourceMap.length; ++x) 
         {
-            if (resourceMap[y][x]) 
+            if (resourceMap[y][x])
             {
                 currentDist = movement.getDistance(location, {x, y});
-
-                if(sortedArr.length === 0)
-                {
-                    sortedArr = [{x, y}];
-                    distArr = [currentDist];
-                }
-
-                for(let i = 0; i < sortedArr.length; ++i)
-                {
-                    if(currentDist < distArr[i])
-                    {
-                        sortedArr.splice(i, 0, {x, y});
-                        distArr.splice(i, 0, currentDist);
-                        break;
-                    }
-                }
+                if(currentDist <= maxDistance) {
+                    targets.push({x: x, y: y, distance: currentDist})
+                }                
             }
         }
     }
-    return sortedArr;
+    targets.sort((a,b) => {
+        if(a.distance < b.distance) {
+            return -1;
+        } else {
+            return 1;
+        }
+    });
+    return targets;
 }
-*/
 
 /**
 *The most simplest moveTowards, get location of a nearby passable adjacent tile, hopefully closer to destination

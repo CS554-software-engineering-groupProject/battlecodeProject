@@ -1,5 +1,7 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
 import movement from './movement.js';
+import combat from './combat.js';
+import communiation from './communication.js';
 
 const pilgrim = {};
 pilgrim.maxKarbonite = SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY;
@@ -22,6 +24,11 @@ pilgrim.doAction = (self) => {
         self.log("Set base as " + JSON.stringify(self.base));
         //Gets nearby base, checks turn
         self.role = 'PIONEER'
+        communiation.initTeamCastleInformation(self);
+        //Set target base on castle signal
+        const {x, y} = communiation.signalToPosition(self.getRobot(self.teamCastles[0].id).signal, self.map)
+        self.target = {x: x, y: y};
+        self.log("pilgrim MINER " + self.id + " targeting depot at [" + self.target.x + "," + self.target.y + "]")
     }
 
     if(self.role === 'MINER') {

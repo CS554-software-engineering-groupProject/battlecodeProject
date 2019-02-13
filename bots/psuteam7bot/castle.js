@@ -65,12 +65,14 @@ castle.findPosition = (self) => {
         return bots.team === self.me.team && bots.units === 0;
     })
     let turn = 0;
-    let storeFriendlyCastles;
+    //let storeFriendlyCastles;
     if(turn == 2){
-        //store the x co-ordinate of friendly castles;
+        //store x co-ordinate of the castle
+        return {x: this.me.x}
     }
     else if (turn == 3){
-        //store the y co-ordinates of friendly castles;
+        //store y co-ordinate of the castle
+        return {y : this.me.y}
     }
 }
 /** Castle should calculate the locations of the enemy castles using the recorded postions

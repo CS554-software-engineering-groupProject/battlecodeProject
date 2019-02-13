@@ -94,7 +94,7 @@ prophet.takeDefenderAction = (self) =>  {
 
 
     //Limited movement towards enemy castle (movement towards guard post)
-    if(self.me.turn < 4)
+    if(self.me.turn < 5)
     {
         if(self.path.length === 0)
         {

@@ -3,6 +3,7 @@ import pilgrim from './pilgrim.js';
 import prophet from './prophet.js';
 import castle from './castle.js';
 import church from './church.js';
+import crusader from './crusader.js';
 import combat from './combat.js';
 import movement from './movement.js';
 import communication from './communication.js';
@@ -38,6 +39,9 @@ class MyRobot extends BCAbstractRobot {
                     break;
                 case SPECS.PROPHET:
                     this.myType = prophet;
+                    break;
+                case SPECS.CRUSADER:
+                    this.myType = crusader;
                     break;
             }
         }

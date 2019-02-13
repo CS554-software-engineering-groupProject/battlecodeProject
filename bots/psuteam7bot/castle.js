@@ -44,8 +44,8 @@ castle.findUnitPlace = (self, unitType) => {
  * Output: returnPosition = return value containing the positions of the friendly castle       
  *  */
 
-castle.findPosition = (self, position) => {
-   if(this.unit === 0 &&  bots.team === self.me.team){
+castle.recordPosition = (self, position) => {
+   if(this.unit === 0 && bots.team === self.me.team){
        let turn = 0;
        if(turn == 1){
            const x = self.castle_talk(x);
@@ -56,6 +56,23 @@ castle.findPosition = (self, position) => {
     }
 }
 
+/**Find positions of the friendly castles. 
+ * Input: self, this is the reference to the object to the calling method.
+ * Output: positions of other friendly castles.
+ */
+castle.findPosition = (self) => {
+    const bots = self.get_visible_robots().filter(bots =>{
+        return bots.team === self.me.team && bots.units === 0;
+    })
+    let turn = 0;
+    let storeFriendlyCastles;
+    if(turn == 2){
+        //store the x co-ordinate of friendly castles;
+    }
+    else if (turn == 3){
+        //store the y co-ordinates of friendly castles;
+    }
+}
 /** Castle should calculate the locations of the enemy castles using the recorded postions
  * Input : the location of the friendly castles
  * Output: mirrored images of the enemy castles
@@ -68,19 +85,19 @@ castle.calculateLocation = () => {
  * Use of this.getVisibleRobots() to see the robots in the vicinity 
  * 
  * Input: self, this is the reference to the object to the calling method.
- * Output: message from 
+ * Output: message from other castles
  */
 castle.checkMessage = (self) => {
     const visibleRobots = this.getVisibleRobotMap().filter(bots =>{
         return bots.team === self.me.team && bots.unit === 0;
-        const filterdCastle;
-        for(i = 0; i< filterdCastle ; i ++)
-        {  
-           const id = 0;
-           this.castle_talk(id);
-           return castle.checkMessage(self)
-        }
     })
+    const filterdCastle;
+    for(i = 0; i< filterdCastle ; i ++)
+    {  
+        const id = 0;
+        this.castle_talk(id);
+        return castle.checkMessage(self)
+    }
     return;
 }
 

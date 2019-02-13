@@ -81,7 +81,19 @@ castle.findPosition = (self) => {
  * Output: mirrored images of the enemy castles
  */
 castle.mirrorCastle = (myLocation, fullMap) => {
-
+    const {x, y} = myLocation;
+    const Ax = fullMap.length - x - 1;
+    const Ay = fullMap.length - y - 1;
+    const isHorizontal = movement.isHorizontalReflection(fullMap);
+    
+    if(isHorizontal)
+    {
+        return {x: x, y: Ay}
+    }
+    else
+    {
+        return {x: Ax, y: y};
+    }
 }
 
 /** Each castle should be able to check for messages from their friendly castles 

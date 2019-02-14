@@ -71,10 +71,10 @@ castle.findPosition = (self) => {
         self.teamCastles.forEach(teamCastle =>{
             if(foundCaslte.id == teamCastle.id){
                 if(turn == 2){
-                    teamCastle.x = foundCaslte.x;
+                    teamCastle.x = foundCaslte.castle_talk;
                 }
                 if(turn == 3){
-                    teamCastle.y = foundCaslte.y;
+                    teamCastle.y = foundCaslte.castle_talk;
                 }
             }
         })

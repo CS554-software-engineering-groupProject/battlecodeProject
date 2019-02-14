@@ -17,7 +17,7 @@ castle.doAction = (self) => {
     {   
         return castle.findUnitPlace(self, 'PILGRIM');
     }
-    else
+    else 
     {
         //Check if there are enough resources to produce this unit.
        if(self.fuel >= SPECS['PROPHET'].CONSTRUCTION_FUEL && self.karbonite >= SPECS['PROPHET'].CONSTRUCTION_KARBONITE){
@@ -70,14 +70,14 @@ castle.findPosition = (self) => {
     let turn = self.me.turn;
     //let storeFriendlyCastles;
 
-    bots.forEach(foundCaslte => {
+    bots.forEach(foundCastle => {
         self.teamCastles.forEach(teamCastle =>{
-            if(foundCaslte.id == teamCastle.id){
+            if(foundCastle.id == teamCastle.id){
                 if(turn == 2){
-                    teamCastle.x = foundCaslte.castle_talk;
+                    teamCastle.x = foundCastle.castle_talk;
                 }
                 if(turn == 3){
-                    teamCastle.y = foundCaslte.castle_talk;
+                    teamCastle.y = foundCastle.castle_talk;
                 }
             }
         })

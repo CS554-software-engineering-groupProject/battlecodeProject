@@ -1,4 +1,6 @@
 import {SPECS} from "battlecode";
+import combat from './combat.js';
+import movement from "./movement.js";
 const communication = {};
 
 /*Translate position object x and y to signal value
@@ -25,5 +27,37 @@ communication.signalToPosition = (signalValue, fullMap) => {
 
     return {x, y};
 }
+
+/**
+ * Method to get information on all castles and pass it into `self.teamCastles` array
+ */
+communication.initTeamCastleInformation = (self) => {
+    if (self.teamCastles.length > 0) {
+        self.log('Team castle locations already initialized - aborting method');
+        return false;
+    } else {
+        const maxDist = -2*Math.pow(self.map.length, 2)-1
+        const castles = combat.filterByTeam(self, combat.filterByUnitType(self.getVisibleRobots(), "CASTLE"), self.me.team);
+        //Initialize some basic information
+        castles.forEach(castle => {
+            if(castle.hasOwnProperty("x") && castle.hasOwnProperty("y")) {
+                self.teamCastles.push({id: castle.id, x: castle.x, y: castle.y});
+            } else {
+                self.teamCastles.push({id: castle.id, x: maxDist, y: maxDist});
+            }
+        });
+        //Sort so nearest castle is self.teamCastles[0]
+        self.teamCastles.sort((a,b) => {
+            if(movement.getDistance(self.me, a) > movement.getDistance(self.me, b)) {
+                return -1;
+            } else {
+                return 1;
+            }
+        });
+        return true;
+    }
+}
+
+
 
 export default communication;

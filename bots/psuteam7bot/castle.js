@@ -19,18 +19,25 @@ castle.doAction = (self) => {
     //This ensures that all local depots are filled and a prophet will be built after
     if(self.me.turn === 1)
     {
+        const buildCounter = {
+            pilgrims:0,
+            crusader:0,
+            prophet:0,
+            total:0
+        }
+
         const karboniteDepots = movement.getResourcesInRange(self.me, 16, self.karbonite_map);
         karboniteDepots.forEach(depot => {
-            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y, buildCounter:buildCounter});
         })
 
         const fuelDepots = movement.getResourcesInRange(self.me, 16, self.fuel_map)
         fuelDepots.forEach(depot => {
-            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y, buildCounter:buildCounter});
         })
         
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
-        self.castleBuildQueue.push({unit: "PROPHET", x: mirrorCastle.x, y: mirrorCastle.y});
+        self.castleBuildQueue.push({unit: "PROPHET", x: mirrorCastle.x, y: mirrorCastle.y, buildCounter:buildCounter});
         self.log(self.castleBuildQueue)
         return castle.buildFromQueue(self);
     }

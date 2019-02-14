@@ -46,7 +46,7 @@ castle.findUnitPlace = (self, unitType) => {
 
 castle.recordPosition = (self, position) => {
    if(this.unit === 0 && bots.team === self.me.team){
-       let turn = 0;
+       let turn = self.me.turn;
        if(turn == 1){
            const x = self.castle_talk(x);
         }
@@ -116,4 +116,11 @@ castle.checkMessage = (self) => {
     return;
 }
 
+/**Input: 
+ * Output
+ */
+
+ castle.checkCastleTalkValue = (self, alliedCastles) => {
+     
+ } 
 export default castle;

@@ -63,6 +63,8 @@ castle.findUnitPlace = (self, unitType) => {
             const location = {x: (self.me.x + i), y: (self.me.y +j)} 
             if(movement.isPassable(location, self.map, self.getVisibleRobotMap()))
             {
+                self.castleTalk(SPECS[unitType]);
+
                 self.log('castle ' + self.id + ' building unit ' + unitType + ' at [' + (self.me.x+i) + ',' + (self.me.y+j) +']'); 
                 return self.buildUnit(SPECS[unitType], i, j);       
             }
@@ -70,7 +72,6 @@ castle.findUnitPlace = (self, unitType) => {
     }
     return;
 }
-
 
 /**
  * Method to build next unit pushed on `castleBuildQueue`. Currently no checks that should be implemented
@@ -103,7 +104,23 @@ castle.recordPosition = (self) => {
     if(turn == 2){
         self.castle_talk(self.me.y);
     }
-    
+
+    if(turn > 2){
+        const bots = self.getVisibleRobotMap().filter(bots =>{
+            return bots.team === self.me.team && bots.units === 0;
+        })
+        
+        bots.forEach(foundCastle => {
+            self.teamCastles.forEach(teamCastle =>{
+                if(foundCastle.id == teamCastle.id){
+                    if(self.castle_talk >= 1){
+                        teamCastle.buildCounter ++;
+                    }
+                    
+                }
+            })
+        });
+    }
 }
 
 /**Find positions of the friendly castles. 
@@ -149,15 +166,6 @@ castle.mirrorCastle = (myLocation, fullMap) => {
         return {x: Ax, y: y};
     }
 }
-
-/** check if the other castles have built units. communicate with them and decide your turn of building units accordingly.
- * Input: 
- * Output:
- */
-
- castle.communicateCastle = (self, otherCastles ) => {
-     
- }
 
 /** Each castle should be able to check for messages from their friendly castles 
  * Use of this.getVisibleRobots() to see the robots in the vicinity 

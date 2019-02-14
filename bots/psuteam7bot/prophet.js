@@ -42,7 +42,7 @@ prophet.doAction = (self) => {
             {
                 const distance = movement.getDistance(self.base, robotElement);
                 //30, assuming defender moved at max speed (r^2= 4) for 5 turns (4*5 = 20), + 10 to account for the possibility of prophet spawning in different starting tiles
-                return distance < 30;
+                return distance <= 64;
             }
         });
 
@@ -56,7 +56,7 @@ prophet.doAction = (self) => {
         else
         {
             self.log("Base defenders = " + JSON.stringify(nearbyDefenders.length) + ", Assigned as an attacker");
-            self.squadSize = 4;
+            self.squadSize = 9; //-2, account for 1 defender and 1 trigger prophet, need to change squad detection if trigger prophet is to be part of squad
             self.role = "ATTACKER";
         }
     }
@@ -94,7 +94,7 @@ prophet.takeDefenderAction = (self) =>  {
 
 
     //Limited movement towards enemy castle (movement towards guard post)
-    if(self.me.turn < 5)
+    if(self.me.turn < 4)
     {
         if(self.path.length === 0)
         {
@@ -150,6 +150,7 @@ prophet.takeAttackerAction = (self) => {
     //Attack visible enemies
     if(attackable.length > 0)
     {
+        --self.me.turn;
         let attacking = attackable[0];
         self.log("Attacking " + combat.UNITTYPE[attacking.unit] + " at " + attacking.x + ", " +  attacking.y);
         return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
@@ -169,28 +170,45 @@ prophet.takeAttackerAction = (self) => {
         return;
     }
 
-    //Move towards a patrol waypoint as a squad
-    let squad = combat.filterByTeam(self, visibleRobots, self.me.team);
-    squad = combat.filterByRange(squad, self.me, 0, 64);
-
-    if(squad.length >= self.squadSize) 
+    //If no path yet
+    if(self.path.length === 0)
     {
-        if(self.path.length === 0)
+        if(movement.aStarPathfinding(self, self.me, self.target, false)) 
         {
-            if(movement.aStarPathfinding(self, self.me, self.target, false)) 
-            {
-                self.log(self.path);
-            } 
-            else 
-            {
-                self.log('Cannot get path to enemy base');
-                return;
-            }
+            self.log(self.path);
+        } 
+        else 
+        {
+            self.log('Cannot get path to enemy base');
+            return;
         }
+    }
+
+    //If first seven turns, move away from allied base towards enemy base, else check if squadSize threshold is met and is 0
+    if(self.me.turn < 6)
+    {
+        self.log('ATTACKER prophet ' + self.id + ' moving to rally point, Current: [' + self.me.x + ',' + self.me.y + ']')
+        return movement.moveAlongPath(self);
+    }
+    else if(self.squadSize === 0)
+    {
         self.log('ATTACKER prophet ' + self.id + ' moving towards enemy base, Current: [' + self.me.x + ',' + self.me.y + ']')
         return movement.moveAlongPath(self);
     }
-    //Should not fall through unless attacker with no nearby teammates/ squad
+    
+
+    let squad = combat.filterByRange(visibleRobots, self.me, 0, 64);
+    squad = combat.filterByUnitType(squad, "PROPHET");
+
+    //Check if threshold is reached, then just move towards enemy base
+    if(squad.length >= self.squadSize) 
+    {
+        self.log('ATTACKER prophet ' + self.id + ' squad threshold reached! Deathballing')
+        self.squadSize = 0;
+
+        return;
+    }
+    //Should not fall through unless attacker with squadSize threshold not reached yet
     self.log('prophet ' + self.role + ' ' + self.me.id + ' doing nothing')
     return;
 }

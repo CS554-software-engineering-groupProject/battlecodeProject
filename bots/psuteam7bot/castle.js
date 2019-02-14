@@ -148,6 +148,7 @@ castle.findPosition = (self) => {
         })
     });
 }
+
 /** Castle should calculate the locations of the enemy castles using the recorded postions. Use mirror castle method. 
  * Input : the location of the friendly castles
  * Output: mirrored images of the enemy castles

@@ -61,7 +61,7 @@ castle.recordPosition = (self, position) => {
  * Output: positions of other friendly castles.
  */
 castle.findPosition = (self) => {
-    const bots = self.get_visible_robots().filter(bots =>{
+    const bots = self.getVisibleRobotMap().filter(bots =>{
         return bots.team === self.me.team && bots.units === 0;
     })
     let turn = self.me.turn;

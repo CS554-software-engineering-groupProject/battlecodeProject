@@ -48,10 +48,10 @@ castle.recordPosition = (self, position) => {
    if(this.unit === 0 && bots.team === self.me.team){
        let turn = self.me.turn;
        if(turn == 1){
-           const x = self.castle_talk(x);
+           self.castle_talk(position.x);
         }
         if(turn == 2){
-            const y = self.castle_talk(y);
+            self.castle_talk(position.y);
         }
     }
 }

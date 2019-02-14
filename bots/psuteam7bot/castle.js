@@ -23,10 +23,12 @@ castle.doAction = (self) => {
         karboniteDepots.forEach(depot => {
             self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
+
         const fuelDepots = movement.getResourcesInRange(self.me, 16, self.fuel_map)
         fuelDepots.forEach(depot => {
             self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
+        
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
         self.castleBuildQueue.push({unit: "PROPHET", x: mirrorCastle.x, y: mirrorCastle.y});
         self.log(self.castleBuildQueue)
@@ -147,6 +149,15 @@ castle.mirrorCastle = (myLocation, fullMap) => {
         return {x: Ax, y: y};
     }
 }
+
+/** check if the other castles have built units. communicate with them and decide your turn of building units accordingly.
+ * Input: 
+ * Output:
+ */
+
+ castle.communicateCastle = (self, otherCastles ) => {
+     
+ }
 
 /** Each castle should be able to check for messages from their friendly castles 
  * Use of this.getVisibleRobots() to see the robots in the vicinity 

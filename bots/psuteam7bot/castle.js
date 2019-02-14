@@ -19,13 +19,6 @@ castle.doAction = (self) => {
     //This ensures that all local depots are filled and a prophet will be built after
     if(self.me.turn === 1)
     {
-        const buildCounter = {
-            pilgrims:0,
-            crusader:0,
-            prophet:0,
-            total:0
-        }
-
         const karboniteDepots = movement.getResourcesInRange(self.me, 16, self.karbonite_map);
         karboniteDepots.forEach(depot => {
             self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y, buildCounter:buildCounter});
@@ -65,12 +58,15 @@ castle.doAction = (self) => {
 
 castle.findUnitPlace = (self, unitType) => {
     //Check if any of the adjacent tile is available. Place the unit if true.
-    for(i = -1; i<= 1; i++){   
-        for(j = -1; j<= 1; j++){
+    for(let i = -1; i<= 1; i++){   
+        for(let j = -1; j<= 1; j++){
             const location = {x: (self.me.x + i), y: (self.me.y +j)} 
             if(movement.isPassable(location, self.map, self.getVisibleRobotMap()))
             {
-                self.castleTalk(SPECS[unitType]);
+                //Send signal starting at turn 3 so you don't overrride location communication at start
+                if(self.me.turn > 2) {
+                    self.castleTalk(SPECS[unitType]);
+                }
 
                 self.log('castle ' + self.id + ' building unit ' + unitType + ' at [' + (self.me.x+i) + ',' + (self.me.y+j) +']'); 
                 return self.buildUnit(SPECS[unitType], i, j);       
@@ -106,10 +102,10 @@ castle.buildFromQueue = (self) => {
 castle.recordPosition = (self) => {
     let turn = self.me.turn;
     if(turn == 1){
-        self.castle_talk(self.me.x);
+        self.castleTalk(self.me.x);
     }
     if(turn == 2){
-        self.castle_talk(self.me.y);
+        self.castleTalk(self.me.y);
     }
 
     if(turn > 2){
@@ -121,10 +117,9 @@ castle.recordPosition = (self) => {
             self.teamCastles.forEach(teamCastle =>{
                 if(foundCastle.id == teamCastle.id){
                     if(foundCastle.castle_talk >= 1){
-                        teamCastle.buildCounter[foundCastle.castle_talk - 2]++;
-                        teamCastle.buildCounter.total ++;
+                        teamCastle.buildCounter[combat.UNITTYPE[foundCastle.castle_talk]]++;
+                        teamCastle.buildCounter.total++;
                     }
-                    
                 }
             })
         });
@@ -136,13 +131,26 @@ castle.recordPosition = (self) => {
  * Output: positions of other friendly castles.
  */
 castle.findPosition = (self) => {
+    //Filter by those that have a castle talk, since apparently unit does not appear if not in vision radius
     const bots = self.getVisibleRobotMap().filter(bots =>{
-        return bots.team === self.me.team && bots.units === 0;
+        return bots.team === self.me.team && bots.castle_talk > 0;
     })
     let turn = self.me.turn;
-    //let storeFriendlyCastles;
+    const buildCounter = {
+        pilgrims:0,
+        crusader:0,
+        prophet:0,
+        total:0
+    }
+    const maxDist = -2*Math.pow(self.map.length, 2)-1
+
 
     bots.forEach(foundCastle => {
+        //Init an item in teamCastles for each on turn 2 once signals being sent
+        if (turn == 2) {
+            teamCastles.push({id: foundCastle.id, x: maxDist, y: maxDist, buildCounter: buildCounter})
+        }
+
         self.teamCastles.forEach(teamCastle =>{
             if(foundCastle.id == teamCastle.id){
                 if(turn == 2){
@@ -153,6 +161,13 @@ castle.findPosition = (self) => {
                 }
             }
         })
+    });
+    self.teamCastles.sort((a,b) => {
+        if(movement.getDistance(self.me, a) > movement.getDistance(self.me, b)) {
+            return -1;
+        } else {
+            return 1;
+        }
     });
 }
 

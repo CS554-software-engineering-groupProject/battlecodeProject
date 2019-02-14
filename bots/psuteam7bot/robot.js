@@ -16,7 +16,6 @@ class MyRobot extends BCAbstractRobot {
         this.base = null;                                //Closest (or original) castle/church like {x: _, y: _} 
         this.previous = null;                            //Previous tile traversed by unit like {x: _, y: _}, initialized to the spawning/ starting location
         this.potentialEnemyCastleLocation = null;
-        this.alliedCastleLocation = null;
     }
     turn() {
         if(this.previous == null) {

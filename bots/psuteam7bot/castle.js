@@ -105,8 +105,7 @@ castle.mirrorCastle = (myLocation, fullMap) => {
  * 
  * Input: self, this is the reference to the object to the calling method.
  * Output: message from other castles
- */
-castle.checkMessage = (self) => {
+ * castle.checkMessage = (self) => {
     const visibleRobots = this.getVisibleRobotMap().filter(bots =>{
         return bots.team === self.me.team && bots.unit === 0;
     })
@@ -119,5 +118,7 @@ castle.checkMessage = (self) => {
     }
     return;
 }
+ */
+
 
 export default castle;

@@ -28,7 +28,7 @@ crusader.doAction = (self) => {
         if(self.isRadioing(baseRobot))  //Check if base has broadcasted a signal on it's turn
         {
             //Get the message using baseRobot.signal and translate to position using helper function
-            self.potentialEnemyCastleLocation = [communication.signalToPosition(baseRobot.signal)];
+            self.potentialEnemyCastleLocation = [communication.signalToPosition(baseRobot.signal, self.map)];
             self.potentialEnemyCastleLocation.push(movement.getDiagonalPatrolPosition(self.base, self.map));
         }
         else

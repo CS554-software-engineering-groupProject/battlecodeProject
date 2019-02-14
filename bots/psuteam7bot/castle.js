@@ -9,8 +9,12 @@ castle.doAction = (self) => {
 
     self.log("castle" + self.id + "taking turn.");
     //Assume that there are enough resources to produce unit 'Pilgrim'
+    
+    castle.recordPosition(self);
+    castle.findPosition(self);
+
     if(self.me.turn < 3)
-    {
+    {   
         return castle.findUnitPlace(self, 'PILGRIM');
     }
     else if(self.me.turn<100)
@@ -44,16 +48,15 @@ castle.findUnitPlace = (self, unitType) => {
  * Output: returnPosition = return value containing the positions of the friendly castle       
  *  */
 
-castle.recordPosition = (self, position) => {
-   if(this.unit === 0 && bots.team === self.me.team){
-       let turn = self.me.turn;
-       if(turn == 1){
-           self.castle_talk(position.x);
-        }
-        if(turn == 2){
-            self.castle_talk(position.y);
-        }
+castle.recordPosition = (self) => {
+    let turn = self.me.turn;
+    if(turn == 1){
+        self.castle_talk(self.me.x);
     }
+    if(turn == 2){
+        self.castle_talk(self.me.y);
+    }
+    
 }
 
 /**Find positions of the friendly castles. 
@@ -119,6 +122,5 @@ castle.mirrorCastle = (myLocation, fullMap) => {
     return;
 }
  */
-
 
 export default castle;

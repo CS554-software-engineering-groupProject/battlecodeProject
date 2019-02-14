@@ -66,19 +66,19 @@ castle.findPosition = (self) => {
     })
     let turn = self.me.turn;
     //let storeFriendlyCastles;
-    for(let i=0; i<bots.lenth; i++)
-    {
-        if(turn == 2){
-            //store x co-ordinate of the castle
-            return {x: this.me.x}
-        }
-        else if (turn == 3){
-            //store y co-ordinate of the castle
-            return {y : this.me.y}
-        }
-        return;
-    }
-    
+
+    bots.forEach(foundCaslte => {
+        self.teamCastles.forEach(teamCastle =>{
+            if(foundCaslte.id == teamCastle.id){
+                if(turn == 2){
+                    teamCastle.x = foundCaslte.x;
+                }
+                if(turn == 3){
+                    teamCastle.y = foundCaslte.y;
+                }
+            }
+        })
+    });
 }
 /** Castle should calculate the locations of the enemy castles using the recorded postions. Use mirror castle method. 
  * Input : the location of the friendly castles

@@ -212,48 +212,39 @@ movement.isPassable = (location, fullMap, robotMap) => {
 }
 
 /**
-*Return an array of resource depot locations sorted by distance from location passed as parameter
-*Use Case: for pioneers?
-*Might exceed chess clock? remove if so...
-*TODO: Might be unnecessary
-*/
-/*
-movement.getSortedResourceList(location, resourceMap)
-{
-    const length = resourceMap.length;
-    var sortedArr = [];
-    var distArr = [];
-    var currentDist;
+ * Method to get an array of resource locations within a specified distance, sorted by distance.
+ * 
+ * @param location Position to check from
+ * @param maxDistance Maximum allowed distance from location
+ * @param resourceMap Either `karbonite_map` or `fuel_map`
+ * @return Array of resource locations sorted by distance (i.e. targets[0] will be closest)
+ */
+movement.getResourcesInRange = (location, maxDistance, resourceMap) => {
+    const targets = [];
+    let currentDist;
 
-    for (let y = 0; y < length; ++y) 
+    for (let y = 0; y < resourceMap.length; ++y) 
     {
-        for (let x = 0; x < length; ++x) 
+        for (let x = 0; x < resourceMap.length; ++x) 
         {
-            if (resourceMap[y][x]) 
+            if (resourceMap[y][x])
             {
                 currentDist = movement.getDistance(location, {x, y});
-
-                if(sortedArr.length === 0)
-                {
-                    sortedArr = [{x, y}];
-                    distArr = [currentDist];
-                }
-
-                for(let i = 0; i < sortedArr.length; ++i)
-                {
-                    if(currentDist < distArr[i])
-                    {
-                        sortedArr.splice(i, 0, {x, y});
-                        distArr.splice(i, 0, currentDist);
-                        break;
-                    }
-                }
+                if(currentDist <= maxDistance) {
+                    targets.push({x: x, y: y, distance: currentDist})
+                }                
             }
         }
     }
-    return sortedArr;
+    targets.sort((a,b) => {
+        if(a.distance < b.distance) {
+            return -1;
+        } else {
+            return 1;
+        }
+    });
+    return targets;
 }
-*/
 
 /**
 *The most simplest moveTowards, get location of a nearby passable adjacent tile, hopefully closer to destination
@@ -471,25 +462,25 @@ movement.getDiagonalPatrolPosition = (myCastleLocation, fullMap) => {
  *         method thus needs to be returned by the action of whatever bot is calling it in order to make move.
  */
 movement.moveAlongPath = (self) => {
-    self.log("me: [" + self.me.x + "," + self.me.y + "]")
+    //self.log("me: [" + self.me.x + "," + self.me.y + "]")
     let nextMove = self.path.pop();
-    self.log("nextMove: [" + nextMove.x + "," + nextMove.y + "]")
+    //self.log("nextMove: [" + nextMove.x + "," + nextMove.y + "]")
 
     //If next move is viable, do it
     if(movement.isPassable(nextMove, self.map, self.getVisibleRobotMap())) {
         self.log("Unit " + self.me.id + " moving to: [" + nextMove.x + "," + nextMove.y + "]")
         return self.move(nextMove.x-self.me.x, nextMove.y-self.me.y);
     //If nextMove is destination (because path is empty), readd destination to path and wait to be moveable
-    } else if (self.path.length === 0) {
+    /*} else if (self.path.length === 0) {
         self.log("Final path position occupied - wait until unoccupied")
         self.path.push(nextMove);
-        return;
+        return;*/
     //If next move not viable, reset path by readding next move, attempt to adjust path accounting for bots
     } else {
         self.path.push(nextMove);
         //If adjustment successful, pop off new next move and go to it
         if(movement.adjustPath(self, self.me)) {
-            self.log(self.path);
+            //self.log(self.path);
             nextMove = self.path.pop();
             self.log("Unit " + self.me.id + " moving to: [" + nextMove.x + "," + nextMove.y + "]")
             return self.move(nextMove.x-self.me.x, nextMove.y-self.me.y);
@@ -528,8 +519,13 @@ movement.adjustPath = (self, newOrigin) => {
         //oldMoves.push(reconnectionPoint);
         reconnectionPoint = self.path.pop();
 
-        self.log("reconnectionPoint: [" + reconnectionPoint.x + "," + reconnectionPoint.y + "]");
+        //self.log("reconnectionPoint: [" + reconnectionPoint.x + "," + reconnectionPoint.y + "]");
     } while(!movement.isPassable(reconnectionPoint, self.map, self.getVisibleRobotMap()) && self.path.length > 0);
+
+    //If the last option is the final destination and that destination is a bot, adjust to a viable final location
+    if(self.path.length === 0 && !movement.isPassable(reconnectionPoint, self.map, self.getVisibleRobotMap())) {
+        reconnectionPoint = movement.findNearestLocation(self, reconnectionPoint);
+    }
     
     /*
         Make path from newOrigin to reconnectionPoint with A* pathfinding accounting for bots and reconnect with rest
@@ -548,6 +544,42 @@ movement.adjustPath = (self, newOrigin) => {
         self.path = oldPath;
         return false;
     }
+}
+
+/**
+ * Method to find a nearby square for a location if the location itself is not viable. Intended for use in
+ * `movement.adjustPath` in case you are trying to move on top of a castle.
+ * 
+ * @param self MyRobot object trying to move
+ * @param location Location to find a nearby square
+ * @return Returns a coordinate pair for a nearby location.
+ */
+movement.findNearestLocation = (self, location) => {
+    //Use Pilgrim's movable positions as example
+    const idealDirection = movement.getRelativeDirection(location, self.me);
+    const positions = movement.getMoveablePositions(2).sort((a, b) => {
+        if(a.r2 < b.r2) {
+            return -2;
+        } else if (a.r2 > b.r2) {
+            return 2;
+        } else {
+            if (a.dirIndex === idealDirection) {
+                return -1;
+            } else if(b.dirIndex === idealDirection) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    });
+
+    for(let i = 0; i < positions.length; i++) {
+        const position = {x: location.x+positions[i].x, y: location.y+positions[i].y};
+        if(movement.isPassable(position, self.map, self.getVisibleRobotMap())) {
+            return position;
+        }
+    }
+    return location;
 }
 
 /**

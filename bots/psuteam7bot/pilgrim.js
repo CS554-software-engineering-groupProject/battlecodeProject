@@ -1,5 +1,7 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
 import movement from './movement.js';
+import combat from './combat.js';
+import communication from './communication.js';
 
 const pilgrim = {};
 pilgrim.maxKarbonite = SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY;
@@ -16,12 +18,17 @@ pilgrim.doAction = (self) => {
     }
     
     if (self.role === 'UNASSIGNED') {
-        //self.base = movement.findAdjacentBase(self);
+        self.base = movement.findAdjacentBase(self);
         //Tweaking to set base not directly on top of castle, because causing pathfinding issues
-        self.base = {x: self.me.x, y: self.me.y};
+        //self.base = {x: self.me.x, y: self.me.y};
         self.log("Set base as " + JSON.stringify(self.base));
         //Gets nearby base, checks turn
         self.role = 'PIONEER'
+        communication.initTeamCastleInformation(self);
+        //Set target base on castle signal
+        const {x, y} = communication.signalToPosition(self.getRobot(self.teamCastles[0].id).signal, self.map)
+        self.target = {x: x, y: y};
+        self.log("pilgrim MINER " + self.id + " targeting depot at [" + self.target.x + "," + self.target.y + "]")
     }
 
     if(self.role === 'MINER') {

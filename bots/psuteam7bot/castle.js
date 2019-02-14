@@ -26,8 +26,8 @@ castle.doAction = (self) => {
 
 castle.findUnitPlace = (self, unitType) => {
     //Check if any of the adjacent tile is available. Place the unit if true.
-    for(i= -1; i<= +1; i++){   
-        for(j = -1; j<= +1; j++){
+    for(i = -1; i<= 1; i++){   
+        for(j = -1; j<= 1; j++){
             const location = {x: (self.me.x + i), y: (self.me.y +j)} 
            if(movement.isPassable(location, self.map, self.getVisibleRobotMap()))
            {

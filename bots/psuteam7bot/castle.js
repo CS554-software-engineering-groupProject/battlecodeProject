@@ -113,8 +113,9 @@ castle.recordPosition = (self) => {
         bots.forEach(foundCastle => {
             self.teamCastles.forEach(teamCastle =>{
                 if(foundCastle.id == teamCastle.id){
-                    if(self.castle_talk >= 1){
-                        teamCastle.buildCounter ++;
+                    if(foundCastle.castle_talk >= 1){
+                        teamCastle.buildCounter[foundCastle.castle_talk - 2]++;
+                        teamCastle.buildCounter.total ++;
                     }
                     
                 }

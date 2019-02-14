@@ -64,7 +64,7 @@ castle.findPosition = (self) => {
     const bots = self.get_visible_robots().filter(bots =>{
         return bots.team === self.me.team && bots.units === 0;
     })
-    let turn = 0;
+    let turn = self.me.turn;
     //let storeFriendlyCastles;
     if(turn == 2){
         //store x co-ordinate of the castle

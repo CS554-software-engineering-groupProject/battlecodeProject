@@ -120,11 +120,4 @@ castle.checkMessage = (self) => {
     return;
 }
 
-/**Input: 
- * Output
- */
-
- castle.checkCastleTalkValue = (self, alliedCastles) => {
-     
- } 
 export default castle;

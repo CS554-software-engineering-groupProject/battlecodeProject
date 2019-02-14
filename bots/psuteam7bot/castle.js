@@ -17,7 +17,7 @@ castle.doAction = (self) => {
     {   
         return castle.findUnitPlace(self, 'PILGRIM');
     }
-    else if(self.me.turn<100)
+    else
     {
         //Check if there are enough resources to produce this unit.
        if(self.fuel >= SPECS['PROPHET'].CONSTRUCTION_FUEL && self.karbonite >= SPECS['PROPHET'].CONSTRUCTION_KARBONITE){

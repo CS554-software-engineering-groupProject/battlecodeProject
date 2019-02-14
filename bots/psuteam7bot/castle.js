@@ -56,8 +56,8 @@ castle.doAction = (self) => {
 
 castle.findUnitPlace = (self, unitType) => {
     //Check if any of the adjacent tile is available. Place the unit if true.
-    for(i = -1; i<= 1; i++){   
-        for(j = -1; j<= 1; j++){
+    for(let i = -1; i<= 1; i++){   
+        for(let j = -1; j<= 1; j++){
             const location = {x: (self.me.x + i), y: (self.me.y +j)} 
             if(movement.isPassable(location, self.map, self.getVisibleRobotMap()))
             {
@@ -96,10 +96,10 @@ castle.buildFromQueue = (self) => {
 castle.recordPosition = (self) => {
     let turn = self.me.turn;
     if(turn == 1){
-        self.castle_talk(self.me.x);
+        self.castleTalk(self.me.x);
     }
     if(turn == 2){
-        self.castle_talk(self.me.y);
+        self.castleTalk(self.me.y);
     }
     
 }

@@ -58,6 +58,7 @@ class mockBC19 {
      * @return {mockBC19} Returns self for chaining purposes
      */
     initEmptyMaps(size) {
+        console.log(size);
         //Taken directly from `bc19/game.js` code for consistency
         function makemap(contents,w,h) {
             var arr = new Array(h);
@@ -67,23 +68,77 @@ class mockBC19 {
             } 
             return arr;
         }
+        this.removeAllBots();
         this.game.shadow = makemap(0, size, size);
         this.game.map = makemap(true, size, size);
         this.game.karbonite_map = makemap(false, size, size);
         this.game.fuel_map = makemap(false, size, size);
-        this.removeAllBots();
         return this;
     }
+
+    /**
+     * Method to make specific tweaks to a map. If the `map` is changed, any locations set to impassible terrain will override
+     * any existing elements at that location, meaning any resource depots or bots on that location will be destroyed
+     * 
+     * @param {String} mapName            String name of map to alter (`map`, `karbonite_map`, `fuel_map`);
+     * @param {Array<Object>} alterations Array of objects corresponding to transformations to make. Alterations should be
+     *                                    styled as `{x: foo, y: bar, value: bar}` where the desired alteration is
+     *                                    `map[y][x] = value` and value is a boolean
+     * @return {Array}                    Returns the map that was altered
+     */
+    alterMap(mapName, alterations) {
+        const map = this.game[mapName];
+        alterations.forEach(element => {
+            if(typeof element.value !== "boolean") {
+                throw "Error - map alterations must provide boolean value"
+            } else if (element.x < 0 || element.x >= map.length) {
+                throw "Error - x-coordinate for map alteration must be between 0 and " + map.length;
+            } else if (element.y < 0 || element.y >= map.length) {
+                throw "Error - y-coordinate for map alteration must be between 0 and " + map.length;
+            }
+            if(mapName === 'map') {
+                if(element.value == false) {
+                    const botId = this.game.shadow[element.y][element.x]
+                    this.game.karbonite_map[element.y][element.x] = false;
+                    this.game.fuel_map[element.y][element.x] = false;
+                    if(botId > 0) {
+                        this.game._deleteRobot(this.game.getItem(botId));
+                    }
+                }
+            }
+            map[element.y][element.x] = element.value
+        });
+        return map;
+    }
+
 }
 
 
 const mock = new mockBC19();
-const bot = mock.createNewRobot(0, 0, 0, 2);
-const bots = mock.game.robots;
-console.log("ALL BOTS")
-console.log(bots);
-const lessBots = mock.removeAllBots();
-console.log("LESS BOTS")
-console.log(lessBots.game.robots)
+
+mock.initEmptyMaps(6);
+const maps = [
+    ["karbonite", mock.game.karbonite_map],
+    ["fuel", mock.game.fuel_map],
+    ["map", mock.game.map],
+    ["shadow", mock.game.shadow]
+];
+/*maps.forEach(mapInfo => {
+    console.log(mapInfo[0])
+    console.log(mapInfo[1]);
+})*/
+mock.createNewRobot(1,1,0,2);
+console.log(mock.game.shadow)
+const alterations = [
+    {x: 0, y: 0, value: false},
+    {x: 0, y: 1, value: true},
+    {x: 1, y: 0, value: true},
+    {x: 2, y: 0, value: false},
+    {x: 0, y: 2, value: false},
+    {x: 1, y: 1, value: false},
+    {x: 2, y: 2, value: true}
+];
+mock.alterMap("map", alterations);
+console.log(mock.game.shadow)
 
 module.exports = mockBC19;

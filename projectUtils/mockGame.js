@@ -88,7 +88,7 @@ class mockBC19 {
         //Delete full bot references in mock
         const refsToDelete = unit !== undefined ? this.robotObjects.filter(bot => { return bot.me.unit == unit}) : this.robotObjects.slice(0);
         for(let i = 0; i < refsToDelete.length; i++) {
-            this.robots.splice(refsToDelete.indexOf(refsToDelete[i]), 1);
+            this.robotObjects.splice(refsToDelete.indexOf(refsToDelete[i]), 1);
             
         }
         this._updateBotReferences();

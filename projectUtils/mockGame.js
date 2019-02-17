@@ -12,21 +12,65 @@ class mockBC19 {
             this.modules = require(modules);
         }
         this.game = new Game(0, 100, 20);
+        this.robotObjects = [];
     }
 
     /**
-     * Method to create a robot from scratch. Intended for only basic robot usage.
+     * Helper function to update the state of a BCAbstractRobot when the game state changes
      * 
-     * @param {int} x     Starting x-coordinate
-     * @param {int} y     Starting y-coordinate
-     * @param {int} team  Team number
-     * @param {int} unit  Unit number
-     * @return {Object}   Returns an object with the `robot` properties, which can be modified and affect game state 
+     * @param {*} BCAbsBot BCAbstractRobot object - REQUIRES THAT `BCAbsBot.me` IS SET
      */
-    createNewRobot(x, y, team, unit) {
-        this.game.createItem(x, y, team, unit);
-        return this.game.initializeRobot();
+    _updateState(BCAbsBot) {
+        //Saves turn since turn must be 1 for getGameStateDump method to properly pass maps in
+        const savedTurn =  BCAbsBot.me.turn;
+        BCAbsBot.me.turn = 1;
+
+        /*Duplicates behavior that sets state - a little weird because they insulate with strings, which needs 
+          to be unparsed back into JSON object. Process ensures map, shadow, etc. properly configured with game
+          at the time this method is invoked*/
+        const stateString = this.game.getGameStateDump(BCAbsBot.me).replace('robot._do_turn(', '').replace(');', '');
+        const game_state = JSON.parse(stateString);
+        
+        BCAbsBot._bc_game_state = game_state;
+        BCAbsBot.id = game_state.id;
+        BCAbsBot.karbonite = game_state.karbonite;
+        BCAbsBot.fuel = game_state.fuel;
+        BCAbsBot.last_offer = game_state.last_offer;
+        BCAbsBot.map = game_state.map;
+        BCAbsBot.karbonite_map = game_state.karbonite_map;
+        BCAbsBot.fuel_map = game_state.fuel_map;
+
+        //Reset turn properly
+        BCAbsBot.me.turn = savedTurn;
     }
+
+    /**
+     * Helper function to update the state of all bots. Necessary during creation so order of creation does not matter
+     */
+    _updateBotReferences() {
+        for(let i = 0; i < this.robotObjects.length; i++) {
+            this._updateState(this.robotObjects[i]);
+        }
+    }
+
+    /**
+     * Method to create a robot from scratch based on inputs and shell of full robot passed in as parameter
+     * 
+     * @param {Object} bot  MyRobot/BCAbstractRobot object shell to pass in so method knows what to fill in with proper data 
+     * @param {int} x       Starting x-coordinate
+     * @param {int} y       Starting y-coordinate
+     * @param {int} team    Team number
+     * @param {int} unit    Unit number
+     * @return {Object}     Returns a modified version of the input `bot`, including map  
+     */
+    createNewRobot(bot, x, y, team, unit) {
+        bot.me = this.game.createItem(x, y, team, unit);
+        this.game.initializeRobot();
+        this.robotObjects.push(bot); //keep track of bots in use
+        this._updateBotReferences(bot); //Update game state for all bots
+        //No return since bot passed in is altered as an object
+    }
+    
 
     /**
      * Method to delete all robots or all robots of a specific unit type from the game if a type integer is passed in
@@ -35,10 +79,19 @@ class mockBC19 {
      */
     removeAllBots(unit) {
         let i = 0;
+        //Delete bots from game
         const toDelete = unit !== undefined ? this.game.robots.filter(bot => { return bot.unit == unit}) : this.game.robots.slice(0);
         for(let i = 0; i < toDelete.length; i++) {
             this.game._deleteRobot(toDelete[i]);
+            
         }
+        //Delete full bot references in mock
+        const refsToDelete = unit !== undefined ? this.robotObjects.filter(bot => { return bot.me.unit == unit}) : this.robotObjects.slice(0);
+        for(let i = 0; i < refsToDelete.length; i++) {
+            this.robots.splice(refsToDelete.indexOf(refsToDelete[i]), 1);
+            
+        }
+        this._updateBotReferences();
 
         return this;
     }
@@ -58,7 +111,6 @@ class mockBC19 {
      * @return {mockBC19} Returns self for chaining purposes
      */
     initEmptyMaps(size) {
-        console.log(size);
         //Taken directly from `bc19/game.js` code for consistency
         function makemap(contents,w,h) {
             var arr = new Array(h);
@@ -73,8 +125,11 @@ class mockBC19 {
         this.game.map = makemap(true, size, size);
         this.game.karbonite_map = makemap(false, size, size);
         this.game.fuel_map = makemap(false, size, size);
+        this._updateBotReferences();
         return this;
     }
+
+
 
     /**
      * Method to make specific tweaks to a map. If the `map` is changed, any locations set to impassible terrain will override
@@ -108,13 +163,15 @@ class mockBC19 {
             }
             map[element.y][element.x] = element.value
         });
+        this._updateBotReferences();
+
         return map;
     }
 
 }
 
 
-const mock = new mockBC19();
+/*const mock = new mockBC19();
 
 mock.initEmptyMaps(6);
 const maps = [
@@ -127,7 +184,7 @@ const maps = [
     console.log(mapInfo[0])
     console.log(mapInfo[1]);
 })*/
-mock.createNewRobot(1,1,0,2);
+/*mock.createNewRobot(1,1,0,2);
 console.log(mock.game.shadow)
 const alterations = [
     {x: 0, y: 0, value: false},
@@ -139,6 +196,6 @@ const alterations = [
     {x: 2, y: 2, value: true}
 ];
 mock.alterMap("map", alterations);
-console.log(mock.game.shadow)
+console.log(mock.game.shadow)*/
 
 module.exports = mockBC19;

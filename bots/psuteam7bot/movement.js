@@ -467,23 +467,20 @@ movement.moveAlongPath = (self) => {
     //self.log("nextMove: [" + nextMove.x + "," + nextMove.y + "]")
 
     //If next move is viable, do it
-    if(movement.isPassable(nextMove, self.map, self.getVisibleRobotMap())) {
+    if(movement.isPassable(nextMove, self.map, self.getVisibleRobotMap()) && movement.hasFuelToMove(self, nextMove)) {
         self.log("Unit " + self.me.id + " moving to: [" + nextMove.x + "," + nextMove.y + "]")
         return self.move(nextMove.x-self.me.x, nextMove.y-self.me.y);
-    //If nextMove is destination (because path is empty), readd destination to path and wait to be moveable
-    /*} else if (self.path.length === 0) {
-        self.log("Final path position occupied - wait until unoccupied")
+    //If nextMove is passable (i.e. just not enough fuel), readd next move to path and wait until enough fuel
+    } else if (movement.isPassable(nextMove, self.map, self.getVisibleRobotMap())) {
         self.path.push(nextMove);
-        return;*/
+        self.log("Unit " + self.me.id + " waiting for more fuel")
+        return;
     //If next move not viable, reset path by readding next move, attempt to adjust path accounting for bots
     } else {
         self.path.push(nextMove);
-        //If adjustment successful, pop off new next move and go to it
+        //If adjustment successful, recurse to move on new path
         if(movement.adjustPath(self, self.me)) {
-            //self.log(self.path);
-            nextMove = self.path.pop();
-            self.log("Unit " + self.me.id + " moving to: [" + nextMove.x + "," + nextMove.y + "]")
-            return self.move(nextMove.x-self.me.x, nextMove.y-self.me.y);
+            return movement.moveAlongPath(self)
         //Otherwise, just dont move (may want to fix)
         } else {
             self.log("bot " + self.me.id + " not moving due to path conflict");
@@ -790,6 +787,12 @@ movement.createPathFromInfoMap = (location, destination, infoMap) => {
         }
     }
     return pathArray;
+}
+
+movement.hasFuelToMove = (self, target) => {
+    const dist = movement.getDistance(self.me, target);
+    const cost = SPECS.UNITS[self.me.unit].FUEL_PER_MOVE * dist;
+    return self.fuel >= cost;
 }
 
 export default movement;

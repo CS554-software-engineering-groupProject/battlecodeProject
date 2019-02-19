@@ -1,6 +1,6 @@
 language: node_js
 before_install:
-- npm install
+- npm install -g
 - npm install -g bc19
 script: npm test
 branches:

@@ -457,7 +457,7 @@ describe('Movement Helpers Unit Tests', function() {
             });
         });
 
-        describe.only('processAStarCell() tests', function() {  
+        describe('processAStarCell() tests', function() {  
             it('should only add cells that are reachable, on map, and not on closedMap', function(done) {
                 const fullMap =   
                 [[true,false,true],

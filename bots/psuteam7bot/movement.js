@@ -726,15 +726,16 @@ movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) =
     let fNext;
     for(let i = 0; i < moveablePositions.length; i++) {
         const nextCoordinates = {x: current.x+moveablePositions[i].x, y: current.y+moveablePositions[i].y};
-        const nextCell = infoMap[nextCoordinates.y][nextCoordinates.x];
         //Skip if nextCoordinates not on map
         if(nextCoordinates.x >= self.map.length || 
            nextCoordinates.x < 0 ||
            nextCoordinates.y >= self.map.length ||
            nextCoordinates.y < 0) {
             continue;
+        }
+        const nextCell = infoMap[nextCoordinates.y][nextCoordinates.x];
         //If destination found, we found a path! Update this last parent and return true to indicate successful completion
-        } else if(movement.positionsAreEqual(nextCoordinates, destination)) {
+        if(movement.positionsAreEqual(nextCoordinates, destination)) {
             nextCell.parent = current;
             return true;
         }

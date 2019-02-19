@@ -705,9 +705,11 @@ movement.initAStarMaps = (self, location, accountForBots, closedMap, infoMap) =>
 movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) => {
     //Sort list by distance and then potentially direction - small optimization?
     openQueue.sort((a, b) => {
-        if(movement.getDistance(a, destination) < movement.getDistance(b, destination)) {
+        const aCell = infoMap[a.y][a.x];
+        const bCell = infoMap[b.y][b.x];
+        if(aCell.f < bCell.f) {
             return -2;
-        } else if (movement.getDistance(a, destination) > movement.getDistance(b, destination)) {
+        } else if (aCell.f > bCell.f) {
             return 2;
         } else {
             return 0;

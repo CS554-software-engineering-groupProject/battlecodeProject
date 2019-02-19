@@ -115,7 +115,12 @@ crusader.takeAttackerAction = (self) => {
     //If first seven turns, move away from allied base towards enemy base, else check if squadSize threshold is met and is 0
     if(self.attackerMoves < 6)
     {
-        self.attackerMoves++;
+        if(movement.hasFuelToMove(self, self.path[self.path.length-1])) {
+            self.attackerMoves++;
+        } else {
+            self.log('ATTACKER crusader ' + self.id + ' waiting for more fuel to move to rally point');
+            return;
+        }
         self.log('ATTACKER crusader ' + self.id + ' moving to rally point, Current: [' + self.me.x + ',' + self.me.y + ']')
         return movement.moveAlongPath(self);
     }

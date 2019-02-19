@@ -703,12 +703,6 @@ movement.initAStarMaps = (self, location, accountForBots, closedMap, infoMap) =>
  * @return Boolean indicating whether cell matches destination, indicating end of A* process
  */
 movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) => {
-    const moveablePositions = movement.getMoveablePositions(self.me.unit);
-    const current = openQueue.shift();
-    const currCell = infoMap[current.y][current.x];
-    const targetDirIndex = movement.getDirectionIndex(movement.getRelativeDirection(current, destination));
-    //Add to closedMap, as it is now being processed
-    closedMap[current.y][current.x] = true;
     //Sort list by distance and then potentially direction - small optimization?
     openQueue.sort((a, b) => {
         if(movement.getDistance(a, destination) < movement.getDistance(b, destination)) {
@@ -719,6 +713,13 @@ movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) =
             return 0;
         }
     });
+    const moveablePositions = movement.getMoveablePositions(self.me.unit);
+    const current = openQueue.shift();
+    const currCell = infoMap[current.y][current.x];
+    const targetDirIndex = movement.getDirectionIndex(movement.getRelativeDirection(current, destination));
+    //Add to closedMap, as it is now being processed
+    closedMap[current.y][current.x] = true;
+
 
     //Iterate through all moveable positions, updating their values and adding them to queue if not destination
     let gNext;

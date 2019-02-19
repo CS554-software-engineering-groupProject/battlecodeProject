@@ -21,6 +21,7 @@ class MyRobot extends BCAbstractRobot {
         this.path = [];                                  //Array representing sequence of moves towards target. `path.pop()` gets next move
         this.previous = null;                            //Previous tile traversed by unit like {x: _, y: _}, initialized to the spawning/ starting location
         this.potentialEnemyCastleLocation = null;
+        this.attackerMoves = 0;
         this.occupiedResources = [];
         this.squadSize = null;                           //Squad size for squad movements
         this.castleBuildQueue = [];                      //Queue for what units the castle should build. NOT related to which castles should build when

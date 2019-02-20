@@ -7,7 +7,7 @@ const movement = require('../projectUtils/psuteam7botCompiled.js').movement;
 const expect = chai.expect;
 
 
-describe.only('Communication Helpers Unit Tests', function() {
+describe('Communication Helpers Unit Tests', function() {
     beforeEach(function() {
         mockGame = new mockBC19();
         mockGame.initEmptyMaps(6);

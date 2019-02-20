@@ -59,6 +59,13 @@ describe.only('Combat Unit Tests', function() {
             expect(output).to.not.deep.include(prophets[1].me);
             expect(output).to.not.deep.include(crusaders[0].me);
 
+            output = combat.filterByUnitType(input, "CRUSADER");
+            expect(output).to.deep.include(crusaders[0].me);
+            expect(output).to.not.deep.include(castles[0].me);
+            expect(output).to.not.deep.include(prophets[1].me);
+            expect(output).to.not.deep.include(myBot.me);
+            expect(output).to.not.deep.include(pilgrims[0].me);
+            expect(output).to.not.deep.include(pilgrims[1].me);
 
             input = [];
             output = combat.filterByUnitType(input, "PILGRIM");

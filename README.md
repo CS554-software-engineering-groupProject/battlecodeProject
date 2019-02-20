@@ -1,3 +1,5 @@
+#Travis-CI badge
+[![Build Status](https://travis-ci.org/CS554-software-engineering-groupProject/battlecodeProject.svg?branch=master)](https://travis-ci.org/CS554-software-engineering-groupProject/battlecodeProject)
 #Coveralls badge
 [![Coverage Status](https://coveralls.io/repos/github/CS554-software-engineering-groupProject/battlecodeProject/badge.svg?branch=master)](https://coveralls.io/github/CS554-software-engineering-groupProject/battlecodeProject?branch=master)
 # battlecodeProject

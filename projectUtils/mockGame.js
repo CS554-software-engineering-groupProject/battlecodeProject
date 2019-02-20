@@ -13,6 +13,12 @@ class mockBC19 {
         }
         this.game = new Game(0, 100, 20);
         this.robotObjects = [];
+        //Create and add BCAbstractRobot shells for all castles in the game
+        this.game.robots.forEach(bot => {
+            const abstractBotShell = {me: bot}
+            this._updateState(abstractBotShell);
+            this.robotObjects.push(abstractBotShell);
+        })
     }
 
     /**
@@ -96,6 +102,25 @@ class mockBC19 {
         return this;
     }
 
+    /**
+     * Method to get all bots in the game that match the input unit value, or all bots if not unitValue provided
+     * @param {int} unitValue Integer number associated with unit type
+     * @return                Array of bots in game
+     */
+    getBotsInGame(unitValue) {
+        if(unitValue === undefined) {
+            return this.robotObjects;
+        } else {
+            return this.robotObjects.filter(bot => {
+                if(bot.hasOwnProperty("me")) {
+                    return unitValue === bot.me.unit;
+                } else {
+                    return unitValue === bot.unit;
+                }
+            });
+        }
+    }
+
 
     /**
      * Method that will destroy any existing map information/bots a create fresh new NxN maps based on input. Note that:
@@ -173,19 +198,16 @@ class mockBC19 {
 
 /*const mock = new mockBC19();
 
-mock.initEmptyMaps(6);
-const maps = [
-    ["karbonite", mock.game.karbonite_map],
-    ["fuel", mock.game.fuel_map],
-    ["map", mock.game.map],
-    ["shadow", mock.game.shadow]
-];
-/*maps.forEach(mapInfo => {
-    console.log(mapInfo[0])
-    console.log(mapInfo[1]);
-})*/
-/*mock.createNewRobot(1,1,0,2);
-console.log(mock.game.shadow)
+mock.getBotsInGame(0).forEach(bot => {
+    console.log(bot.me.id)
+    console.log(bot.me.unit)
+    console.log(bot.me.team)
+    console.log(bot.me.x)
+    console.log(bot.me.y)
+})
+
+mock.createNewRobot({}, 1,1,0,2);*/
+/*console.log(mock.game.shadow)
 const alterations = [
     {x: 0, y: 0, value: false},
     {x: 0, y: 1, value: true},

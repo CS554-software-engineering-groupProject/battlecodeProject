@@ -1,3 +1,5 @@
+#Coveralls badge
+[![Coverage Status](https://coveralls.io/repos/github/CS554-software-engineering-groupProject/battlecodeProject/badge.svg?branch=master)](https://coveralls.io/github/CS554-software-engineering-groupProject/battlecodeProject?branch=master)
 # battlecodeProject
 
 ## Instructions from BattleCode site for installation:

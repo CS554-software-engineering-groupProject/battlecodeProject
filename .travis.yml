@@ -4,7 +4,10 @@ node_js:
 before_install:
 - npm install -g
 - npm install -g bc19
-script: npm test
+- npm install -g codecov
+script: 
+- npm test
+- npm run reportcoverage
 branches:
   only:
   - master

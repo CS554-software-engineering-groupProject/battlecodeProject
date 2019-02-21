@@ -21,8 +21,8 @@ crusader.doAction = (self) => {
         }
 
         //Receive location of enemy base from Castle, if they are signaling to its adjacent square
-        const baseID = self.getVisibleRobotMap()[self.base.y][self.base.x];   //Get ID of the base Castle robot
-        const baseRobot = self.getRobot(baseID);    //Get robot reference of the base castle robot
+        self.baseID = self.getVisibleRobotMap()[self.base.y][self.base.x];   //Get ID of the base Castle robot
+        const baseRobot = self.getRobot(self.baseID);    //Get robot reference of the base castle robot
 
         //Receive signal just in case
         if(self.isRadioing(baseRobot))  //Check if base has broadcasted a signal on it's turn

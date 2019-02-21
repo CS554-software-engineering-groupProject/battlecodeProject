@@ -151,7 +151,18 @@ castle.mirrorCastle = (myLocation, fullMap) => {
 castle.makeDecision = (self) => {
     if(findPosition.this.signal == true)
     {
+        /** Algorithm:
+         * If the signal is true, call this.buildUnit.
+         * After calling this method,
+         * check if the position is available 
+         * if position is available, check if the resources are available
+         * these procedures are done in method findPosition
+         * call that method 
+         *  */
+
+        castle.findPosition
         this.buildUnit(UNIT, dx, dy);
+
     }
 }
 

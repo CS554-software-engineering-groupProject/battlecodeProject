@@ -203,9 +203,6 @@ castle.makeDecision = (self) => {
          * call that method 
          *  */
 
-        castle.findPosition
-        this.buildUnit(UNIT, dx, dy);
-
     }
 }
 

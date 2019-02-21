@@ -15,7 +15,7 @@
   "scripts": {
     "test": "./projectUtils/test_script.sh",
     "wintest": "projectUtils\\wintest.bat",
-    "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
+    "reportcoverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
   },
   "repository": {
     "type": "git",

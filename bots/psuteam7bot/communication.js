@@ -58,6 +58,41 @@ communication.initTeamCastleInformation = (self) => {
     }
 }
 
+/**
+ * Checks whether target tile is visible and is empty/ not a castle and report to allied castles
+ * Returns the x-coord or y-coord value of the target tile depending on the map reflection
+ */
+communication.checkAndReportEnemyCastleDestruction = (self) => {
+    const {x, y} = self.target;
+    const robotID = self.getVisibleRobotMap()[y][x];
 
+    //Case, empty target, castle is destroyed
+    if(robotID === 0)
+    {
+        if(movement.isHorizontalReflection(self.map))
+        {
+            self.castleTalk(x);
+        }
+        else    
+        {
+            self.castleTalk(y);
+        }
+    }
+    else //Case target occupied or not in visible radius, -1 or there is a robotID > 0
+    {
+        //Check if robot is not a castle, if so, report castle destruction
+        if(robotID > 0 && self.getRobot(robotID).unit === 0)
+        {
+            if(movement.isHorizontalReflection(self.map))
+            {
+                self.castleTalk(x);
+            }
+            else    
+            {
+                self.castleTalk(y);
+            }
+        }
+    }
+}
 
 export default communication;

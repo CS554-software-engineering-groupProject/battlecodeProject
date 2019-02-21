@@ -149,7 +149,10 @@ castle.mirrorCastle = (myLocation, fullMap) => {
 }
 
 castle.makeDecision = (self) => {
-    
+    if(findPosition.this.signal == true)
+    {
+        
+    }
 }
 
 /** Each castle should be able to check for messages from their friendly castles 

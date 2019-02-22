@@ -8,14 +8,11 @@
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "codecov": "^3.2.0",
-    "mocha": "^5.2.0",
-    "nyc": "^13.3.0"
+    "mocha": "^5.2.0"
   },
   "scripts": {
     "test": "./projectUtils/test_script.sh",
-    "wintest": "projectUtils\\wintest.bat",
-    "reportcoverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
+    "wintest": "projectUtils\\wintest.bat"
   },
   "repository": {
     "type": "git",

@@ -1,7 +1,3 @@
-#Travis-CI badge 
-[![Build Status](https://travis-ci.org/CS554-software-engineering-groupProject/battlecodeProject.svg?branch=master)](https://travis-ci.org/CS554-software-engineering-groupProject/battlecodeProject)
-#Codecov Badge
-[![codecov](https://codecov.io/gh/CS554-software-engineering-groupProject/battlecodeProject/branch/master/graph/badge.svg)](https://codecov.io/gh/CS554-software-engineering-groupProject/battlecodeProject)
 # battlecodeProject
 
 ## Instructions from BattleCode site for installation:

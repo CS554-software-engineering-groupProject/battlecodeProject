@@ -27,10 +27,6 @@ class mockBC19 {
      * @param {*} BCAbsBot BCAbstractRobot object - REQUIRES THAT `BCAbsBot.me` IS SET
      */
     _updateState(BCAbsBot) {
-        //Saves turn since turn must be 1 for getGameStateDump method to properly pass maps in
-        const savedTurn =  BCAbsBot.me.turn;
-        BCAbsBot.me.turn = 1;
-
         /*Duplicates behavior that sets state - a little weird because they insulate with strings, which needs 
           to be unparsed back into JSON object. Process ensures map, shadow, etc. properly configured with game
           at the time this method is invoked*/
@@ -42,12 +38,9 @@ class mockBC19 {
         BCAbsBot.karbonite = game_state.karbonite;
         BCAbsBot.fuel = game_state.fuel;
         BCAbsBot.last_offer = game_state.last_offer;
-        BCAbsBot.map = game_state.map;
-        BCAbsBot.karbonite_map = game_state.karbonite_map;
-        BCAbsBot.fuel_map = game_state.fuel_map;
-
-        //Reset turn properly
-        BCAbsBot.me.turn = savedTurn;
+        BCAbsBot.map = this.game.map;
+        BCAbsBot.karbonite_map = this.game.karbonite_map;
+        BCAbsBot.fuel_map = this.game.fuel_map;
     }
 
     /**

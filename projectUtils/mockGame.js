@@ -1,5 +1,6 @@
 const Game = require('bc19/game.js');
 const ColdBrew = require('bc19');
+const sinon = require('sinon');
 
 class mockBC19 {
     /**
@@ -8,8 +9,10 @@ class mockBC19 {
      * @param {String} modules String representing path from directory to any modules you wish to import for mocking purposes
      */
     constructor(modules) {
+        this.modules = null
         if(modules) {
             this.modules = require(modules);
+            this.sandbox = sinon.createSandbox();
         }
         this.game = new Game(0, 100, 20);
         this.robotObjects = [];
@@ -186,9 +189,75 @@ class mockBC19 {
         return map;
     }
 
+    /**
+     * Function that stubs a method for a given module with a substitute function. In other words, allows 
+     * you to replace the functionality of a method with whatever you like for testing purposes. For example,
+     * let's say you wanted to avoid the implementation of `aStarPathFinding` and just have it set `self.path`
+     * when invoked. You could do:
+     *      `replaceMethod('movement', 'aStarPathfinding', function(bot) => { bot.path = [...] })`
+     * As another example, lets say you want a specific function to always return a certain value during a testing call,
+     * like `isPassable` to always be true. Then you could do something like:
+     *      `replaceMethod('movement', 'isPassable', function() => { return true; })`
+     * Lots of different way to use this; most are probably unnecessary for scope of this project
+     * 
+     * @param {*} moduleName      String representing module/file in which the method resides
+     * @param {*} methodName      String representing name of method whose execution is to be replaced
+     * @param {*} replacementFunc Function that will be executed in place of the stubbed method. If not function passed,
+     *                            generic `Sinon` stub is returned (this can be manipulated as desired, but probably
+     *                            more advanced than necessary)
+     * @return {Object}           Returns a `Sinon` stub object. See online SinonJS documentation for more details. 
+     */
+    replaceMethod(moduleName, methodName, replacementFunc) {
+        if(moduleName === undefined || methodName === undefined) {
+            throw "Module and method names required"
+        } else if (this.modules == null) {
+            throw "Need reference to modules"
+        } else if (this.modules[moduleName] === undefined) {
+            throw "Module '" + moduleName + "' not recognized";
+        } else if (this.modules[moduleName].methodName === undefined) {
+            throw "Method '" + methodName + "' in module '" + moduleName + "' not recognized";
+        } else if (replacementFunc === undefined) {
+            return this.sandbox.stub(this.modules[moduleName], methodName);
+        } else {
+            return this.sandbox.stub(this.modules[moduleName], methodName).callsFake(replacementFunc);
+        }
+    }
+
+    /**
+     * Function that spys a method for a given module. Using the spy object of `SinonJS`, can track how many times
+     * a method is called, whether a method was called with certain arguments, etc. Lots of different way to use this,
+     * most are probably unnecessary for scope of this project
+     * 
+     * @param {*} moduleName      String representing module/file in which the method resides
+     * @param {*} methodName      String representing name of method whose execution is to be replaced
+     * @return {Object}           Returns a `Sinon` spy object. See online SinonJS documentation for more details. 
+     */
+    trackMethod(moduleName, methodName) {
+        if(moduleName === undefined || methodName === undefined) {
+            throw "Module and method names required"
+        } else if (this.modules == null) {
+            throw "Need reference to modules"
+        } else if (this.modules[moduleName] === undefined) {
+            throw "Module '" + moduleName + "' not recognized";
+        } else if (this.modules[moduleName].methodName === undefined) {
+            throw "Method '" + methodName + "' in module '" + moduleName + "' not recognized";
+        } else {
+            return this.sandbox.spy(this.modules[moduleName], methodName);
+        }
+    }
+
+    /**
+     * Function to undo any spies/stubs/other mock Sinon objects created during testing. Recommended to call
+     * this at conclusion of tests that use Sinon functionality of this class.
+     */
+    undoSinonMethods() {
+        this.sandbox.restore();
+    }
+
 }
 
-
+const mock = new mockBC19('../projectUtils/psuteam7botCompiled.js');
+console.log(mock.modules)
 /*const mock = new mockBC19();
 
 mock.getBotsInGame(0).forEach(bot => {

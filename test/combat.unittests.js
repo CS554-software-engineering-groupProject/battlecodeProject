@@ -45,9 +45,8 @@ describe.only('Combat Unit Tests', function() {
     });
 
     describe('filterByUnitType tests', function() {
-
+        input = [];
         it('should properly filter by unit type', function(done) {
-            input = [];
             input.push(pilgrims[0].me, pilgrims[1].me, myBot.me)
             output = combat.filterByUnitType(input, "PILGRIM");
             expect(output).to.eql(input);
@@ -71,6 +70,39 @@ describe.only('Combat Unit Tests', function() {
             output = combat.filterByUnitType(input, "PILGRIM");
             expect(output).to.eql([]);
 
+            done();
+        });
+    });
+
+    describe('getRobotsInRange tests', function() {
+        let expectedBots;
+        it('should pass range edge cases', function(done) {
+            //minRange above maxRange - should return nothing
+            output = combat.getRobotsInRange(myBot, 1, 0);
+            expect(output).to.eql([])
+
+            //minRange equal to maxRange - should return things at exactly that length
+            output = combat.getRobotsInRange(myBot, 49, 49);
+            expect(output.length).equals(2);
+
+            //minRange is 0 - should return bot itself
+            output = combat.getRobotsInRange(myBot, 0, 1);
+            expect(output.length).equals(1);
+            expect(myBot.me).to.include(output[0]);
+
+
+            done();
+        });
+
+        it('should only get visible bots', function(done) {
+            output = combat.getRobotsInRange(myBot, 0, 1000);
+            expect(output.length).equals(7);
+            expect(myBot.me).to.include(output[0]);
+            output.forEach(bot => {
+                expect(pilgrims[1].me).to.not.include(bot);
+                expect(castles[1].me).to.not.include(bot);
+            })
+            
             done();
         });
     });

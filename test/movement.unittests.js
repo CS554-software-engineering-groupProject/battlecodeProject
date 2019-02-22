@@ -358,7 +358,7 @@ describe('Movement Helpers Unit Tests', function() {
         });
     });
 
-    describe('A* Movement Tests', function() {
+    describe('A* Pathfinding Tests', function() {
         describe('initAStarMaps() tests', function() {
             it('should set defaults for infoMap except for at starting location', function(done) {
                 let returnValue;
@@ -737,7 +737,75 @@ describe('Movement Helpers Unit Tests', function() {
         });
     });
 
-    describe.only('findNearestLocation() Tests', function() {
+    describe.only('Path Movement Tests', function() {
+        let output;
+        let myBot = new MyRobot();
+
+        beforeEach(function() {
+            mockGame = new mockBC19();
+            mockGame.initEmptyMaps(10);
+            mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+        });
+
+        describe('moveAlongPath() tests', function() {
+            it('should do something', function(done) {
+            
+                done();
+            });
+        });
+
+        describe('adjustPath() tests', function() {  
+            it('should do things', function(done) {
+
+                done();
+            });     
+        });
+    });
+
+    describe('getMoveablePositions() Tests', function() {
+        let output;
+
+        beforeEach(function() {
+            mockGame = new mockBC19();
+            mockGame.initEmptyMaps(6);
+        });
+
+        it('should provide basic coordinates and information for every move', function(done) {
+            output = movement.getMoveablePositions(3);
+            output.forEach(position => {
+                expect(position).to.have.property('x');
+                expect(position).to.have.property('y');
+                expect(position).to.have.property('r2');
+                expect(position).to.have.property('dirIndex');
+            });
+
+            done();
+        });
+
+        it('should only include moves in range for unit', function(done) {
+            //Because I'm too lazy to import SPECS atm...
+            const maxSpeed = [0, 0, 4, 9, 4, 4];
+            for(let i = 0; i < 6; i++) {
+                output = movement.getMoveablePositions(i);
+                output.forEach(position => {
+                    expect(position.r2).to.be.at.most(maxSpeed[i]);
+                });
+            }
+
+            done();
+        });
+
+        it('should not include a non-movement position', function(done) {
+            for(let i = 0; i < 6; i++) {
+                output = movement.getMoveablePositions(i);
+                expect(output).to.not.deep.include({x: 0, y: 0});
+            }
+
+            done();
+        });
+    });
+
+    describe('findNearestLocation() Tests', function() {
         let output;
         let myBot = new MyRobot();
         let target = {x: 3, y: 3};
@@ -809,6 +877,5 @@ describe('Movement Helpers Unit Tests', function() {
 
             done();
         });
-
     });
 });

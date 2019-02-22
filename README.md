@@ -1,9 +1,6 @@
-#Travis-CI badge 
-[![Build Status](https://travis-ci.org/CS554-software-engineering-groupProject/battlecodeProject.svg?branch=master)](https://travis-ci.org/CS554-software-engineering-groupProject/battlecodeProject)
-#Codecov Badge
-[![codecov](https://codecov.io/gh/CS554-software-engineering-groupProject/battlecodeProject/branch/master/graph/badge.svg)](https://codecov.io/gh/CS554-software-engineering-groupProject/battlecodeProject)
 # battlecodeProject
-
+[![Build Status](https://travis-ci.org/CS554-software-engineering-groupProject/battlecodeProject.svg?branch=master)](https://travis-ci.org/CS554-software-engineering-groupProject/battlecodeProject)
+[![codecov](https://codecov.io/gh/CS554-software-engineering-groupProject/battlecodeProject/branch/master/graph/badge.svg)](https://codecov.io/gh/CS554-software-engineering-groupProject/battlecodeProject)
 ## Instructions from BattleCode site for installation:
 1. Install npm.
 2. `npm install -g bc19`.

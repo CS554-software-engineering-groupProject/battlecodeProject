@@ -7,7 +7,7 @@ const movement = require('../projectUtils/psuteam7botCompiled.js').movement;
 const expect = chai.expect;
 
 
-describe.only('Combat Unit Tests', function() {
+describe('Combat Unit Tests', function() {
     let input;
     let output;
     let myBot = new MyRobot();

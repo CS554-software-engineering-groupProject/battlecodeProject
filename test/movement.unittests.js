@@ -1,5 +1,6 @@
 const mocha = require('mocha');
 const chai = require('chai');
+const mockBC19 = require('../projectUtils/mockGame.js');
 const MyRobot = require('../projectUtils/psuteam7botCompiled.js').MyRobot;
 const movement = require('../projectUtils/psuteam7botCompiled.js').movement;
 const expect = chai.expect;
@@ -734,5 +735,80 @@ describe('Movement Helpers Unit Tests', function() {
                 done();
             });
         });
+    });
+
+    describe.only('findNearestLocation() Tests', function() {
+        let output;
+        let myBot = new MyRobot();
+        let target = {x: 3, y: 3};
+        let targetIndex
+
+        beforeEach(function() {
+            mockGame = new mockBC19();
+            mockGame.initEmptyMaps(6);
+            mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+            targetIndex = movement.getDirectionIndex(movement.getRelativeDirection(target, myBot.me));
+        });
+
+        it('should prioritize closest cells to target', function(done) {
+            let mapAlterations;
+            target = {x: 4, y: 0};
+
+            output = movement.findNearestLocation(myBot, target);
+            expect(output).eql({x: 3, y: 0});
+
+            mapAlterations = [
+                {x: 3, y: 2, value: false},
+                {x: 2, y: 3, value: false},
+                {x: 4, y: 3, value: false}
+            ]
+            target = {x: 3, y: 3};
+
+            mockGame.alterMap("map", mapAlterations);
+            output = movement.findNearestLocation(myBot, target);
+            expect(output).eql({x: 3, y: 4});
+
+            mockGame.alterMap("map", [{x: 3, y: 4, value: false}]);
+            output = movement.findNearestLocation(myBot, target);
+            expect(output).eql({x: 2, y: 2});
+
+
+            done();
+        });
+
+        it('should prioritize cells in direction from target to bot if equal distance', function(done) {
+            let mapAlterations = [
+                {x: 3, y: 2, value: false},
+                {x: 2, y: 3, value: false},
+                {x: 4, y: 3, value: false},
+                {x: 3, y: 4, value: false}
+            ];
+            target = {x: 3, y: 3};
+
+            mockGame.alterMap("map", mapAlterations);
+            output = movement.findNearestLocation(myBot, target);
+            expect(output).eql({x: 2, y: 2});
+
+            done();
+        });
+
+        it('should account for bots in the way', function(done) {
+            let anotherBot = new MyRobot();
+            let mapAlterations = [
+                {x: 3, y: 2, value: false},
+                {x: 2, y: 3, value: false},
+                {x: 4, y: 3, value: false},
+                {x: 3, y: 4, value: false}
+            ];
+            target = {x: 3, y: 3};
+
+            mockGame.createNewRobot(anotherBot, 2, 2, 0, 2);
+            mockGame.alterMap("map", mapAlterations);
+            output = movement.findNearestLocation(myBot, target);
+            expect(output).to.not.eql({x: 2, y: 2});
+
+            done();
+        });
+
     });
 });

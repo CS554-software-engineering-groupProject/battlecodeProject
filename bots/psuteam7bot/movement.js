@@ -462,9 +462,7 @@ movement.getDiagonalPatrolPosition = (myCastleLocation, fullMap) => {
  *         method thus needs to be returned by the action of whatever bot is calling it in order to make move.
  */
 movement.moveAlongPath = (self) => {
-    //self.log("me: [" + self.me.x + "," + self.me.y + "]")
     let nextMove = self.path.pop();
-    //self.log("nextMove: [" + nextMove.x + "," + nextMove.y + "]")
 
     //If next move is viable, do it
     if(movement.isPassable(nextMove, self.map, self.getVisibleRobotMap()) && movement.hasFuelToMove(self, nextMove)) {

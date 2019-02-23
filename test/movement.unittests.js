@@ -794,17 +794,27 @@ describe.only('Movement Helpers Unit Tests', function() {
         });
     });
 
-    describe.only('Path Movement Tests', function() {
+    describe('Path Movement Tests', function() {
         let output;
         let myBot = new MyRobot();
+        let stubAStarPathfining;
+        let spyAdjustPath;
+        let targetPath = [
+            {x: 5, y: 5}, 
+            {x: 4, y: 4},
+            {x: 3, y: 3},
+            {x: 2, y: 2},
+            {x: 1, y: 1}
+        ];
 
         beforeEach(function() {
-            //Allow for stubbing of methods for true unittesting and not integration testing
-            //Basically, shouldn't be running tests with other intricate methods (more of an integration test)
-            //Will try to stub out or at least track if possible
             mockGame = new mockBC19('../projectUtils/psuteam7botCompiled.js');
-            mockGame.initEmptyMaps(10);
+            myBot = new MyRobot();
+            mockGame.initEmptyMaps(6);
             mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+            myBot.target = {x: 5, y: 5};
+            //Make deep copy so comparisons to targetPath not always identical
+            myBot.path = JSON.parse(JSON.stringify(targetPath)) 
         });
 
         afterEach(function() {
@@ -813,31 +823,77 @@ describe.only('Movement Helpers Unit Tests', function() {
         })
 
         describe('moveAlongPath() tests', function() {
-            it('should do something', function(done) {
-            
+            it('should move to next location on path if passible and enough fuel', function(done) {
+                //Set fuel to exactly required amount
+                myBot.fuel = movement.getDistance(myBot.me, targetPath[4]);
+                output = movement.moveAlongPath(myBot);
+
+                expect(myBot.path).to.deep.include.members(targetPath.slice(0, 4));
+                expect(myBot.path).to.not.deep.include(targetPath[4]);
+                expect(output['action']).equals('move');
+                expect(output['dx']).equals(1);
+                expect(output['dy']).equals(1);
+
+                done();
+            });
+
+            it('should wait if next location on path if passible but not enough fuel', function(done) {
+                //Set fuel to just under required amount
+                myBot.fuel = movement.getDistance(myBot.me, targetPath[4])-1;
+                output = movement.moveAlongPath(myBot);
+
+                expect(myBot.path).to.deep.include.members(targetPath);
+                expect(output).equals(undefined);
+
+                done();
+            });
+
+            it('should not move if next place on path impassable and adjustPath fails', function(done) {
+                const mapAlterations = [
+                    {x: 1, y: 1, value: false},
+                    {x: 2, y: 2, value: false},
+                    {x: 3, y: 3, value: false},
+                    {x: 4, y: 4, value: false},
+                    {x: 5, y: 5, value: false},
+                    {x: 3, y: 5, value: false},
+                    {x: 5, y: 3, value: false},
+                    {x: 4, y: 5, value: false},
+                    {x: 5, y: 4, value: false}
+                ]
+                mockGame.alterMap("map", mapAlterations);
+                spyAdjustPath = mockGame.trackMethod("movement", "adjustPath");
+
+                output = movement.moveAlongPath(myBot);
+
+                expect(spyAdjustPath.callCount).equals(1);
+                expect(myBot.path).to.deep.include.members(targetPath);
+                expect(output).equals(undefined);
+
+                done();
+            });
+
+            it('should move to new adjusted location if next move is impassable and adjustPath() succeeds', function(done) {
+                const mapAlterations = [
+                    {x: 1, y: 1, value: false}
+                ]
+                mockGame.createNewRobot(new MyRobot(), 2, 2, 0, 0);
+                mockGame.alterMap("map", mapAlterations);
+                spyAdjustPath = mockGame.trackMethod("movement", "adjustPath");
+
+                output = movement.moveAlongPath(myBot);
+
+                expect(spyAdjustPath.callCount).equals(1);
+                expect(myBot.path).to.deep.include.members(targetPath.slice(0, 3));
+                expect(myBot.path).to.not.deep.include(targetPath[3]);
+                expect(myBot.path).to.not.deep.include(targetPath[4]);
+                expect(output['action']).equals('move');
+                expect({x: output['dx'], y: output['dy']}).to.not.eql({x: 1, y: 1});
+
                 done();
             });
         });
 
         describe('adjustPath() tests', function() {  
-            let stubAStarPathfining;
-            let targetPath = [
-                {x: 5, y: 5}, 
-                {x: 4, y: 4},
-                {x: 3, y: 3},
-                {x: 2, y: 2},
-                {x: 1, y: 1}
-            ];
-            beforeEach(function() {
-                mockGame = new mockBC19('../projectUtils/psuteam7botCompiled.js');
-                myBot = new MyRobot();
-                mockGame.initEmptyMaps(6);
-                mockGame.createNewRobot(myBot, 0, 0, 0, 2);
-                myBot.target = {x: 5, y: 5};
-                //Make deep copy so comparisons to targetPath not always identical
-                myBot.path = JSON.parse(JSON.stringify(targetPath)) 
-            });
-
             it('should adjust nothing if path clear', function(done) {
                 /*stubAStarPathfining = mockGame.replaceMethod("movement", "aStarPathfinding", function(self) {
                     self.path

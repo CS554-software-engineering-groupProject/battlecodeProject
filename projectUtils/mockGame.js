@@ -215,7 +215,7 @@ class mockBC19 {
             throw "Need reference to modules"
         } else if (this.modules[moduleName] === undefined) {
             throw "Module '" + moduleName + "' not recognized";
-        } else if (this.modules[moduleName].methodName === undefined) {
+        } else if (this.modules[moduleName][methodName] === undefined) {
             throw "Method '" + methodName + "' in module '" + moduleName + "' not recognized";
         } else if (replacementFunc === undefined) {
             return this.sandbox.stub(this.modules[moduleName], methodName);
@@ -240,7 +240,7 @@ class mockBC19 {
             throw "Need reference to modules"
         } else if (this.modules[moduleName] === undefined) {
             throw "Module '" + moduleName + "' not recognized";
-        } else if (this.modules[moduleName].methodName === undefined) {
+        } else if (this.modules[moduleName][methodName] === undefined) {
             throw "Method '" + methodName + "' in module '" + moduleName + "' not recognized";
         } else {
             return this.sandbox.spy(this.modules[moduleName], methodName);

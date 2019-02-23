@@ -9,8 +9,9 @@ class mockBC19 {
      * @param {String} modules String representing path from directory to any modules you wish to import for mocking purposes
      */
     constructor(modules) {
-        this.modules = null
-        if(modules) {
+        this.modules = null;
+        this.sandbox = null;
+        if(modules !== undefined) {
             this.modules = require(modules);
             this.sandbox = sinon.createSandbox();
         }

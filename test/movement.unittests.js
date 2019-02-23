@@ -9,6 +9,7 @@ const expect = chai.expect;
 describe.only('Movement Helpers Unit Tests', function() {
     let mockGame;
     let myBot;
+    let output;
     beforeEach(function() {
         mockGame = new mockBC19();
         mockGame.initEmptyMaps(6);
@@ -246,10 +247,16 @@ describe.only('Movement Helpers Unit Tests', function() {
 
         it('isPassable Returns true Given Valid location And fullMap Objects With location Values Outside Map', function(done) {
             const D = {x: 4, y: 7};
-            const E = {x: -1, y: 2};
+            const E = {x: -1, y: 0};
+            const F = {x: 0, y: -1};
+            const G = {x: mockGame.game.map.length, y: 0};
+            const H = {x: 0, y: mockGame.game.map.length};
 
             expect(movement.isPassable(D, mockGame.game.map, myBot.getVisibleRobotMap())).equals(false);
             expect(movement.isPassable(E, mockGame.game.map, myBot.getVisibleRobotMap())).equals(false);
+            expect(movement.isPassable(F, mockGame.game.map, myBot.getVisibleRobotMap())).equals(false);
+            expect(movement.isPassable(G, mockGame.game.map, myBot.getVisibleRobotMap())).equals(false);
+            expect(movement.isPassable(H, mockGame.game.map, myBot.getVisibleRobotMap())).equals(false);
             done();
         });
     });
@@ -787,15 +794,23 @@ describe.only('Movement Helpers Unit Tests', function() {
         });
     });
 
-    describe.skip('Path Movement Tests', function() {
+    describe.only('Path Movement Tests', function() {
         let output;
         let myBot = new MyRobot();
 
         beforeEach(function() {
-            mockGame = new mockBC19();
+            //Allow for stubbing of methods for true unittesting and not integration testing
+            //Basically, shouldn't be running tests with other intricate methods (more of an integration test)
+            //Will try to stub out or at least track if possible
+            mockGame = new mockBC19('../projectUtils/psuteam7botCompiled.js');
             mockGame.initEmptyMaps(10);
             mockGame.createNewRobot(myBot, 0, 0, 0, 2);
         });
+
+        afterEach(function() {
+            //Reset any spies/mocks created so they don't affect subsequent tests
+            mockGame.undoSinonMethods();
+        })
 
         describe('moveAlongPath() tests', function() {
             it('should do something', function(done) {
@@ -806,11 +821,96 @@ describe.only('Movement Helpers Unit Tests', function() {
 
         describe('adjustPath() tests', function() {  
             let stubAStarPathfining;
-            
-            it('should do things', function(done) {
+            let targetPath = [
+                {x: 5, y: 5}, 
+                {x: 4, y: 4},
+                {x: 3, y: 3},
+                {x: 2, y: 2},
+                {x: 1, y: 1}
+            ];
+            beforeEach(function() {
+                mockGame = new mockBC19('../projectUtils/psuteam7botCompiled.js');
+                myBot = new MyRobot();
+                mockGame.initEmptyMaps(6);
+                mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+                myBot.target = {x: 5, y: 5};
+                //Make deep copy so comparisons to targetPath not always identical
+                myBot.path = JSON.parse(JSON.stringify(targetPath)) 
+            });
+
+            it('should adjust nothing if path clear', function(done) {
+                /*stubAStarPathfining = mockGame.replaceMethod("movement", "aStarPathfinding", function(self) {
+                    self.path
+                });*/
+                output = movement.adjustPath(myBot, myBot.me);
+
+                expect(myBot.path).to.eql(targetPath);
+                expect(myBot.path[0]).to.eql(myBot.target);
 
                 done();
             });     
+
+            it('should adjust path up until next passible point on path', function(done) {
+                const mapAlterations = [
+                    {x: 1, y: 1, value: false},
+                    {x: 2, y: 2, value: false},
+                    {x: 3, y: 3, value: false}
+                ]
+                mockGame.alterMap("map", mapAlterations);
+
+                output = movement.adjustPath(myBot, myBot.me);
+
+                expect(myBot.path).to.deep.include.members(targetPath.slice(0, 2));
+                expect(myBot.path).to.not.deep.include(targetPath[2]);
+                expect(myBot.path).to.not.deep.include(targetPath[3]);
+                expect(myBot.path).to.not.deep.include(targetPath[4]);
+                expect(myBot.path).to.not.deep.include.members(targetPath.slice(2));
+                expect(myBot.path[0]).to.eql(myBot.target);
+
+                done();
+            }); 
+
+            it('should adjust target to nearest location if all path locations are impassable', function(done) {
+                const mapAlterations = [
+                    {x: 1, y: 1, value: false},
+                    {x: 2, y: 2, value: false},
+                    {x: 3, y: 3, value: false},
+                    {x: 4, y: 4, value: false},
+                    {x: 5, y: 5, value: false}
+                ]
+                mockGame.alterMap("map", mapAlterations);
+                const closestTarget = movement.findNearestLocation(myBot, myBot.target);
+
+                output = movement.adjustPath(myBot, myBot.me);
+
+                expect(myBot.path).to.not.deep.include.members(targetPath);
+                expect(myBot.path[0]).to.eql(closestTarget);
+
+                done();
+            });
+
+            it('should return false and reproduce original path if all path locations AND movement near target impossible', function(done) {
+                const mapAlterations = [
+                    {x: 1, y: 1, value: false},
+                    {x: 2, y: 2, value: false},
+                    {x: 3, y: 3, value: false},
+                    {x: 4, y: 4, value: false},
+                    {x: 5, y: 5, value: false},
+                    {x: 3, y: 5, value: false},
+                    {x: 5, y: 3, value: false},
+                    {x: 4, y: 5, value: false},
+                    {x: 5, y: 4, value: false}
+                ]
+                mockGame.alterMap("map", mapAlterations);
+
+                output = movement.adjustPath(myBot, myBot.me);
+
+                expect(output).to.be.false;
+                expect(myBot.path).to.deep.include.members(targetPath);
+
+                done();
+            });
+
         });
     });
 

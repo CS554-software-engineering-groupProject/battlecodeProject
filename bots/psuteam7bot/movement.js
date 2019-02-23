@@ -208,7 +208,7 @@ movement.isPassable = (location, fullMap, robotMap) => {
         return false;
     else if(x > fullMap.length || y > fullMap.length)   //Map bound check
         return false;
-    return((robotMap[y][x] === 0) && (fullMap[y][x])); //Returns true only if tile is empty and is passable
+    return((robotMap[y][x] <= 0) && (fullMap[y][x])); //Returns true only if tile is empty and is passable
 }
 
 /**
@@ -703,28 +703,25 @@ movement.initAStarMaps = (self, location, accountForBots, closedMap, infoMap) =>
  * @return Boolean indicating whether cell matches destination, indicating end of A* process
  */
 movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) => {
+    //Sort list by distance and then potentially direction - small optimization?
+    openQueue.sort((a, b) => {
+        const aCell = infoMap[a.y][a.x];
+        const bCell = infoMap[b.y][b.x];
+        if(aCell.f < bCell.f) {
+            return -2;
+        } else if (aCell.f > bCell.f) {
+            return 2;
+        } else {
+            return 0;
+        }
+    });
     const moveablePositions = movement.getMoveablePositions(self.me.unit);
     const current = openQueue.shift();
     const currCell = infoMap[current.y][current.x];
     const targetDirIndex = movement.getDirectionIndex(movement.getRelativeDirection(current, destination));
     //Add to closedMap, as it is now being processed
     closedMap[current.y][current.x] = true;
-    //Sort list by distance and then potentially direction - small optimization?
-    moveablePositions.sort((a, b) => {
-        if(a.r2 > b.r2) {
-            return -2;
-        } else if (a.r2 < b.r2) {
-            return 2;
-        } else {
-            if (a.dirIndex === targetDirIndex) {
-                return -1;
-            } else if(b.dirIndex === targetDirIndex) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-    });
+
 
     //Iterate through all moveable positions, updating their values and adding them to queue if not destination
     let gNext;
@@ -739,25 +736,23 @@ movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) =
            nextCoordinates.y < 0) {
             continue;
         }
+        const nextCell = infoMap[nextCoordinates.y][nextCoordinates.x];
+        //If destination found, we found a path! Update this last parent and return true to indicate successful completion
+        if(movement.positionsAreEqual(nextCoordinates, destination)) {
+            nextCell.parent = current;
+            return true;
+        }
         //If coordinates not already processed, do stuff
         if(!closedMap[nextCoordinates.y][nextCoordinates.x]) {
-            const nextCell = infoMap[nextCoordinates.y][nextCoordinates.x];
-            //If destination found, we found a path! Update this last parent and return true to indicate successful completion
-            if(movement.positionsAreEqual(nextCoordinates, destination)) {
+            gNext = currCell.g + movement.getDistance(current, nextCoordinates);
+            hNext = movement.getDistance(nextCoordinates, destination);
+            fNext = gNext+hNext;
+            if(nextCell.f > fNext) {
                 nextCell.parent = current;
-                return true;
-            //Otherwise, update cell information and push onto openQueue if possible improvement on path
-            } else {
-                gNext = currCell.g + movement.getDistance(current, nextCoordinates);
-                hNext = movement.getDistance(nextCoordinates, destination);
-                fNext = gNext+hNext;
-                if(nextCell.f > fNext) {
-                    nextCell.parent = current;
-                    nextCell.g = gNext;
-                    nextCell.h = hNext;
-                    nextCell.f = fNext;
-                    openQueue.push(nextCoordinates);
-                }
+                nextCell.g = gNext;
+                nextCell.h = hNext;
+                nextCell.f = fNext;
+                openQueue.push(nextCoordinates);
             }
         }        
     }

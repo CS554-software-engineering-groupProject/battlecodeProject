@@ -6,7 +6,12 @@ const movement = require('../projectUtils/psuteam7botCompiled.js').movement;
 const expect = chai.expect;
 
 
-describe('Movement Helpers Unit Tests', function() {
+describe.only('Movement Helpers Unit Tests', function() {
+    beforeEach(function() {
+        mockGame = new mockBC19();
+        mockGame.initEmptyMaps(6);
+    });
+
     describe('positionsAreEqual Returns Values Correctly', function(done) {
         it('positionsAreEqual Returns true Given Two Objects With The Same x And y Values', function(done) {
             const A = {x: 1, y: 1};
@@ -138,18 +143,10 @@ describe('Movement Helpers Unit Tests', function() {
             let C = {x: 2, y: 5};
             let D = {x: 4, y: 4};
 
-            let fullMap =                         
-            [[0,0,0,0,0,0],
-            [0,0,0,0,0,0],
-            [0,0,0,0,0,0],
-            [0,0,0,0,0,0],
-            [0,0,0,0,0,0],
-            [0,0,0,0,0,0]];
-
-            expect(movement.checkQuadrant(A, fullMap)).equals(1);
-            expect(movement.checkQuadrant(B, fullMap)).equals(2);
-            expect(movement.checkQuadrant(C, fullMap)).equals(3);
-            expect(movement.checkQuadrant(D, fullMap)).equals(4);
+            expect(movement.checkQuadrant(A, mockGame.game.map)).equals(1);
+            expect(movement.checkQuadrant(B, mockGame.game.map)).equals(2);
+            expect(movement.checkQuadrant(C, mockGame.game.map)).equals(3);
+            expect(movement.checkQuadrant(D, mockGame.game.map)).equals(4);
             done();
         });
     });
@@ -160,66 +157,90 @@ describe('Movement Helpers Unit Tests', function() {
             const B = {x: 5, y: 2};
             const C = {x: 2, y: 5};
             const D = {x: 4, y: 4};
+            const vertMapAlts = [
+                {x: 1, y: 2, value: false},
+                {x: 4, y: 2, value: false}
+            ];
+            const horiMapAlts = [
+                {x: 3, y: 2, value: false},
+                {x: 3, y: 4, value: false}
+            ];   
 
+            mockGame.alterMap("map", horiMapAlts);
+            expect(movement.getAttackerPatrolRoute(A, mockGame.game.map)).to.eql([{x: 0,y: 4}, {x: 5, y: 4}]);
+            expect(movement.getAttackerPatrolRoute(B, mockGame.game.map)).to.eql([{x: 5, y: 3}, {x: 0, y: 3}]);
+            expect(movement.getAttackerPatrolRoute(C, mockGame.game.map)).to.eql([{x: 2, y: 0}, {x: 3, y: 0}]);
+            expect(movement.getAttackerPatrolRoute(D, mockGame.game.map)).to.eql([{x: 4, y: 1}, {x: 1, y: 1}]);
 
-            const vertFullMap = 
-            [[true,true,true,true,true,true],
-            [true,true,true,true,true,true],
-            [true,false,true,true,false,true],
-            [true,true,true,true,true,true],
-            [true,true,true,true,true,true],
-            [true,true,true,true,true,true]];    
+            mockGame.initEmptyMaps(6);
+            mockGame.alterMap("map", vertMapAlts);
+            expect(movement.getAttackerPatrolRoute(A, mockGame.game.map)).to.eql([{x: 5,y: 1}, {x: 5, y: 4}]);
+            expect(movement.getAttackerPatrolRoute(B, mockGame.game.map)).to.eql([{x: 0, y: 2}, {x: 0, y: 3}]);
+            expect(movement.getAttackerPatrolRoute(C, mockGame.game.map)).to.eql([{x: 3, y: 5}, {x: 3, y: 0}]);
+            expect(movement.getAttackerPatrolRoute(D, mockGame.game.map)).to.eql([{x: 1, y: 4}, {x: 1, y: 1}]);
 
-            const horiFullMap = 
-            [[true,true,true,true,true,true],
-            [true,true,true,false,true,true],
-            [true,true,true,true,true,true],
-            [true,true,true,true,true,true],
-            [true,true,true,false,true,true],
-            [true,true,true,true,true,true]];    
-
-            expect(movement.getAttackerPatrolRoute(A, horiFullMap)).to.eql([{x: 0,y: 4}, {x: 5, y: 4}]);
-            expect(movement.getAttackerPatrolRoute(A, vertFullMap)).to.eql([{x: 5,y: 1}, {x: 5, y: 4}]);
-            expect(movement.getAttackerPatrolRoute(B, horiFullMap)).to.eql([{x: 5, y: 3}, {x: 0, y: 3}]);
-            expect(movement.getAttackerPatrolRoute(B, vertFullMap)).to.eql([{x: 0, y: 2}, {x: 0, y: 3}]);
-            expect(movement.getAttackerPatrolRoute(C, horiFullMap)).to.eql([{x: 2, y: 0}, {x: 3, y: 0}]);
-            expect(movement.getAttackerPatrolRoute(C, vertFullMap)).to.eql([{x: 3, y: 5}, {x: 3, y: 0}]);
-            expect(movement.getAttackerPatrolRoute(D, horiFullMap)).to.eql([{x: 4, y: 1}, {x: 1, y: 1}]);
-            expect(movement.getAttackerPatrolRoute(D, vertFullMap)).to.eql([{x: 1, y: 4}, {x: 1, y: 1}]);
             done();
         });
     });
 
     describe('isPassable Returns Values Correctly', function(done) {                  
+        /*
+        //Keeping as visual since hard to see with alterations array
         const fullMap =   
         [[true,false,false,false,false,false],
         [true,false,true,true,false,false],
         [true,true,true,true,true,true],
         [false,true,true,true,false,false],
         [false,false,true,true,false,false],
-        [false,false,false,false,false,false]];                      
+        [false,false,false,false,false,false]];
+        */   
+        const mapAlterations = [
+            {x: 2, y: 0, value: false},
+            {x: 3, y: 0, value: false},
+            {x: 4, y: 0, value: false},
+            {x: 5, y: 0, value: false},
+            {x: 1, y: 1, value: false},
+            {x: 4, y: 1, value: false},
+            {x: 5, y: 1, value: false},
+            {x: 0, y: 3, value: false},
+            {x: 4, y: 3, value: false},
+            {x: 5, y: 3, value: false},
+            {x: 0, y: 4, value: false},
+            {x: 1, y: 4, value: false},
+            {x: 4, y: 4, value: false},
+            {x: 5, y: 4, value: false},
+            {x: 0, y: 5, value: false},
+            {x: 1, y: 5, value: false},
+            {x: 2, y: 5, value: false},
+            {x: 3, y: 5, value: false},
+            {x: 4, y: 5, value: false},
+            {x: 5, y: 5, value: false},
 
-
-        const robotMap = 
-        [[0,0,0,0,0,0],
-        [0,0,0,0,0,0],
-        [0,0,0,0,0,3005],
-        [0,0,0,0,0,0],
-        [0,0,0,0,0,0],
-        [0,0,0,0,0,0]];
+        ]                   
+        const myBot = new MyRobot();
+        mockGame = new mockBC19();
+        mockGame.initEmptyMaps(6);
+        mockGame.alterMap("map", mapAlterations);
+        mockGame.createNewRobot(new MyRobot(), 5, 2, 0, 2);
+        mockGame.createNewRobot(myBot, 1, 0, 0, 2);
+        console.log(myBot.getVisibleRobotMap())
+        console.log(mockGame.game.shadow)
 
         it('isPassable Returns true Given Valid location, fullMap, and robotMap Objects With Valid Values, And Location Is Passable On The Map', function(done) {
             const A = {x: 0, y: 1};
             
-            expect(movement.isPassable(A, fullMap, robotMap)).equals(true);
+            expect(movement.isPassable(A, mockGame.game.map, myBot.getVisibleRobotMap())).equals(true);
             done();
         });
         it('isPassable Returns false Given Valid location, fullMap, and robotMap Objects With Valid Values, And Location Is impassable On The Map', function(done) {
             const B = {x: 5, y: 2};
             const C = {x: 2, y: 5};
             
-            expect(movement.isPassable(B, fullMap, robotMap)).equals(false);
-            expect(movement.isPassable(C, fullMap, robotMap)).equals(false);
+            console.log(myBot.getVisibleRobotMap())
+            console.log(mockGame.game.shadow)
+            
+            expect(movement.isPassable(B, mockGame.game.map, myBot.getVisibleRobotMap())).equals(false);
+            expect(movement.isPassable(C, mockGame.game.map, myBot.getVisibleRobotMap())).equals(false);
             done();
         });
 
@@ -227,8 +248,8 @@ describe('Movement Helpers Unit Tests', function() {
             const D = {x: 4, y: 7};
             const E = {x: -1, y: 2};
 
-            expect(movement.isPassable(D, fullMap, robotMap)).equals(false);
-            expect(movement.isPassable(E, fullMap, robotMap)).equals(false);
+            expect(movement.isPassable(D, mockGame.game.map, myBot.getVisibleRobotMap())).equals(false);
+            expect(movement.isPassable(E, mockGame.game.map, myBot.getVisibleRobotMap())).equals(false);
             done();
         });
     });
@@ -358,7 +379,7 @@ describe('Movement Helpers Unit Tests', function() {
         });
     });
 
-    describe('A* Pathfinding Tests', function() {
+    describe.skip('A* Pathfinding Tests', function() {
         describe('initAStarMaps() tests', function() {
             it('should set defaults for infoMap except for at starting location', function(done) {
                 let returnValue;
@@ -737,7 +758,7 @@ describe('Movement Helpers Unit Tests', function() {
         });
     });
 
-    describe.only('Path Movement Tests', function() {
+    describe.skip('Path Movement Tests', function() {
         let output;
         let myBot = new MyRobot();
 

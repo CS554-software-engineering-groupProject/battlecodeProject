@@ -256,9 +256,9 @@ class mockBC19 {
 
 }
 
-const mock = new mockBC19('../projectUtils/psuteam7botCompiled.js');
+/*const mock = new mockBC19('../projectUtils/psuteam7botCompiled.js');
 console.log(mock.modules)
-/*const mock = new mockBC19();
+const mock = new mockBC19();
 
 mock.getBotsInGame(0).forEach(bot => {
     console.log(bot.me.id)

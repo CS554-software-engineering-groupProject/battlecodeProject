@@ -26,8 +26,12 @@ church.buildFromQueue = (self) => {
     }
 }
 
-church.findUnitPlace() = (self) => {
-    
+church.findUnitPlace() = (self, unitType) => {
+    for(let i = -1; i<= 1; i++){
+        for(let j = -1; j<= 1; j++){
+            
+        }
+    }
 }
 
 export default church;

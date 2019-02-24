@@ -192,5 +192,72 @@ describe.only('Combat Unit Tests', function() {
 
             done();
         });
+
+        it("ATTACKERS with a path should move for 6 turns iff they have fuel to move", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 3, y: 3}];
+            myBot.target = {x: 9, y: 3};
+
+            //Enough fuel, still turns to move
+            myBot.attackerMoves = 5;
+            myBot.fuel = 4;
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.attackerMoves).equals(6);
+            expect(output).equals("moved successfully");
+
+            //Not enough fuel, still turns to move
+            myBot.attackerMoves = 5;
+            myBot.fuel = 3;
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.attackerMoves).equals(5);
+            expect(output).to.be.undefined;
+            
+
+            done();
+        });
+
+        it("ATTACKERS after 6 turns should wait for squad and adjust squadSize accordingly", function(done) {
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 3, y: 3}];
+            myBot.target = {x: 9, y: 3};
+            myBot.attackerMoves = 6;
+            myBot.squadSize = 2;
+
+            //Squad not big enough
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.attackerMoves).equals(6);
+            expect(output).to.be.undefined;
+
+            //Squad not big enough because bot of wrong type
+            mockGame.createNewRobot(new MyRobot(), 5, 3, 0, 4);
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.attackerMoves).equals(6);
+            expect(myBot.squadSize).equals(2);
+            expect(output).to.be.undefined;
+
+            //Squad not big enough friendly crusader out of range
+            mockGame.createNewRobot(new MyRobot(), 8, 4, 0, 3);
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.attackerMoves).equals(6);
+            expect(myBot.squadSize).equals(2);
+            expect(output).to.be.undefined;
+
+            //Squad not big enough 
+            mockGame.createNewRobot(new MyRobot(), 8, 3, 0, 3);
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.attackerMoves).equals(6);
+            expect(myBot.squadSize).equals(0);
+            expect(output).to.be.undefined;
+            
+
+            done();
+        });
     });
 });

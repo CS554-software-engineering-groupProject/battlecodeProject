@@ -194,7 +194,7 @@ castle.mirrorCastle = (myLocation, fullMap) => {
   */
  castle.checkUnitCastleTalk = (self) => {
     const alliedUnits = self.getVisibleRobotMap().filter(bot =>{
-        return bot.team === self.me.team && bot.unit !== 0 && bot.castleTalk;
+        return bot.team === self.me.team && bot.unit !== 0 && bot.castle_talk;
     })
     const length = alliedUnits.length;
     const enemyCastlesLength = self.enemyCastles.length
@@ -204,7 +204,7 @@ castle.mirrorCastle = (myLocation, fullMap) => {
         {
             if(movement.isHorizontalReflection(self.map))
             {
-                if(alliedUnits[i].castleTalk === self.enemyCastles[j].x)
+                if(alliedUnits[i].castle_talk === self.enemyCastles[j].x)
                 {
                     if(self.target === self.enemyCastles[j])
                         self.target = null;
@@ -217,7 +217,7 @@ castle.mirrorCastle = (myLocation, fullMap) => {
             }
             else
             {
-                if(alliedUnits[i].castleTalk === self.enemyCastles[j].y)
+                if(alliedUnits[i].castle_talk === self.enemyCastles[j].y)
                 {
                     if(self.target === self.enemyCastles[j])
                         self.target = null;

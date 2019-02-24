@@ -32,6 +32,15 @@ describe.only('Combat Unit Tests', function() {
     })
 
     describe('doAction() tests', function() {
+        it("Bots in unspecified roles should do nothing", function(done) {
+            myBot.role = "TESTROLE";
+            output = crusader.doAction(myBot);
+
+            expect(output).to.be.undefined;
+
+            done();
+        });
+
         it("UNASSIGNED bots should become ATTACKERS if they can't find a base", function(done) {
             const noBaseBot = new MyRobot();
             mockGame.createNewRobot(noBaseBot, 0, 9, 9, 3);
@@ -72,7 +81,7 @@ describe.only('Combat Unit Tests', function() {
             expect(myBot.base).to.eql({x: 0, y: 3});
             expect(myBot.role).equals("ATTACKER");
             expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
-                {x: 9, y: 3}, //Mirror castle location (relative to localCastle)
+                {x: 9, y: 3}, //Mirror curent position (relative to crusader)
                 {x: 9, y: 6}  //Diagonal patrol (relative to localCastle)
             ]);
             expect(output).equals('skipping attacker action');
@@ -81,8 +90,106 @@ describe.only('Combat Unit Tests', function() {
         });
     });
 
-    describe('takeAttackerAction() tests', function() {
-        it('should do things', function(done) {
+    describe.only('takeAttackerAction() tests', function() {
+        it('ATTACKERS with no base should identify enemy castles', function(done) {
+            myBot.path = [{x: 3, y: 3}];
+            myBot.target = {x: 9, y: 3};
+
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
+                {x: 8, y: 3}, //Mirror location (relative to myBot)
+                {x: 8, y: 6}  //Diagonal patrol (relative to myBot)
+            ]);
+            expect(output['action']).equals('move');
+
+            done();
+        });
+
+        it('ATTACKERS with base but no potential castles should identify potential locations', function(done) {
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 3, y: 3}];
+            myBot.target = {x: 9, y: 3};
+
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
+                {x: 9, y: 3}, //Mirror location (relative to localCastle)
+                {x: 9, y: 6}  //Diagonal patrol (relative to localCastle)
+            ]);
+            expect(output['action']).equals('move');
+
+            done();
+        });
+
+        it('ATTACKERS with no target should update based on potentialEnemyCastleLocations', function(done) {
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 3, y: 3}];
+
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
+                {x: 9, y: 3}, //Mirror location (relative to localCastle)
+                {x: 9, y: 6}  //Diagonal patrol (relative to localCastle)
+            ]);
+            expect(myBot.target).to.eql({x: 9, y: 3});
+            expect(output['action']).equals('move');
+
+            done();
+        });
+
+        it('ATTACKERS with enemies in attackable range should just attack enemies', function(done) {
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 3, y: 3}];
+            myBot.target = {x: 9, y: 3};
+
+            //Teammate in attackable range
+            mockGame.createNewRobot(new MyRobot(), 1, 7, 0, 2);
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(output['action']).equals('move');
+
+            //Enemy out of attackable range
+            mockGame.createNewRobot(new MyRobot(), 5, 4, 1, 2);
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(output['action']).equals('move');
+
+            //Enemy in attackable range
+            mockGame.createNewRobot(new MyRobot(), 5, 3, 1, 2); 
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(output['action']).equals('attack');
+            expect(output['dx']).equals(4);
+            expect(output['dy']).equals(0);            
+
+            done();
+        });
+
+        it("ATTACKERS in attack range of castle but who didn't attack should get next potential castle", function(done) {
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 3, y: 3}];
+
+            //If only one target left, should stop and do nothing
+            myBot.potentialEnemyCastleLocation = [{x: 9, y: 9}];
+            myBot.target = {x: 5, y: 3};
+
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.potentialEnemyCastleLocation.length).equals(0);
+            expect(myBot.target).eql({x: 5, y: 3});
+            expect(output).to.be.undefined;  
+            
+            //If more than one target left, should alter potentialEnemyCastleLocation and set new target
+            myBot.potentialEnemyCastleLocation = [{x: 5, y: 3}, {x: 9, y: 9}];
+            myBot.target = {x: 5, y: 3};
+
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.potentialEnemyCastleLocation).to.deep.include({x: 9, y: 9});
+            expect(myBot.target).eql({x: 9, y: 9});
+            expect(output['action']).equals('move');
+
             done();
         });
     });

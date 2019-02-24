@@ -85,11 +85,13 @@ crusader.takeAttackerAction = (self) => {
     }
 
     //No enemy castle at target and there are more waypoint to check
-    if(self.potentialEnemyCastleLocation.length > 0 && movement.getDistance(self.me, self.target) <= 49)
+    if(self.potentialEnemyCastleLocation.length > 0 && movement.getDistance(self.me, self.target) <= 16)
     {
         //Assign new target waypoint
         self.potentialEnemyCastleLocation.shift();
-        self.target = self.potentialEnemyCastleLocation[0];
+        if(self.potentialEnemyCastleLocation.length != 0) {
+            self.target = self.potentialEnemyCastleLocation[0];
+        }
     }
 
     //TODO No more patrol waypoint, do nothing
@@ -117,12 +119,12 @@ crusader.takeAttackerAction = (self) => {
     {
         if(movement.hasFuelToMove(self, self.path[self.path.length-1])) {
             self.attackerMoves++;
+            self.log('ATTACKER crusader ' + self.id + ' moving to rally point, Current: [' + self.me.x + ',' + self.me.y + ']')
+            return movement.moveAlongPath(self);
         } else {
             self.log('ATTACKER crusader ' + self.id + ' waiting for more fuel to move to rally point');
             return;
         }
-        self.log('ATTACKER crusader ' + self.id + ' moving to rally point, Current: [' + self.me.x + ',' + self.me.y + ']')
-        return movement.moveAlongPath(self);
     }
     else if(self.squadSize === 0)
     {

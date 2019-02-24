@@ -6,7 +6,8 @@ import communication from './communication.js';
 const church = {};
 
 church.doAction = (self) => {
-    
+
+    self.log("church" + self.id + "taking turn.");
 }
 
 export default church;

@@ -19,7 +19,12 @@ church.buildFromQueue = (self) => {
             self.churchBuildQueue.shift();
             self.signal(communication.positionToSignal(nextBuild, self.map), 2);
             return church.findUnitPlace(self, buildNextUnit);
-        }
+    }
+    else{
+        self.log('cannnot build unit'+ buildNextUnit.unit +'- not enough resources');
+        return;
+    }
+
     
 }
 

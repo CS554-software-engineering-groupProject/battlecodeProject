@@ -5,5 +5,8 @@ const castle = require('../projectUtils/psuteam7botCompiled.js').castle;
 const expect = chai.expect;
 
 describe('Castle Helpers Unit Tests', function(){
+    describe('', function(done){
+
+    });
 
 });

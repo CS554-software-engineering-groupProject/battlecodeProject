@@ -83,7 +83,7 @@ communication.checkAndReportEnemyCastleDestruction = (self) => {
     else //Case target occupied or not in visible radius, -1 or there is a robotID > 0
     {
         //Check if robot is not a castle, if so, report castle destruction
-        if(robotID > 0 && self.getRobot(robotID).unit === 0)
+        if(robotID > 0 && self.getRobot(robotID).unit !== 0)
         {
             if(movement.isHorizontalReflection(self.map))
             {
@@ -101,7 +101,6 @@ communication.checkAndReportEnemyCastleDestruction = (self) => {
 
 communication.checkBaseSignalAndUpdateTarget = (self) => {
     const baseRobot = self.getRobot(self.baseID);    //Get robot reference of the base castle robot
-
     //Check if it is signalling, if so, read the value as new target castle
     if(baseRobot && self.isRadioing(baseRobot))  //Check if base has broadcasted a signal on it's turn
     {

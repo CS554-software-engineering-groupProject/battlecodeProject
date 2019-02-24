@@ -8,6 +8,11 @@ const church = {};
 church.doAction = (self) => {
 
     self.log("church" + self.id + "taking turn.");
+
+}
+
+church.buildFromQueue = (self) => {
+    
 }
 
 export default church;

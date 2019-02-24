@@ -8,7 +8,7 @@ const movement = require('../projectUtils/psuteam7botCompiled.js').movement;
 const communication = require('../projectUtils/psuteam7botCompiled.js').communication;
 const expect = chai.expect;
 
-describe.only('Combat Unit Tests', function() {
+describe('Combat Unit Tests', function() {
     let mockGame;
     let myBot;
     let localCastle
@@ -90,7 +90,7 @@ describe.only('Combat Unit Tests', function() {
         });
     });
 
-    describe.only('takeAttackerAction() tests', function() {
+    describe('takeAttackerAction() tests', function() {
         it('ATTACKERS with no base should identify enemy castles', function(done) {
             myBot.path = [{x: 3, y: 3}];
             myBot.target = {x: 9, y: 3};
@@ -193,6 +193,22 @@ describe.only('Combat Unit Tests', function() {
             done();
         });
 
+        it("ATTACKERS with an empty path should create a path to target", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.target = {x: 9, y: 3};
+            myBot.attackerMoves = 6;
+            myBot.squadSize = 0;
+
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.path[0]).to.eql(myBot.target);
+            expect(output).equals("moved successfully");
+            
+
+            done();
+        });
+
         it("ATTACKERS with a path should move for 6 turns iff they have fuel to move", function(done) {
             let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
@@ -248,7 +264,7 @@ describe.only('Combat Unit Tests', function() {
             expect(myBot.squadSize).equals(2);
             expect(output).to.be.undefined;
 
-            //Squad not big enough 
+            //Squad big enough
             mockGame.createNewRobot(new MyRobot(), 8, 3, 0, 3);
             output = crusader.takeAttackerAction(myBot);
 
@@ -256,6 +272,23 @@ describe.only('Combat Unit Tests', function() {
             expect(myBot.squadSize).equals(0);
             expect(output).to.be.undefined;
             
+
+            done();
+        });
+
+        it("ATTACKERS with squadSize set to 0 should rush towards target", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 3, y: 3}];
+            myBot.target = {x: 9, y: 3};
+            myBot.attackerMoves = 6;
+            myBot.squadSize = 0;
+
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.attackerMoves).equals(6);
+            expect(myBot.squadSize).equals(0);
+            expect(output).equals("moved successfully");
 
             done();
         });

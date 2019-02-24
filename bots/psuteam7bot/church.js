@@ -17,7 +17,9 @@ church.buildFromQueue = (self) => {
     if(self.fuel >= SPECS.UNITS[SPECS[nextBuild.unit]].CONSTRUCTION_FUEL && 
         self.karbonite >= SPECS.UNITS[SPECS[nextBuild.unit]].CONSTRUCTION_KARBONITE){
             self.churchBuildQueue.shift();
+            self.signal(communication.positionToSignal(nextBuild, self.map), 2);
         }
+    
 }
 
 export default church;

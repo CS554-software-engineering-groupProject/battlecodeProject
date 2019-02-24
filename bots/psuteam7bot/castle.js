@@ -14,10 +14,10 @@ castle.doAction = (self) => {
     castle.findPosition(self);
     if(self.me.turn === 4)
     {
-        for(let i = 0; i < self.teamCastles.length; ++i)
-        {
-            self.enemyCastles.push(movement.getEnemyCastleLocations(self.teamCastles[i], self.map));
-        }
+        self.enemyCastles = movement.getEnemyCastleLocations(self.teamCastles, self.map);
+        self.log("----------------------------------------------------------");
+        self.log("Enemy Castles:")
+        self.log(self.enemyCastles);
     }
 
     //On first turn:
@@ -35,9 +35,12 @@ castle.doAction = (self) => {
         fuelDepots.forEach(depot => {
             self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
+        self.log("Team Castles: ");
+        self.teamCastles.push({id: self.me.id, x: self.me.x, y: self.me.y});
+        self.log(self.teamCastles);
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
         self.target = mirrorCastle;
-
+        self.enemyCastles.push({x: self.target.x, y: self.target.y});
         self.castleBuildQueue.push({unit: "CRUSADER", x: self.target.x, y: self.target.y});
         self.log(self.castleBuildQueue)
         return castle.buildFromQueue(self);
@@ -114,10 +117,10 @@ castle.buildFromQueue = (self) => {
 
 castle.recordPosition = (self) => {
     let turn = self.me.turn;
-    if(turn == 1){
+    if(turn === 1){
         self.castleTalk(self.me.x);
     }
-    if(turn == 2){
+    if(turn === 2){
         self.castleTalk(self.me.y);
     }
     
@@ -128,23 +131,28 @@ castle.recordPosition = (self) => {
  * Output: positions of other friendly castles.
  */
 castle.findPosition = (self) => {
-    const bots = self.getVisibleRobotMap().filter(bots =>{
-        return bots.team === self.me.team && bots.units === 0;
+    const bots = self.getVisibleRobots().filter(bots =>{
+        return bots.id !== self.me.id && bots.team === self.me.team && bots.castle_talk;
     })
     let turn = self.me.turn;
+    self.log("turn: " + turn);
     //let storeFriendlyCastles;
 
     bots.forEach(foundCastle => {
-        self.teamCastles.forEach(teamCastle =>{
-            if(foundCastle.id == teamCastle.id){
-                if(turn == 2){
-                    teamCastle.x = foundCastle.castle_talk;
-                }
-                if(turn == 3){
+        if(turn === 2){
+            self.teamCastles.push({id: foundCastle.id, x: foundCastle.castle_talk})
+        }
+        if(turn === 3){
+            self.teamCastles.forEach(teamCastle => {
+                if(foundCastle.id === teamCastle.id)
+                {
                     teamCastle.y = foundCastle.castle_talk;
                 }
-            }
-        })
+            })
+            self.log("----------------------------------------------------------");
+            self.log("Team Castles: ")
+            self.log(self.teamCastles);
+        }
     });
 }
 /** Castle should calculate the locations of the enemy castles using the recorded postions. Use mirror castle method. 
@@ -194,7 +202,7 @@ castle.mirrorCastle = (myLocation, fullMap) => {
   */
  castle.checkUnitCastleTalk = (self) => {
     const alliedUnits = self.getVisibleRobotMap().filter(bot =>{
-        return bot.team === self.me.team && bot.unit !== 0 && bot.castle_talk;
+        return bot.team === self.me.team && bot.castle_talk;
     })
     const length = alliedUnits.length;
     const enemyCastlesLength = self.enemyCastles.length

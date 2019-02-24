@@ -31,7 +31,13 @@ church.findUnitPlace() = (self, unitType) => {
         for(let j = -1; j<= 1; j++){
             const location = {x: (self.me.x + i), y: (self.me.y +j)} 
             if(movement.isPassable(location, self.map, self.getVisibleRobotMap())){
-                
+                //Send signal starting at turn 3 so you don't overrride location communication at start
+                if(self.me.turn > 2) {
+                    self.castleTalk(SPECS[unitType]);
+                }
+
+                self.log('church ' + self.id + ' building unit ' + unitType + ' at [' + (self.me.x+i) + ',' + (self.me.y+j) +']'); 
+                return self.buildUnit(SPECS[unitType], i, j);    
             }
         }
     }

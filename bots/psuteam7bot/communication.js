@@ -59,8 +59,9 @@ communication.initTeamCastleInformation = (self) => {
 }
 
 /**
- * Checks whether target tile is visible and is empty/ not a castle and report to allied castles
+ * Checks whether target tile is visible and is empty OR occupied and not a castle and report to allied castles if so
  * Returns the x-coord or y-coord value of the target tile depending on the map reflection
+ *
  */
 communication.checkAndReportEnemyCastleDestruction = (self) => {
     const {x, y} = self.target;
@@ -77,6 +78,7 @@ communication.checkAndReportEnemyCastleDestruction = (self) => {
         {
             self.castleTalk(y);
         }
+        return true;
     }
     else //Case target occupied or not in visible radius, -1 or there is a robotID > 0
     {
@@ -91,17 +93,22 @@ communication.checkAndReportEnemyCastleDestruction = (self) => {
             {
                 self.castleTalk(y);
             }
+            return true;
         }
     }
+    return false;
 }
 
-communication.checkCastleSignalAndUpdateTarget = (self) => {
+communication.checkBaseSignalAndUpdateTarget = (self) => {
     const baseRobot = self.getRobot(self.baseID);    //Get robot reference of the base castle robot
 
     //Check if it is signalling, if so, read the value as new target castle
-    if(self.isRadioing(baseRobot))  //Check if base has broadcasted a signal on it's turn
+    if(baseRobot && self.isRadioing(baseRobot))  //Check if base has broadcasted a signal on it's turn
     {
-        self.target = communication.signalToPosition(baseRobot.signal, self.fullMap);
+        if(baseRobot.signal)
+        {
+            self.target = communication.signalToPosition(baseRobot.signal, self.fullMap);
+        }
     }
 }
 

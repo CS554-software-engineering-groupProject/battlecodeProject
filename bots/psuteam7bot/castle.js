@@ -201,11 +201,11 @@ castle.mirrorCastle = (myLocation, fullMap) => {
   * remove the destroyed enemy castle from the array of enemy castles, and set self.target to null
   */
  castle.checkUnitCastleTalk = (self) => {
-    const alliedUnits = self.getVisibleRobotMap().filter(bot =>{
+    const alliedUnits = self.getVisibleRobots().filter(bot =>{
         return bot.team === self.me.team && bot.castle_talk;
     })
     const length = alliedUnits.length;
-    const enemyCastlesLength = self.enemyCastles.length
+    let enemyCastlesLength = self.enemyCastles.length
     for(let i = 0; i < length; ++i)
     {  
         for(let j = 0; j < enemyCastlesLength; ++j)
@@ -214,12 +214,14 @@ castle.mirrorCastle = (myLocation, fullMap) => {
             {
                 if(alliedUnits[i].castle_talk === self.enemyCastles[j].x)
                 {
-                    if(self.target === self.enemyCastles[j])
-                        self.target = null;
-                    self.enemyCastles.splice(j,1);
+                    const removedCastle = self.enemyCastles.splice(j,1);
                     enemyCastlesLength = self.enemyCastles.length;
                     // TODO Account for fuel, maybe add a pending message property, push message onto it and check every turn if there is one not 'sent' yet
-                    self.signal(self.target, self.map.length);
+                    if(self.target === removedCastle && enemyCastlesLength > 0)
+                    {
+                        self.target = enemyCastles[0];
+                        self.signal(self.target, self.map.length);
+                    }
                     break;
                 }
             }
@@ -227,12 +229,14 @@ castle.mirrorCastle = (myLocation, fullMap) => {
             {
                 if(alliedUnits[i].castle_talk === self.enemyCastles[j].y)
                 {
-                    if(self.target === self.enemyCastles[j])
-                        self.target = null;
-                    self.enemyCastles.splice(j,1);
+                    const removedCastle = self.enemyCastles.splice(j,1);
                     enemyCastlesLength = self.enemyCastles.length;
                     // TODO Account for fuel, maybe add a pending message property, push message onto it and check every turn if there is one not 'sent' yet
-                    self.signal(self.target, self.map.length);
+                    if(self.target === removedCastle && enemyCastlesLength > 0)
+                    {
+                        self.target = enemyCastles[0];
+                        self.signal(self.target, self.map.length);
+                    }
                     break;
                 }
             }

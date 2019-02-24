@@ -33,7 +33,7 @@ crusader.doAction = (self) => {
         else
         {
             self.log("UNASSIGNED crusader didn't receive signal from base, getting mirror coord");
-            self.target = movement.getEnemyCastleLocations(self.me, self.map);
+            self.target = movement.getMirrorCastle(self.me, self.map);
         }
 
         self.squadSize = 4; //-1 trigger crusader, need to change squad detection if trigger crusader is to be part of squad
@@ -53,10 +53,10 @@ crusader.takeAttackerAction = (self) => {
     self.log("ATTACKER crusader " + self.id + " taking turn");
 
     //If no base
-    if(self.base == null)
+    if(self.base === null)
     {
         //Set opposite of current coord as target
-        self.target = movement.getEnemyCastleLocations(self.me, self.map);
+        self.target = movement.getMirrorCastle(self.me, self.map);
     }
 
     //If no target, check for update from base
@@ -88,7 +88,7 @@ crusader.takeAttackerAction = (self) => {
     {
         //Enemy castle destroyed, waiting for next order
         self.log("Enemy castle destroyed and reported, waiting for next order")
-        self.target === null;
+        self.target = null;
         return;
     }
 
@@ -120,6 +120,10 @@ crusader.takeAttackerAction = (self) => {
     }
     else if(self.squadSize === 0)
     {
+        if(self.fuel < 100)
+        {
+            self.log('Low Fuel, Global fuel < 100, ATTACKER crusader ' + self.id + ' Standing by.')
+        }
         self.log('ATTACKER crusader ' + self.id + ' moving towards enemy base, Current: [' + self.me.x + ',' + self.me.y + ']')
         return movement.moveAlongPath(self);
     }

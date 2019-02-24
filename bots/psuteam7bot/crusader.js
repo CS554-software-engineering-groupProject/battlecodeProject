@@ -71,7 +71,6 @@ crusader.takeAttackerAction = (self) => {
     //Attack visible enemies
     if(attackable.length > 0)
     {
-        --self.me.turn;
         let attacking = attackable[0];
         self.log("Attacking " + combat.UNITTYPE[attacking.unit] + " at " + attacking.x + ", " +  attacking.y);
         return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
@@ -108,8 +107,14 @@ crusader.takeAttackerAction = (self) => {
     }
 
     //If first seven turns, move away from allied base towards enemy base, else check if squadSize threshold is met and is 0
-    if(self.me.turn < 6)
+    if(self.attackerMoves < 6)
     {
+        if(movement.hasFuelToMove(self, self.path[self.path.length-1])) {
+            self.attackerMoves++;
+        } else {
+            self.log('ATTACKER crusader ' + self.id + ' waiting for more fuel to move to rally point');
+            return;
+        }
         self.log('ATTACKER crusader ' + self.id + ' moving to rally point, Current: [' + self.me.x + ',' + self.me.y + ']')
         return movement.moveAlongPath(self);
     }

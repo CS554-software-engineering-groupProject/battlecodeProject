@@ -18,6 +18,7 @@ church.buildFromQueue = (self) => {
         self.karbonite >= SPECS.UNITS[SPECS[nextBuild.unit]].CONSTRUCTION_KARBONITE){
             self.churchBuildQueue.shift();
             self.signal(communication.positionToSignal(nextBuild, self.map), 2);
+            return church.findUnitPlace(self, buildNextUnit);
         }
     
 }

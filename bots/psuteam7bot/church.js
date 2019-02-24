@@ -24,7 +24,9 @@ church.buildFromQueue = (self) => {
         self.log('cannnot build unit'+ buildNextUnit.unit +'- not enough resources');
         return;
     }
+}
 
+church.findUnitPlace() = (self) => {
     
 }
 

@@ -16,7 +16,7 @@ church.buildFromQueue = (self) => {
     const buildNextUnit = self.churchBuildQueue[0];
     if(self.fuel >= SPECS.UNITS[SPECS[nextBuild.unit]].CONSTRUCTION_FUEL && 
         self.karbonite >= SPECS.UNITS[SPECS[nextBuild.unit]].CONSTRUCTION_KARBONITE){
-            
+            self.churchBuildQueue.shift();
         }
 }
 

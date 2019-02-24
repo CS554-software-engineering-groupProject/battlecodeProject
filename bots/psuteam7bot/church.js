@@ -5,4 +5,8 @@ import communication from './communication.js';
 
 const church = {};
 
+church.doAction = (self) => {
+    
+}
+
 export default church;

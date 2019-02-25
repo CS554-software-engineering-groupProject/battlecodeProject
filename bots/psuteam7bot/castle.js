@@ -12,9 +12,11 @@ castle.doAction = (self) => {
   
     castle.recordPosition(self);
     castle.findPosition(self);
-    if(self.me.turn === 4)
+    if(self.me.turn === 5)
     {
         self.enemyCastles = movement.getEnemyCastleLocations(self.teamCastles, self.map);
+        self.log("Enemy castles: ");
+        self.log(self.enemyCastles);
     }
 
     //On first turn:
@@ -42,8 +44,11 @@ castle.doAction = (self) => {
     }
     else if (self.castleBuildQueue.length > 0) 
     {
-        castle.checkUnitCastleTalk(self);
-        castle.signalNewUnitTarget(self);
+        if(self.me.turn > 5)
+        {
+            castle.checkUnitCastleTalk(self);
+            castle.signalNewUnitTarget(self);
+        }
         self.log("BUILD QUEUE NON-EMPTY")
         self.log(self.castleBuildQueue)
         const botsInQueue = self.castleBuildQueue.length;
@@ -110,10 +115,12 @@ castle.buildFromQueue = (self) => {
 
 castle.recordPosition = (self) => {
     let turn = self.me.turn;
-    if(turn === 1){
+    if(turn === 1|| turn === 2){
+        //self.log("Sent x-coord: " + self.me.x);
         self.castleTalk(self.me.x);
     }
-    if(turn === 2){
+    if(turn === 3|| turn === 4){
+        //self.log("Sent y-coord: " + self.me.x);
         self.castleTalk(self.me.y);
     }
     
@@ -133,15 +140,19 @@ castle.findPosition = (self) => {
 
     bots.forEach(foundCastle => {
         if(turn === 2){
+            //self.log("Received id: " + foundCastle.id + ", x-coord: " + foundCastle.castle_talk);
             self.teamCastles.push({id: foundCastle.id, x: foundCastle.castle_talk})
         }
-        if(turn === 3){
+        if(turn === 4){
             self.teamCastles.forEach(teamCastle => {
                 if(foundCastle.id === teamCastle.id)
                 {
+                    //self.log("Received y-coord: " + foundCastle.castle_talk);
                     teamCastle.y = foundCastle.castle_talk;
                 }
             })
+            //self.log("Team castles: ");
+            //self.log(self.teamCastles);
         }
     });
 }
@@ -198,43 +209,55 @@ castle.mirrorCastle = (myLocation, fullMap) => {
     let enemyCastlesLength = self.enemyCastles.length
     for(let i = 0; i < length; ++i)
     {  
+        self.log("Castle talk received: " + alliedUnits[i].castle_talk);
+        self.log("Enemy castles: ");
+        self.log(self.enemyCastles);
         for(let j = 0; j < enemyCastlesLength; ++j)
         {
+            // TODO, seems need to send both X and Y for cases where the enemy castle need to be on X and Y
             if(movement.isHorizontalReflection(self.map))
             {
                 if(alliedUnits[i].castle_talk === self.enemyCastles[j].x)
                 {
-                    self.log("Castle talk received from unit: " + alliedUnits[i].castle_talk);
-                    const removedCastle = self.enemyCastles.splice(j,1);
+                    const removedCastle = self.enemyCastles.splice(j,1)[0];
                     enemyCastlesLength = self.enemyCastles.length;
+                    self.log("Enemy castle removed from array----------------------------------------------------------------------------------------")
+                    //self.log(self.target);
+                    //self.log(removedCastle);
+                    //self.log(""+movement.positionsAreEqual(self.target, removedCastle));
+                    //self.log(""+(enemyCastlesLength > 0));
                     // TODO Account for fuel, maybe add a pending message property, push message onto it and check every turn if there is one not 'sent' yet
                     if(movement.positionsAreEqual(self.target, removedCastle) && enemyCastlesLength > 0)
                     {
-                        self.target = enemyCastles[0];
+                        self.target = self.enemyCastles[0];
                         self.pendingMessages.push(communication.positionToSignal(self.target, self.map));
-                        self.log("Signal stored-------------------------------------------------------------------------------------------");
-                        self.log(self.pendingMessages);
+                        //self.log("Signal stored-------------------------------------------------------------------------------------------");
+                        //self.log(self.pendingMessages);
                     }
-                    break;
                 }
             }
             else
             {
                 if(alliedUnits[i].castle_talk === self.enemyCastles[j].y)
                 {
-                    const removedCastle = self.enemyCastles.splice(j,1);
+                    const removedCastle = self.enemyCastles.splice(j,1)[0];
                     enemyCastlesLength = self.enemyCastles.length;
+                    //self.log("Enemy castle removed from array----------------------------------------------------------------------------------------")
+                    //self.log(self.target);
+                    //self.log(removedCastle);
+                    //self.log(""+movement.positionsAreEqual(self.target, removedCastle));
+                    //self.log(""+(enemyCastlesLength > 0));
                     // TODO Account for fuel, maybe add a pending message property, push message onto it and check every turn if there is one not 'sent' yet
                     if(movement.positionsAreEqual(self.target, removedCastle) && enemyCastlesLength > 0)
                     {
-                        self.target = enemyCastles[0];
+                        self.target = self.enemyCastles[0];
                         self.pendingMessages.push(communication.positionToSignal(self.target, self.map));
-                        self.log("Signal stored-------------------------------------------------------------------------------------------");
-                        self.log(self.pendingMessages);
+                        //self.log("Signal stored-------------------------------------------------------------------------------------------");
+                        //self.log(self.pendingMessages);
                     }
-                    break;
                 }
             }
+            self.log(self.enemyCastles);
         }
     }
     return;

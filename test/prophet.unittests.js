@@ -133,7 +133,7 @@ describe.only('Prophet Unit Tests', function() {
 
     });
 
-    describe.only('takeAttackerAction() tests', function() {
+    describe('takeAttackerAction() tests', function() {
         it('ATTACKERS with no base should identify enemy castles', function(done) {
             myBot.path = [{x: 3, y: 3}];
             myBot.target = {x: 9, y: 3};
@@ -335,5 +335,96 @@ describe.only('Prophet Unit Tests', function() {
 
             done();
         });
+    });
+
+    describe.only('takeDefenderAction() tests', function() {
+        it('DEFENDERS with enemies in attackable range should just attack enemies', function(done) {
+            myBot.potentialEnemyCastleLocation = [{x: 9, y: 9}];
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 3, y: 3}];
+            myBot.target = {x: 9, y: 3};
+            myBot.attackerMoves = 0;
+
+            //Teammate in attackable range
+            mockGame.createNewRobot(new MyRobot(), 1, 7, 0, 2);
+            output = prophet.takeDefenderAction(myBot);
+
+            expect(output['action']).equals('move');
+            expect(myBot.attackerMoves).equals(1);
+
+            //Enemy out of attackable range
+            mockGame.createNewRobot(new MyRobot(), 9, 4, 1, 2);
+            output = prophet.takeDefenderAction(myBot);
+
+            expect(output['action']).equals('move');
+            expect(myBot.attackerMoves).equals(2);
+
+            //Enemy in attackable range
+            mockGame.createNewRobot(new MyRobot(), 9, 3, 1, 2); 
+            output = prophet.takeDefenderAction(myBot);
+
+            expect(output['action']).equals('attack');
+            expect(output['dx']).equals(8);
+            expect(output['dy']).equals(0);            
+
+            done();
+        });
+
+
+        it("DEFENDERS for first 5 turns should attempt to set path to target if empty", function(done) {
+            myBot.potentialEnemyCastleLocation = [{x: 9, y: 3}];
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.target = {x: 9, y: 3};
+            myBot.attackerMoves = 3;
+
+            expect(myBot.path.length).equals(0);
+            output = prophet.takeDefenderAction(myBot);
+
+            expect(myBot.path[0]).to.eql(myBot.target);
+            expect(output['action']).equals('move');
+            expect(myBot.attackerMoves).equals(4);
+
+            //Create impassable terrain so myBot can't get path
+            const mapAlterations = [
+                {x: 0, y: 2, value: false},
+                {x: 0, y: 3, value: false}, //Yes this is a bot, but aStarPathfinding ignore that
+                {x: 0, y: 4, value: false},
+                {x: 1, y: 1, value: false},
+                {x: 1, y: 2, value: false},
+                {x: 1, y: 4, value: false},
+                {x: 1, y: 5, value: false},
+                {x: 2, y: 2, value: false},
+                {x: 2, y: 3, value: false},
+                {x: 2, y: 4, value: false},
+                {x: 3, y: 3, value: false},
+            ]
+
+            myBot.path = [];
+            mockGame.alterMap("map", mapAlterations);
+            expect(myBot.path.length).equals(0);
+            output = prophet.takeDefenderAction(myBot);
+
+            expect(myBot.path.length).equals(0);
+            expect(output).to.be.undefined;
+            expect(myBot.attackerMoves).equals(5);
+            
+
+            done();
+        });
+
+        it("DEFENDERS after first 5 turns should wait if no enemies to attack", function(done) {
+            myBot.potentialEnemyCastleLocation = [{x: 9, y: 3}];
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.target = {x: 9, y: 3};
+            myBot.attackerMoves = 5;
+
+            output = prophet.takeDefenderAction(myBot);
+
+            expect(output).to.be.undefined;
+            expect(myBot.attackerMoves).equals(5);           
+
+            done();
+        });
+
     });
 });

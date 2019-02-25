@@ -2,13 +2,13 @@ const mocha = require('mocha');
 const chai = require('chai');
 const mockBC19 = require('../projectUtils/mockGame.js');
 const MyRobot = require('../projectUtils/psuteam7botCompiled.js').MyRobot;
-const crusader = require('../projectUtils/psuteam7botCompiled.js').crusader;
+const prophet = require('../projectUtils/psuteam7botCompiled.js').prophet;
 const combat = require('../projectUtils/psuteam7botCompiled.js').combat;
 const movement = require('../projectUtils/psuteam7botCompiled.js').movement;
 const communication = require('../projectUtils/psuteam7botCompiled.js').communication;
 const expect = chai.expect;
 
-describe('Crusader Unit Tests', function() {
+describe.only('Prophet Unit Tests', function() {
     let mockGame;
     let myBot;
     let localCastle
@@ -24,17 +24,17 @@ describe('Crusader Unit Tests', function() {
         //Alter so map is viewed as horizontally symmetric
         mockGame.alterMap("map", [{x: 0, y: 0, value: false}, {x: 9, y: 0, value: false}])
         mockGame.createNewRobot(localCastle, 0, 3, 0, 0);
-        mockGame.createNewRobot(myBot, 1, 3, 0, 3);
+        mockGame.createNewRobot(myBot, 1, 3, 0, 4);
     });
 
     afterEach(function() {
         mockGame.undoSinonMethods();
     })
 
-    describe('doAction() tests', function() {
+    describe.only('doAction() tests', function() {
         it("Bots in unspecified roles should do nothing", function(done) {
             myBot.role = "TESTROLE";
-            output = crusader.doAction(myBot);
+            output = prophet.doAction(myBot);
 
             expect(output).to.be.undefined;
 
@@ -43,8 +43,8 @@ describe('Crusader Unit Tests', function() {
 
         it("UNASSIGNED bots should become ATTACKERS if they can't find a base", function(done) {
             const noBaseBot = new MyRobot();
-            mockGame.createNewRobot(noBaseBot, 0, 9, 9, 3);
-            output = crusader.doAction(noBaseBot);
+            mockGame.createNewRobot(noBaseBot, 0, 9, 9, 4);
+            output = prophet.doAction(noBaseBot);
 
             expect(noBaseBot.base).to.be.null;
             expect(noBaseBot.role).equals("ATTACKER");
@@ -54,40 +54,83 @@ describe('Crusader Unit Tests', function() {
         });
 
         it("UNASSIGNED bots should use the radio signal from the base if one exists", function(done) {
-            let stubAttackerAction = mockGame.replaceMethod("crusader", "takeAttackerAction").returns('skipping attacker action');
+            let stubDefenderAction = mockGame.replaceMethod("prophet", "takeDefenderAction").returns('skipping defender action');
             let signalPos = communication.signalToPosition(17, mockGame.game.map);
             localCastle.me.signal = 17;
             localCastle.me.signal_radius = 2;
             mockGame._setCommunication(localCastle);
 
-            output = crusader.doAction(myBot);
+            output = prophet.doAction(myBot);
 
             expect(myBot.base).to.eql({x: 0, y: 3});
-            expect(myBot.role).equals("ATTACKER");
+            expect(myBot.role).equals("DEFENDER");
             expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
                 signalPos,    //Castle signal (could be anything)
                 {x: 9, y: 6}  //Diagonal patrol (relative to localCastle)
             ]);
-            expect(output).equals('skipping attacker action');
+            expect(output).equals('skipping defender action');
 
             done();
         });
 
         it("UNASSIGNED bots should use getAttackerPatrolPosition if radio signal from the base DNE", function(done) {
-            let stubAttackerAction = mockGame.replaceMethod("crusader", "takeAttackerAction").returns('skipping attacker action');
+            let stubDefenderAction = mockGame.replaceMethod("prophet", "takeDefenderAction").returns('skipping defender action');
 
-            output = crusader.doAction(myBot);
+            output = prophet.doAction(myBot);
 
             expect(myBot.base).to.eql({x: 0, y: 3});
-            expect(myBot.role).equals("ATTACKER");
+            expect(myBot.role).equals("DEFENDER");
             expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
-                {x: 9, y: 3}, //Mirror curent position (relative to crusader)
+                {x: 9, y: 3}, //Mirror curent position (relative to prophet)
                 {x: 9, y: 6}  //Diagonal patrol (relative to localCastle)
             ]);
+            expect(output).equals('skipping defender action');
+
+            done();
+        });
+
+        it("UNASSIGNED bots should become DEFENDERS if 2 or less local prophets, ATTACKERS otherwise", function(done) {
+            let stubDefenderAction = mockGame.replaceMethod("prophet", "takeDefenderAction").returns('skipping defender action');
+            let stubAttackerAction = mockGame.replaceMethod("prophet", "takeAttackerAction").returns('skipping attacker action');
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            
+            //Only defender
+            output = prophet.doAction(myBot);
+
+            expect(myBot.role).equals("DEFENDER");
+            expect(output).equals('skipping defender action');
+
+            //Two defenders in range of base, one out of range
+            myBot.role = "UNASSIGNED";
+            mockGame.createNewRobot(new MyRobot(), 8, 3, 0, 4);
+            mockGame.createNewRobot(new MyRobot(), 8, 4, 0, 4);
+
+            output = prophet.doAction(myBot);
+            
+            expect(myBot.role).equals("DEFENDER");
+            expect(output).equals('skipping defender action');
+
+            //Two defenders in range of base, one non-prophet also in range
+            myBot.role = "UNASSIGNED";
+            mockGame.createNewRobot(new MyRobot(), 3, 3, 0, 3);
+
+            output = prophet.doAction(myBot);
+
+            expect(myBot.role).equals("DEFENDER");
+            expect(output).equals('skipping defender action');
+
+            //Three defenders in range of base
+            myBot.role = "UNASSIGNED";
+            mockGame.createNewRobot(new MyRobot(), 4, 4, 0, 4);
+
+            output = prophet.doAction(myBot);
+
+            expect(myBot.role).equals("ATTACKER");
             expect(output).equals('skipping attacker action');
 
             done();
         });
+
     });
 
     describe('takeAttackerAction() tests', function() {
@@ -95,7 +138,7 @@ describe('Crusader Unit Tests', function() {
             myBot.path = [{x: 3, y: 3}];
             myBot.target = {x: 9, y: 3};
 
-            output = crusader.takeAttackerAction(myBot);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
                 {x: 8, y: 3}, //Mirror location (relative to myBot)
@@ -111,7 +154,7 @@ describe('Crusader Unit Tests', function() {
             myBot.path = [{x: 3, y: 3}];
             myBot.target = {x: 9, y: 3};
 
-            output = crusader.takeAttackerAction(myBot);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
                 {x: 9, y: 3}, //Mirror location (relative to localCastle)
@@ -126,7 +169,7 @@ describe('Crusader Unit Tests', function() {
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
             myBot.path = [{x: 3, y: 3}];
 
-            output = crusader.takeAttackerAction(myBot);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
                 {x: 9, y: 3}, //Mirror location (relative to localCastle)
@@ -145,19 +188,19 @@ describe('Crusader Unit Tests', function() {
 
             //Teammate in attackable range
             mockGame.createNewRobot(new MyRobot(), 1, 7, 0, 2);
-            output = crusader.takeAttackerAction(myBot);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(output['action']).equals('move');
 
             //Enemy out of attackable range
             mockGame.createNewRobot(new MyRobot(), 5, 4, 1, 2);
-            output = crusader.takeAttackerAction(myBot);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(output['action']).equals('move');
 
             //Enemy in attackable range
             mockGame.createNewRobot(new MyRobot(), 5, 3, 1, 2); 
-            output = crusader.takeAttackerAction(myBot);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(output['action']).equals('attack');
             expect(output['dx']).equals(4);
@@ -174,7 +217,7 @@ describe('Crusader Unit Tests', function() {
             myBot.potentialEnemyCastleLocation = [{x: 9, y: 9}];
             myBot.target = {x: 5, y: 3};
 
-            output = crusader.takeAttackerAction(myBot);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.potentialEnemyCastleLocation.length).equals(0);
             expect(myBot.target).eql({x: 5, y: 3});
@@ -184,7 +227,7 @@ describe('Crusader Unit Tests', function() {
             myBot.potentialEnemyCastleLocation = [{x: 5, y: 3}, {x: 9, y: 9}];
             myBot.target = {x: 5, y: 3};
 
-            output = crusader.takeAttackerAction(myBot);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.potentialEnemyCastleLocation).to.deep.include({x: 9, y: 9});
             expect(myBot.target).eql({x: 9, y: 9});
@@ -200,7 +243,7 @@ describe('Crusader Unit Tests', function() {
             myBot.attackerMoves = 6;
             myBot.squadSize = 0;
 
-            output = crusader.takeAttackerAction(myBot);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.path[0]).to.eql(myBot.target);
             expect(output).equals("moved successfully");
@@ -218,7 +261,7 @@ describe('Crusader Unit Tests', function() {
             //Enough fuel, still turns to move
             myBot.attackerMoves = 5;
             myBot.fuel = 4;
-            output = crusader.takeAttackerAction(myBot);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.attackerMoves).equals(6);
             expect(output).equals("moved successfully");
@@ -226,7 +269,7 @@ describe('Crusader Unit Tests', function() {
             //Not enough fuel, still turns to move
             myBot.attackerMoves = 5;
             myBot.fuel = 3;
-            output = crusader.takeAttackerAction(myBot);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.attackerMoves).equals(5);
             expect(output).to.be.undefined;
@@ -243,30 +286,30 @@ describe('Crusader Unit Tests', function() {
             myBot.squadSize = 2;
 
             //Squad not big enough
-            output = crusader.takeAttackerAction(myBot);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.attackerMoves).equals(6);
             expect(output).to.be.undefined;
 
             //Squad not big enough because bot of wrong type
-            mockGame.createNewRobot(new MyRobot(), 5, 3, 0, 4);
-            output = crusader.takeAttackerAction(myBot);
+            mockGame.createNewRobot(new MyRobot(), 5, 3, 0, 3);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.attackerMoves).equals(6);
             expect(myBot.squadSize).equals(2);
             expect(output).to.be.undefined;
 
-            //Squad not big enough friendly crusader out of range
-            mockGame.createNewRobot(new MyRobot(), 8, 4, 0, 3);
-            output = crusader.takeAttackerAction(myBot);
+            //Squad not big enough friendly prophet out of range
+            mockGame.createNewRobot(new MyRobot(), 8, 4, 0, 4);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.attackerMoves).equals(6);
             expect(myBot.squadSize).equals(2);
             expect(output).to.be.undefined;
 
             //Squad big enough
-            mockGame.createNewRobot(new MyRobot(), 8, 3, 0, 3);
-            output = crusader.takeAttackerAction(myBot);
+            mockGame.createNewRobot(new MyRobot(), 8, 3, 0, 4);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.attackerMoves).equals(6);
             expect(myBot.squadSize).equals(0);
@@ -284,7 +327,7 @@ describe('Crusader Unit Tests', function() {
             myBot.attackerMoves = 6;
             myBot.squadSize = 0;
 
-            output = crusader.takeAttackerAction(myBot);
+            output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.attackerMoves).equals(6);
             expect(myBot.squadSize).equals(0);

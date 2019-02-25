@@ -47,7 +47,7 @@ prophet.doAction = (self) => {
         });
 
         //2 defenders towards mirror castle, should be enough to kill a crusader in 2 turns before it gets to attack range
-        if(nearbyDefenders.length < 2)
+        if(nearbyDefenders.length < 3)
         {
             self.log("Base defenders = " + JSON.stringify(nearbyDefenders.length) + ", Assigned as a defender");
             self.role = "DEFENDER";

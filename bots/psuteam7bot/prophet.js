@@ -186,7 +186,7 @@ prophet.takeAttackerAction = (self) => {
     }
 
     //If first seven turns, move away from allied base towards enemy base, else check if squadSize threshold is met and is 0
-    if(self.me.turn < 6)
+    if(self.attackerMoves < 6)
     {
         if(movement.hasFuelToMove(self, self.path[self.path.length-1])) {
             self.attackerMoves++;

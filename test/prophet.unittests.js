@@ -31,7 +31,7 @@ describe.only('Prophet Unit Tests', function() {
         mockGame.undoSinonMethods();
     })
 
-    describe.only('doAction() tests', function() {
+    describe('doAction() tests', function() {
         it("Bots in unspecified roles should do nothing", function(done) {
             myBot.role = "TESTROLE";
             output = prophet.doAction(myBot);
@@ -133,7 +133,7 @@ describe.only('Prophet Unit Tests', function() {
 
     });
 
-    describe('takeAttackerAction() tests', function() {
+    describe.only('takeAttackerAction() tests', function() {
         it('ATTACKERS with no base should identify enemy castles', function(done) {
             myBot.path = [{x: 3, y: 3}];
             myBot.target = {x: 9, y: 3};
@@ -193,17 +193,17 @@ describe.only('Prophet Unit Tests', function() {
             expect(output['action']).equals('move');
 
             //Enemy out of attackable range
-            mockGame.createNewRobot(new MyRobot(), 5, 4, 1, 2);
+            mockGame.createNewRobot(new MyRobot(), 9, 4, 1, 2);
             output = prophet.takeAttackerAction(myBot);
 
             expect(output['action']).equals('move');
 
             //Enemy in attackable range
-            mockGame.createNewRobot(new MyRobot(), 5, 3, 1, 2); 
+            mockGame.createNewRobot(new MyRobot(), 9, 3, 1, 2); 
             output = prophet.takeAttackerAction(myBot);
 
             expect(output['action']).equals('attack');
-            expect(output['dx']).equals(4);
+            expect(output['dx']).equals(8);
             expect(output['dy']).equals(0);            
 
             done();
@@ -260,7 +260,7 @@ describe.only('Prophet Unit Tests', function() {
 
             //Enough fuel, still turns to move
             myBot.attackerMoves = 5;
-            myBot.fuel = 4;
+            myBot.fuel = 8;
             output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.attackerMoves).equals(6);
@@ -268,7 +268,7 @@ describe.only('Prophet Unit Tests', function() {
 
             //Not enough fuel, still turns to move
             myBot.attackerMoves = 5;
-            myBot.fuel = 3;
+            myBot.fuel = 7;
             output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.attackerMoves).equals(5);
@@ -300,7 +300,7 @@ describe.only('Prophet Unit Tests', function() {
             expect(output).to.be.undefined;
 
             //Squad not big enough friendly prophet out of range
-            mockGame.createNewRobot(new MyRobot(), 8, 4, 0, 4);
+            mockGame.createNewRobot(new MyRobot(), 9, 4, 0, 4);
             output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.attackerMoves).equals(6);
@@ -308,7 +308,7 @@ describe.only('Prophet Unit Tests', function() {
             expect(output).to.be.undefined;
 
             //Squad big enough
-            mockGame.createNewRobot(new MyRobot(), 8, 3, 0, 4);
+            mockGame.createNewRobot(new MyRobot(), 9, 3, 0, 4);
             output = prophet.takeAttackerAction(myBot);
 
             expect(myBot.attackerMoves).equals(6);

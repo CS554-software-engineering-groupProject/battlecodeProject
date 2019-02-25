@@ -150,7 +150,6 @@ prophet.takeAttackerAction = (self) => {
     //Attack visible enemies
     if(attackable.length > 0)
     {
-        --self.me.turn;
         let attacking = attackable[0];
         self.log("Attacking " + combat.UNITTYPE[attacking.unit] + " at " + attacking.x + ", " +  attacking.y);
         return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
@@ -161,7 +160,9 @@ prophet.takeAttackerAction = (self) => {
     {
         //Assign new target waypoint
         self.potentialEnemyCastleLocation.shift();
-        self.target = self.potentialEnemyCastleLocation[0];
+        if(self.potentialEnemyCastleLocation.length != 0) {
+            self.target = self.potentialEnemyCastleLocation[0];
+        }
     }
 
     //TODO No more patrol waypoint, do nothing
@@ -187,8 +188,14 @@ prophet.takeAttackerAction = (self) => {
     //If first seven turns, move away from allied base towards enemy base, else check if squadSize threshold is met and is 0
     if(self.me.turn < 6)
     {
-        self.log('ATTACKER prophet ' + self.id + ' moving to rally point, Current: [' + self.me.x + ',' + self.me.y + ']')
-        return movement.moveAlongPath(self);
+        if(movement.hasFuelToMove(self, self.path[self.path.length-1])) {
+            self.attackerMoves++;
+            self.log('ATTACKER prophet ' + self.id + ' moving to rally point, Current: [' + self.me.x + ',' + self.me.y + ']')
+            return movement.moveAlongPath(self);
+        } else {
+            self.log('ATTACKER prophet ' + self.id + ' waiting for more fuel to move to rally point');
+            return;
+        }
     }
     else if(self.squadSize === 0)
     {

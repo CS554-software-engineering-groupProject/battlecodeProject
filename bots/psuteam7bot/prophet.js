@@ -81,12 +81,6 @@ prophet.takeDefenderAction = (self) =>  {
 
     if(attackable.length > 0)
     {
-        //Compensate guard post movement turn loss due to attacking
-        if(self.me.turn < 5)
-        {
-            --self.me.turn;
-        }
-
         let attacking = attackable[0];
         self.log("Attacking " + combat.UNITTYPE[attacking.unit] + " at " + attacking.x + ", " +  attacking.y);
         return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
@@ -94,8 +88,10 @@ prophet.takeDefenderAction = (self) =>  {
 
 
     //Limited movement towards enemy castle (movement towards guard post)
-    if(self.me.turn < 5)
+    if(self.attackerMoves < 5)
     {
+        //Reusing attacker move naming convention
+        self.attackerMoves++;
         if(self.path.length === 0)
         {
             if(movement.aStarPathfinding(self, self.me, self.potentialEnemyCastleLocation[0], false)) {

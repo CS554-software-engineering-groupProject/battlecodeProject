@@ -15,9 +15,6 @@ castle.doAction = (self) => {
     if(self.me.turn === 4)
     {
         self.enemyCastles = movement.getEnemyCastleLocations(self.teamCastles, self.map);
-        self.log("----------------------------------------------------------");
-        self.log("Enemy Castles:")
-        self.log(self.enemyCastles);
     }
 
     //On first turn:
@@ -35,9 +32,7 @@ castle.doAction = (self) => {
         fuelDepots.forEach(depot => {
             self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
-        self.log("Team Castles: ");
         self.teamCastles.push({id: self.me.id, x: self.me.x, y: self.me.y});
-        self.log(self.teamCastles);
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
         self.target = mirrorCastle;
         self.enemyCastles.push({x: self.target.x, y: self.target.y});
@@ -48,8 +43,7 @@ castle.doAction = (self) => {
     else if (self.castleBuildQueue.length > 0) 
     {
         castle.checkUnitCastleTalk(self);
-        if(self.target === null)
-            self.target = enemyCastles[0];
+        castle.signalNewUnitTarget(self);
         self.log("BUILD QUEUE NON-EMPTY")
         self.log(self.castleBuildQueue)
         const botsInQueue = self.castleBuildQueue.length;
@@ -62,8 +56,7 @@ castle.doAction = (self) => {
     else 
     {
         castle.checkUnitCastleTalk(self);
-        if(self.target === null)
-            self.target = enemyCastles[0];
+        castle.signalNewUnitTarget(self);
         self.log("BUILD QUEUE EMPTY, ATTEMPTING TO BUILD CRUSADER")
         //Check if there are enough resources to produce this unit.
        if(self.fuel >= SPECS.UNITS[SPECS.CRUSADER].CONSTRUCTION_FUEL && self.karbonite >= SPECS.UNITS[SPECS.CRUSADER].CONSTRUCTION_KARBONITE) {
@@ -149,9 +142,6 @@ castle.findPosition = (self) => {
                     teamCastle.y = foundCastle.castle_talk;
                 }
             })
-            self.log("----------------------------------------------------------");
-            self.log("Team Castles: ")
-            self.log(self.teamCastles);
         }
     });
 }
@@ -214,13 +204,16 @@ castle.mirrorCastle = (myLocation, fullMap) => {
             {
                 if(alliedUnits[i].castle_talk === self.enemyCastles[j].x)
                 {
+                    self.log("Castle talk received from unit: " + alliedUnits[i].castle_talk);
                     const removedCastle = self.enemyCastles.splice(j,1);
                     enemyCastlesLength = self.enemyCastles.length;
                     // TODO Account for fuel, maybe add a pending message property, push message onto it and check every turn if there is one not 'sent' yet
-                    if(self.target === removedCastle && enemyCastlesLength > 0)
+                    if(movement.positionsAreEqual(self.target, removedCastle) && enemyCastlesLength > 0)
                     {
                         self.target = enemyCastles[0];
-                        self.signal(self.target, self.map.length);
+                        self.pendingMessages.push(communication.positionToSignal(self.target, self.map));
+                        self.log("Signal stored-------------------------------------------------------------------------------------------");
+                        self.log(self.pendingMessages);
                     }
                     break;
                 }
@@ -232,10 +225,12 @@ castle.mirrorCastle = (myLocation, fullMap) => {
                     const removedCastle = self.enemyCastles.splice(j,1);
                     enemyCastlesLength = self.enemyCastles.length;
                     // TODO Account for fuel, maybe add a pending message property, push message onto it and check every turn if there is one not 'sent' yet
-                    if(self.target === removedCastle && enemyCastlesLength > 0)
+                    if(movement.positionsAreEqual(self.target, removedCastle) && enemyCastlesLength > 0)
                     {
                         self.target = enemyCastles[0];
-                        self.signal(self.target, self.map.length);
+                        self.pendingMessages.push(communication.positionToSignal(self.target, self.map));
+                        self.log("Signal stored-------------------------------------------------------------------------------------------");
+                        self.log(self.pendingMessages);
                     }
                     break;
                 }
@@ -245,9 +240,23 @@ castle.mirrorCastle = (myLocation, fullMap) => {
     return;
  }
 
-
-castle.signalTargetChange = (self) => {
-
+ /**
+  * Checks whether there are pending messages to broadcast, pop it from the list and broadcast it if there is enough fuel
+  */
+castle.signalNewUnitTarget = (self) =>{
+    if(self.pendingMessages.length > 0)
+    {
+        if(self.fuel > self.map.length)
+        {
+            const newTarget = self.pendingMessages.pop();
+            self.signal(newTarget, self.map.length);
+            self.log("Signal sent to units, " + newTarget + "---------------------------------------------------------------------------------------------------------");
+        }
+        else
+        {
+            self.log("Not enough fuel to send signal");
+        }
+    }
 }
 
 export default castle;

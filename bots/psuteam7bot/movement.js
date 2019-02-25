@@ -206,7 +206,7 @@ movement.isPassable = (location, fullMap, robotMap) => {
 
     if(x < 0 || y < 0)  //Map bound check
         return false;
-    else if(x > fullMap.length || y > fullMap.length)   //Map bound check
+    else if(x >= fullMap.length || y >= fullMap.length)   //Map bound check
         return false;
     return((robotMap[y][x] <= 0) && (fullMap[y][x])); //Returns true only if tile is empty and is passable
 }
@@ -462,9 +462,7 @@ movement.getDiagonalPatrolPosition = (myCastleLocation, fullMap) => {
  *         method thus needs to be returned by the action of whatever bot is calling it in order to make move.
  */
 movement.moveAlongPath = (self) => {
-    //self.log("me: [" + self.me.x + "," + self.me.y + "]")
     let nextMove = self.path.pop();
-    //self.log("nextMove: [" + nextMove.x + "," + nextMove.y + "]")
 
     //If next move is viable, do it
     if(movement.isPassable(nextMove, self.map, self.getVisibleRobotMap()) && movement.hasFuelToMove(self, nextMove)) {

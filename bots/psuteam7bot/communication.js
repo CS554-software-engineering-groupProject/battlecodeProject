@@ -48,7 +48,7 @@ communication.initTeamCastleInformation = (self) => {
         });
         //Sort so nearest castle is self.teamCastles[0]
         self.teamCastles.sort((a,b) => {
-            if(movement.getDistance(self.me, a) > movement.getDistance(self.me, b)) {
+            if(movement.getDistance(self.me, a) < movement.getDistance(self.me, b)) {
                 return -1;
             } else {
                 return 1;

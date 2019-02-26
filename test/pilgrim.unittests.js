@@ -25,7 +25,7 @@ describe.only('Pilgrim Unit Tests', function() {
         mockGame.undoSinonMethods();
     })
 
-    describe.only('doAction() tests', function() {
+    describe('doAction() tests', function() {
         it('should do nothing if in undefined role', function(done) {
             myBot.role = "TESTROLE";
 
@@ -44,6 +44,27 @@ describe.only('Pilgrim Unit Tests', function() {
             done();
         })
 
+        it('PIONEER/MINER pilgrims should just call respective action methods', function(done) {
+            let stubTakePioneerAction = mockGame.replaceMethod("pilgrim", "takePioneerAction").returns('taking pioneer action');
+            let stubTakeMinerAction = mockGame.replaceMethod("pilgrim", "takeMinerAction").returns('taking miner action');
+            myBot.role = "PIONEER";
+
+            output = pilgrim.doAction(myBot);
+
+            expect(myBot.base).to.be.null;
+            expect(output).equals('taking pioneer action');
+
+            myBot.role = "MINER";
+
+            output = pilgrim.doAction(myBot);
+
+            expect(myBot.base).to.be.null;
+            expect(output).equals('taking miner action');
+            done();
+        })
+    })
+
+    describe.only('takePioneerAction() tests', function() {
         it('PIONEER/MINER pilgrims should just call respective action methods', function(done) {
             let stubTakePioneerAction = mockGame.replaceMethod("pilgrim", "takePioneerAction").returns('taking pioneer action');
             let stubTakeMinerAction = mockGame.replaceMethod("pilgrim", "takeMinerAction").returns('taking miner action');

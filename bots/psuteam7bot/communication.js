@@ -101,21 +101,21 @@ communication.checkAndReportEnemyCastleDestruction = (self) => {
 
 communication.checkBaseSignalAndUpdateTarget = (self) => {
     const baseRobot = self.getVisibleRobots().filter((bot) => {
-
-        //Filter for only enemies && distance >= robot's minimum attack radius && distance <= robot's maximum attack radius
-        return bot.signal > 0;
+        //Filter signalling base robot
+        return bot.signal > 0 && bot.id === self.baseID;
     });
-    //Check if it is signalling, if so, read the value as new target castle
-
     if(baseRobot.length > 0)
     {
-        self.log(baseRobot[0].id);
-        self.log(baseRobot[0].signal);
-        if(baseRobot[0].id === self.baseID && baseRobot[0].signal > 0)
+        //self.log("Found base bot");
+        //self.log(baseRobot[0].id);
+        if(baseRobot[0].signal > 0)
         {
             self.log("Received signal from base")
-            self.log(baseRobot[0].signal)
-            self.target = communication.signalToPosition(baseRobot[0].signal, self.fullMap);
+            //self.log(baseRobot[0].signal)
+            //Reset target, path and set squadsize to 0, for all existing units of a base
+            self.target = communication.signalToPosition(baseRobot[0].signal, self.map);
+            self.path = [];
+            self.squadSize = 0;
         }
     }
 

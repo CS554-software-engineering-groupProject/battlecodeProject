@@ -59,11 +59,8 @@ crusader.takeAttackerAction = (self) => {
         self.target = movement.getMirrorCastle(self.me, self.map);
     }
 
-    //If no target, check for update from base
-    if(self.target === null)
-    {     
-        communication.checkBaseSignalAndUpdateTarget(self);
-    }
+    //Checks for target update from base
+    communication.checkBaseSignalAndUpdateTarget(self);
 
     const visibleRobots = self.getVisibleRobots();
     const attackable = combat.filterByAttackable(self, visibleRobots);

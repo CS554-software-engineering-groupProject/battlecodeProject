@@ -61,6 +61,7 @@ crusader.takeAttackerAction = (self) => {
 
     //Checks for target update from base
     communication.checkBaseSignalAndUpdateTarget(self);
+    communication.sendCastleTalkMessage(self);
 
     const visibleRobots = self.getVisibleRobots();
     const attackable = combat.filterByAttackable(self, visibleRobots);
@@ -84,7 +85,7 @@ crusader.takeAttackerAction = (self) => {
     if(communication.checkAndReportEnemyCastleDestruction(self))
     {
         //Enemy castle destroyed, waiting for next order
-        self.log("Enemy castle destroyed and reported, waiting for next order")
+        self.log("Enemy castle destroyed, message stored")
         self.target = null;
         return;
     }
@@ -126,7 +127,6 @@ crusader.takeAttackerAction = (self) => {
         return movement.moveAlongPath(self);
     }
     
-
     let squad = combat.filterByRange(visibleRobots, self.me, 0, 49);
     squad = combat.filterByUnitType(squad, "CRUSADER");
 

@@ -6,7 +6,7 @@ const movement = require('../projectUtils/psuteam7botCompiled.js').movement;
 const expect = chai.expect;
 
 
-describe.only('Movement Helpers Unit Tests', function() {
+describe('Movement Helpers Unit Tests', function() {
     let mockGame;
     let myBot;
     let output;

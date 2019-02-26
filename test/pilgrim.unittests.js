@@ -7,13 +7,65 @@ const pilgrim = require('../projectUtils/psuteam7botCompiled.js').pilgrim;
 const expect = chai.expect;
 
 
-describe('Pilgrim Unit Tests', function() {
+describe.only('Pilgrim Unit Tests', function() {
     let mockGame;
-    describe.skip('Role objectives tests', function(done) {
-        beforeEach(function() {
-            mockGame = new mockBC19();
-            mockGame.initEmptyMaps(10);
+    let myBot;
+    let localCastle;
+    let output;
+    beforeEach(function() {
+        myBot = new MyRobot();
+        localCastle = new MyRobot();
+        mockGame = new mockBC19('../projectUtils/psuteam7botCompiled.js');
+        mockGame.initEmptyMaps(10);
+        mockGame.createNewRobot(localCastle, 0, 0, 0, 0);
+        mockGame.createNewRobot(myBot, 1, 1, 0, 2);
+    })
+
+    afterEach(function() {
+        mockGame.undoSinonMethods();
+    })
+
+    describe.only('doAction() tests', function() {
+        it('should do nothing if in undefined role', function(done) {
+            myBot.role = "TESTROLE";
+
+            output = pilgrim.doAction(myBot);
+
+            expect(output).to.be.undefined;
+            done();
+        });
+
+        it('UNASSIGNED pilgrims', function(done) {
+            myBot.role = "TESTROLE";
+
+            output = pilgrim.doAction(myBot);
+
+            expect(output).to.be.undefined;
+            done();
         })
+
+        it('PIONEER/MINER pilgrims should just call respective action methods', function(done) {
+            let stubTakePioneerAction = mockGame.replaceMethod("pilgrim", "takePioneerAction").returns('taking pioneer action');
+            let stubTakeMinerAction = mockGame.replaceMethod("pilgrim", "takeMinerAction").returns('taking miner action');
+            myBot.role = "PIONEER";
+
+            output = pilgrim.doAction(myBot);
+
+            expect(myBot.base).to.be.null;
+            expect(output).equals('taking pioneer action');
+
+            myBot.role = "MINER";
+
+            output = pilgrim.doAction(myBot);
+
+            expect(myBot.base).to.be.null;
+            expect(output).equals('taking miner action');
+            done();
+        })
+    })
+
+
+    describe.skip('Role objectives tests', function(done) {
 
         it('MINERS without a target should identify and move towards a resource', function(done) {
             let returnValue;

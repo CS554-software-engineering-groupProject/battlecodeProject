@@ -70,14 +70,9 @@ communication.checkAndReportEnemyCastleDestruction = (self) => {
     //Case, empty target, castle is destroyed
     if(robotID === 0)
     {
-        if(movement.isHorizontalReflection(self.map))
-        {
-            self.castleTalk(x);
-        }
-        else    
-        {
-            self.castleTalk(y);
-        }
+        //Add coords to pending messages, push y then x
+        self.pendingMessages.push(y);
+        self.pendingMessages.push(x);
         return true;
     }
     else //Case target occupied or not in visible radius, -1 or there is a robotID > 0
@@ -85,16 +80,22 @@ communication.checkAndReportEnemyCastleDestruction = (self) => {
         //Check if robot is not a castle, if so, report castle destruction
         if(robotID > 0 && self.getRobot(robotID).unit !== 0)
         {
-            if(movement.isHorizontalReflection(self.map))
-            {
-                self.castleTalk(x);
-            }
-            else    
-            {
-                self.castleTalk(y);
-            }
+            //Add coords to pending messages, push y then x
+            self.pendingMessages.push(y);
+            self.pendingMessages.push(x);
             return true;
         }
+    }
+    return false;
+}
+
+communication.sendCastleTalkMessage = (self) => {
+    if(self.pendingMessages.length > 0)
+    {
+        const message = self.pendingMessages.pop();
+        self.castleTalk(message);
+        self.log("Message sent to castle");
+        return true;
     }
     return false;
 }
@@ -117,9 +118,10 @@ communication.checkBaseSignalAndUpdateTarget = (self) => {
             self.path = [];
             if(self.attackerMoves > 1)
                 self.squadSize = 0;
+            return true;
         }
     }
-
+    return false;
 }
 
 export default communication;

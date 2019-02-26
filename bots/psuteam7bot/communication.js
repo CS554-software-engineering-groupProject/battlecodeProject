@@ -115,7 +115,8 @@ communication.checkBaseSignalAndUpdateTarget = (self) => {
             //Reset target, path and set squadsize to 0, for all existing units of a base
             self.target = communication.signalToPosition(baseRobot[0].signal, self.map);
             self.path = [];
-            self.squadSize = 0;
+            if(self.me.turn > 1)
+                self.squadSize = 0;
         }
     }
 

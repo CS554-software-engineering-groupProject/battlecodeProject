@@ -204,55 +204,50 @@ castle.mirrorCastle = (myLocation, fullMap) => {
     })
     const length = alliedUnits.length;
     let enemyCastlesLength = self.enemyCastles.length
+    
+
     for(let i = 0; i < length; ++i)
     {  
-        //self.log("Castle talk received: " + alliedUnits[i].castle_talk);
+        self.log("Castle talk received: " + alliedUnits[i].castle_talk);
         //self.log("Enemy castles: ");
         //self.log(self.enemyCastles);
-        for(let j = 0; j < enemyCastlesLength; ++j)
+        let messageValue = alliedUnits[i].castle_talk;
+        
+        //Castle talk is in the range 0-63 inclusive, reserved for coords - assume as destroyed enemy castle loc
+        if(messageValue >= 0 && messageValue < 64)
         {
-            // TODO, seems need to send both X and Y for cases where the enemy castle need to be on X and Y
-            if(movement.isHorizontalReflection(self.map))
+            //Look for a partial message from the bot in receivedMessages
+            for(let j = 0; j < self.receivedMessages.length; ++j)
             {
-                if(alliedUnits[i].castle_talk === self.enemyCastles[j].x)
+                if(alliedUnits[i].id === self.receivedMessages[j].id)
                 {
-                    const removedCastle = self.enemyCastles.splice(j,1)[0];
-                    enemyCastlesLength = self.enemyCastles.length;
-                    //self.log("Enemy castle removed from array----------------------------------------------------------------------------------------")
-                    //self.log(self.target);
-                    //self.log(removedCastle);
-                    // TODO Account for fuel, maybe add a pending message property, push message onto it and check every turn if there is one not 'sent' yet
-                    if(movement.positionsAreEqual(self.target, removedCastle) && enemyCastlesLength > 0)
+                    self.receivedMessages[j].y = messageValue;
+                    const enemyCastle = self.receivedMessages.splice(j, 1)[0];
+                    j -= 1;
+                    //Remove from enemy Castles array if match coords and store in pending message
+                    for(let k = 0; k < enemyCastlesLength; ++k)
                     {
-                        self.target = self.enemyCastles[0];
-                        self.pendingMessages.push(communication.positionToSignal(self.target, self.map));
-                        //self.log("Signal stored-------------------------------------------------------------------------------------------");
-                        //self.log(self.pendingMessages);
+                        if(movement.positionsAreEqual(enemyCastle, self.enemyCastles[k]))
+                        {
+                            const removedCastle = self.enemyCastles.splice(k,1)[0];
+                            enemyCastlesLength = self.enemyCastles.length;
+                            //self.log("Enemy castle removed from array----------------------------------------------------------------------------------------")
+                            //self.log(self.target);
+                            //self.log(removedCastle);
+                            if(movement.positionsAreEqual(self.target, removedCastle) && enemyCastlesLength > 0)
+                            {
+                                self.target = self.enemyCastles[0];
+                                self.pendingMessages.push(communication.positionToSignal(self.target, self.map));
+                                //self.log("Signal stored-------------------------------------------------------------------------------------------");
+                                //self.log(self.pendingMessages);
+                                return;
+                            }
+                        }
                     }
                 }
             }
-            else
-            {
-                if(alliedUnits[i].castle_talk === self.enemyCastles[j].y)
-                {
-                    const removedCastle = self.enemyCastles.splice(j,1)[0];
-                    enemyCastlesLength = self.enemyCastles.length;
-                    //self.log("Enemy castle removed from array----------------------------------------------------------------------------------------")
-                    //self.log(self.target);
-                    //self.log(removedCastle);
-                    //self.log(""+movement.positionsAreEqual(self.target, removedCastle));
-                    //self.log(""+(enemyCastlesLength > 0));
-                    // TODO Account for fuel, maybe add a pending message property, push message onto it and check every turn if there is one not 'sent' yet
-                    if(movement.positionsAreEqual(self.target, removedCastle) && enemyCastlesLength > 0)
-                    {
-                        self.target = self.enemyCastles[0];
-                        self.pendingMessages.push(communication.positionToSignal(self.target, self.map));
-                        //self.log("Signal stored-------------------------------------------------------------------------------------------");
-                        //self.log(self.pendingMessages);
-                    }
-                }
-            }
-            self.log(self.enemyCastles);
+            //No partial message yet, add partial message to receivedMessages
+            self.receivedMessages.push({id: alliedUnits[i].id, x: messageValue});
         }
     }
     return;

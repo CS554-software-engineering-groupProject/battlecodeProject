@@ -337,7 +337,7 @@ describe.only('Prophet Unit Tests', function() {
         });
     });
 
-    describe.only('takeDefenderAction() tests', function() {
+    describe('takeDefenderAction() tests', function() {
         it('DEFENDERS with enemies in attackable range should just attack enemies', function(done) {
             myBot.potentialEnemyCastleLocation = [{x: 9, y: 9}];
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
@@ -427,4 +427,73 @@ describe.only('Prophet Unit Tests', function() {
         });
 
     });
+
+    describe.only('fleeBehavior() tests', function() {
+        it('should return false if no enemies in blindspot', function(done) {
+            mockGame.createNewRobot(new MyRobot(), 5, 3, 1, 3);
+            mockGame.createNewRobot(new MyRobot(), 4, 3, 0, 3);
+            output = prophet.fleeBehavior(myBot, myBot.getVisibleRobots());       
+            
+            expect(output).to.be.false;
+
+            done();
+        });
+
+        it('should return false if there are no fleeing directions', function(done) {
+            const mapAlterations = [ 
+                { x: 1, y: 1, value: false},
+                { x: 0, y: 2, value: false},
+                { x: 1, y: 2, value: false},
+                { x: 0, y: 4, value: false},
+                { x: 1, y: 4, value: false},
+                { x: 1, y: 5, value: false} 
+            ];
+
+
+            mockGame.createNewRobot(new MyRobot(), 3, 3, 1, 3);
+            mockGame.alterMap("map", mapAlterations);
+            output = prophet.fleeBehavior(myBot, myBot.getVisibleRobots());       
+            
+            expect(output).to.be.false;
+
+            done();
+        });
+
+        it('should return true and add current position and flee position to path', function(done) {
+            const fleeingBot = new MyRobot();
+            mockGame.createNewRobot(fleeingBot, 3, 3, 1, 4);
+            output = prophet.fleeBehavior(fleeingBot, fleeingBot.getVisibleRobots());       
+            
+            //Optimal move - furthest in direction
+            expect(output).to.be.true;
+            expect(fleeingBot.path).to.eql([{x: 3, y: 3}, {x: 5, y: 3}]);
+
+            //Next best move - furthest in non-opposite direction
+            fleeingBot.path = [];
+            mockGame.alterMap("map", [{x: 5, y: 3, value:false}, {x: 3, y: 5, value:false}])
+            output = prophet.fleeBehavior(fleeingBot, fleeingBot.getVisibleRobots());       
+
+            expect(output).to.be.true;
+            expect(fleeingBot.path).to.eql([{x: 3, y: 3}, {x: 3, y: 1}]);
+
+            //Still best move
+            fleeingBot.path = [];
+            mockGame.alterMap("map", [{x: 3, y: 1, value:false}, {x: 4, y: 4, value:false}])
+            output = prophet.fleeBehavior(fleeingBot, fleeingBot.getVisibleRobots());       
+
+            expect(output).to.be.true;
+            expect(fleeingBot.path).to.eql([{x: 3, y: 3}, {x: 4, y: 2}]);
+
+            //Take what you can get
+            fleeingBot.path = [];
+            mockGame.alterMap("map", [{x: 4, y: 2, value:false}, {x: 4, y: 3, value:false}, {x: 3, y: 4, value:false}])
+            output = prophet.fleeBehavior(fleeingBot, fleeingBot.getVisibleRobots());       
+
+            expect(output).to.be.true;
+            expect(fleeingBot.path).to.eql([{x: 3, y: 3}, {x: 3, y: 2}]);
+
+            done();
+        });
+    });
+    
 });

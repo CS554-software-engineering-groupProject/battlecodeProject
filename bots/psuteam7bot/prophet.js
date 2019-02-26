@@ -216,45 +216,52 @@ prophet.takeAttackerAction = (self) => {
     return;
 }
 
-
+/**
+ * Method for prophets to flee from enemies in their blindspot (0-15 R^2).
+ * 
+ * @param self MyRobot prophet doing fleeing
+ * @param visibleRobots Visible bots for prophet
+ * @return Boolean indicating whether the bot should flee due to an enemy in the blindspot
+ */
 prophet.fleeBehavior = (self, visibleRobots) => {
     let minUnattackable = combat.filterByTeam(self, visibleRobots, -1);
     minUnattackable = combat.filterByRange(minUnattackable, self.me, 0, SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0]-1);
-
     
     //Set 'fleeing behavior?' (whenattack target < min attack range)
     if(minUnattackable.length > 0)
     {
         const attacker = minUnattackable[0];
-        const direction = movement.getRelativeDirection(self.me, attacker);
+        const direction = movement.getRelativeDirection(attacker, self.me);
         const directionIndex = movement.getDirectionIndex(direction);
-        const moveablePositions = movement.getMoveablePositions(self);
+        const fleeDirections = movement.getDirectionsBetween(directionIndex, 2, 2);
 
         //Filter for opposite directions perpendicular/ away potential moveable position and is passable
-        moveablePositions.filter((location) => {
-            if((directionIndex <= location.dirIndex + 2 && directionIndex >= location.dirIndex - 2) 
-                && location.r2 <= SPECS.UNITS[self.me.unit].SPEED
-                && movement.isPassable(location))
-                return true;
-
-            return false;
+        const fleeMoves = movement.getMoveablePositions(self.me.unit).filter((location) => {
+            const locDirection = movement.directions[location.dirIndex];
+            const move = {x: location.x+self.me.x, y: location.y+self.me.y};
+            if(fleeDirections.indexOf(locDirection) >= 0
+                && movement.isPassable(move, self.map, self.getVisibleRobotMap())) {
+                    return true;
+                } else {
+                    return false;
+                }
         });
 
         //No possible location to flee to, return false
-        if(moveablePositions.length === 0)
+        if(fleeMoves.length === 0)
         {
             return false;
-        }
+        }        
 
         let minDiffDir = 3;
         let maxDist = 0;
-        let bestLoc = null;
+        let bestLoc = fleeMoves[0];
 
         //Get moveable position with lower than minDiffDir and greater than maxDist
-        for(let i = 0; i < moveablePositions.length; ++i)
+        for(let i = 0; i < fleeMoves.length; ++i)
         {
-            const current = moveablePositions[i];
-            const diffDir = Math.abs(current.dirIndex-directionIndex);
+            const current = fleeMoves[i];
+            const diffDir = Math.min(Math.abs(current.dirIndex-directionIndex), (current.dirIndex+8-directionIndex));
             if(diffDir <= minDiffDir && current.r2 >= maxDist)
             {
                 bestLoc = {x: current.x, y: current.y};
@@ -262,18 +269,14 @@ prophet.fleeBehavior = (self, visibleRobots) => {
                 maxDist = current.r2;
             }
         }
-
-        if(bestLoc != null)
-        {
-            //There is a fleeing coord
-            //Store retreat position and current position in path (for backtrack after fleeing behavior is done)
-            self.path.unshift(bestLoc, self.me);
-            self.log("Prophet " + self.id + "Fleeing from attacker" + attacker.unit + " " + attacker.id + " to x: " + bestLoc.x + ", y: " + bestLoc[0].y);
-            return true;
-        }
+        //Store retreat position and current position in path (for backtrack after fleeing behavior is done)
+        self.path.push({x: self.me.x, y: self.me.y});
+        self.path.push({x: bestLoc.x+self.me.x, y: bestLoc.y+self.me.y});
+        self.log("Prophet " + self.id + "Fleeing from attacker" + attacker.unit + " " + attacker.id + " to x: " + bestLoc.x + ", y: " + bestLoc.y);
+        return true;
+    } else {
         return false;
     }
-    return false;
 }
 
 

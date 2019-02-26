@@ -34,7 +34,6 @@ castle.doAction = (self) => {
         fuelDepots.forEach(depot => {
             self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
-        self.teamCastles.push({id: self.me.id, x: self.me.x, y: self.me.y});
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
         self.target = mirrorCastle;
         self.log(self.castleBuildQueue)
@@ -130,7 +129,7 @@ castle.recordPosition = (self) => {
  */
 castle.findPosition = (self) => {
     const bots = self.getVisibleRobots().filter(bots =>{
-        return bots.id !== self.me.id && bots.team === self.me.team && bots.castle_talk;
+        return bots.team === self.me.team && bots.castle_talk;
     })
     let turn = self.me.turn;
     self.log("turn: " + turn);
@@ -207,9 +206,9 @@ castle.mirrorCastle = (myLocation, fullMap) => {
     let enemyCastlesLength = self.enemyCastles.length
     for(let i = 0; i < length; ++i)
     {  
-        self.log("Castle talk received: " + alliedUnits[i].castle_talk);
-        self.log("Enemy castles: ");
-        self.log(self.enemyCastles);
+        //self.log("Castle talk received: " + alliedUnits[i].castle_talk);
+        //self.log("Enemy castles: ");
+        //self.log(self.enemyCastles);
         for(let j = 0; j < enemyCastlesLength; ++j)
         {
             // TODO, seems need to send both X and Y for cases where the enemy castle need to be on X and Y

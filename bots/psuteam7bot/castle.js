@@ -37,8 +37,6 @@ castle.doAction = (self) => {
         self.teamCastles.push({id: self.me.id, x: self.me.x, y: self.me.y});
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
         self.target = mirrorCastle;
-        self.enemyCastles.push({x: self.target.x, y: self.target.y});
-        self.castleBuildQueue.push({unit: "CRUSADER", x: self.target.x, y: self.target.y});
         self.log(self.castleBuildQueue)
         return castle.buildFromQueue(self);
     }
@@ -221,11 +219,9 @@ castle.mirrorCastle = (myLocation, fullMap) => {
                 {
                     const removedCastle = self.enemyCastles.splice(j,1)[0];
                     enemyCastlesLength = self.enemyCastles.length;
-                    self.log("Enemy castle removed from array----------------------------------------------------------------------------------------")
+                    //self.log("Enemy castle removed from array----------------------------------------------------------------------------------------")
                     //self.log(self.target);
                     //self.log(removedCastle);
-                    //self.log(""+movement.positionsAreEqual(self.target, removedCastle));
-                    //self.log(""+(enemyCastlesLength > 0));
                     // TODO Account for fuel, maybe add a pending message property, push message onto it and check every turn if there is one not 'sent' yet
                     if(movement.positionsAreEqual(self.target, removedCastle) && enemyCastlesLength > 0)
                     {
@@ -272,8 +268,8 @@ castle.signalNewUnitTarget = (self) =>{
         if(self.fuel > self.map.length)
         {
             const newTarget = self.pendingMessages.pop();
-            self.signal(newTarget, self.map.length);
-            self.log("Signal sent to units, " + newTarget + "---------------------------------------------------------------------------------------------------------");
+            self.signal(newTarget, self.map.length*self.map.length);
+            //self.log("Signal sent to units, " + newTarget + "---------------------------------------------------------------------------------------------------------");
         }
         else
         {

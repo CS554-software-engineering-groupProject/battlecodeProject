@@ -64,26 +64,131 @@ describe.only('Pilgrim Unit Tests', function() {
         })
     })
 
-    describe.only('takePioneerAction() tests', function() {
-        it('PIONEER/MINER pilgrims should just call respective action methods', function(done) {
-            let stubTakePioneerAction = mockGame.replaceMethod("pilgrim", "takePioneerAction").returns('taking pioneer action');
-            let stubTakeMinerAction = mockGame.replaceMethod("pilgrim", "takeMinerAction").returns('taking miner action');
-            myBot.role = "PIONEER";
+    describe('takePioneerAction() tests', function() {
+        it('should set target to karbonite depot if no target and odd number of local pilgrims', function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
+            const karbAlterations = [
+                {x: 3, y: 4, value:true},
+                {x: 1, y: 5, value:true}
+            ];
+            const fuelAlterations = [
+                {x: 4, y: 3, value:true},
+                {x: 5, y: 1, value:true}
+            ];
+            mockGame.alterMap("karbonite_map", karbAlterations);
+            mockGame.alterMap("fuel_map", fuelAlterations);
 
-            output = pilgrim.doAction(myBot);
+            //One local pilgrim (itself)
+            output = pilgrim.takePioneerAction(myBot);
 
-            expect(myBot.base).to.be.null;
-            expect(output).equals('taking pioneer action');
+            expect(myBot.target).to.not.be.null;
+            expect(myBot.target).eql({x: 3, y: 4});
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.true;
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.false;
+            expect(output).equals('move made');
 
-            myBot.role = "MINER";
+            //Still one local pilgrim
+            myBot.target = null;
+            mockGame.createNewRobot(new MyRobot(), 5, 5, 1, 2);
+            mockGame.createNewRobot(new MyRobot(), 9, 8, 0, 2);
+            output = pilgrim.takePioneerAction(myBot);
 
-            output = pilgrim.doAction(myBot);
+            expect(myBot.target).to.not.be.null;
+            expect(myBot.target).eql({x: 3, y: 4});
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.true;
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.false;
+            expect(output).equals('move made');
 
-            expect(myBot.base).to.be.null;
-            expect(output).equals('taking miner action');
+            //Three local pilgrims
+            myBot.target = null;
+            mockGame.createNewRobot(new MyRobot(), 9, 7, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 8, 8, 0, 2);
+            output = pilgrim.takePioneerAction(myBot);
+
+            expect(myBot.target).to.not.be.null;
+            expect(myBot.target).eql({x: 3, y: 4});
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.true;
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.false;
+            expect(output).equals('move made');
+            
             done();
-        })
-    })
+        });
+
+        it('should set target to fuel depot if no target and even number of local pilgrims', function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
+            const karbAlterations = [
+                {x: 3, y: 4, value:true},
+                {x: 1, y: 5, value:true}
+            ];
+            const fuelAlterations = [
+                {x: 4, y: 3, value:true},
+                {x: 5, y: 1, value:true}
+            ];
+            mockGame.alterMap("karbonite_map", karbAlterations);
+            mockGame.alterMap("fuel_map", fuelAlterations);
+            mockGame.createNewRobot(new MyRobot(), 2, 2, 0, 2);
+
+            //Two locals pilgrims
+            output = pilgrim.takePioneerAction(myBot);
+
+            expect(myBot.target).to.not.be.null;
+            expect(myBot.target).eql({x: 4, y: 3});
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.false;
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.true;
+            expect(output).equals('move made');
+
+            //Still two local pilgrims
+            myBot.target = null;
+            mockGame.createNewRobot(new MyRobot(), 5, 5, 1, 2);
+            mockGame.createNewRobot(new MyRobot(), 9, 8, 0, 2);
+            output = pilgrim.takePioneerAction(myBot);
+
+            expect(myBot.target).to.not.be.null;
+            expect(myBot.target).eql({x: 4, y: 3});
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.false;
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.true;
+            expect(output).equals('move made');
+
+            //Four local pilgrims
+            myBot.target = null;
+            mockGame.createNewRobot(new MyRobot(), 9, 7, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 8, 8, 0, 2);
+            output = pilgrim.takePioneerAction(myBot);
+
+            expect(myBot.target).to.not.be.null;
+            expect(myBot.target).eql({x: 4, y: 3});
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.false;
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.true;
+            expect(output).equals('move made');
+
+            done();
+        });
+
+        it('should become miner if at target', function(done) {
+            let stubTakeMinerAction = mockGame.replaceMethod("pilgrim", "takeMinerAction").returns('becoming pilgrim');
+            myBot.target = {x: myBot.me.x, y: myBot.me.y};
+
+            //Two locals pilgrims
+            output = pilgrim.takePioneerAction(myBot);
+
+            expect(myBot.role).equals('MINER');
+            expect(output).equals('becoming pilgrim');
+
+            done();
+        });
+
+        it('should move towards target if not there yet', function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
+            myBot.target = {x: myBot.me.x+1, y: myBot.me.y+1};
+
+            //Two locals pilgrims
+            output = pilgrim.takePioneerAction(myBot);
+
+            expect(output).equals('move made');
+
+            done();
+        });
+    });
 
 
     describe.skip('Role objectives tests', function(done) {

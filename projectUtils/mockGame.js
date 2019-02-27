@@ -57,6 +57,21 @@ class mockBC19 {
     }
 
     /**
+     * Method to take a BCAbstractRobot object and update the game's record of this bot with its communication information.
+     * Necessary because the game refers to a simplified `robot` object which does not reference `BCAbstractRobot.me` inherently
+     * and does not automatically adjust when bot adjusted.
+     * 
+     * @param {*} BCAbsBot BCAbstractRobot passed in to update the corresponding `robot` object in `this.game`
+     */
+    _setCommunication(BCAbsBot) {
+        const gameBot = this.game.getItem(BCAbsBot.me.id);
+        gameBot.signal = BCAbsBot.me.signal;
+        gameBot.signal_radius = BCAbsBot.me.signal_radius;
+        gameBot.castle_talk = BCAbsBot.me.castle_talk;
+        this._updateBotReferences();
+    }
+
+    /**
      * Method to create a robot from scratch based on inputs and shell of full robot passed in as parameter
      * 
      * @param {Object} bot  MyRobot/BCAbstractRobot object shell to pass in so method knows what to fill in with proper data 
@@ -117,7 +132,6 @@ class mockBC19 {
             });
         }
     }
-
 
     /**
      * Method that will destroy any existing map information/bots a create fresh new NxN maps based on input. Note that:

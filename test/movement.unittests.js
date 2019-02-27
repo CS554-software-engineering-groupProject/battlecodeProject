@@ -6,7 +6,7 @@ const movement = require('../projectUtils/psuteam7botCompiled.js').movement;
 const expect = chai.expect;
 
 
-describe.only('Movement Helpers Unit Tests', function() {
+describe('Movement Helpers Unit Tests', function() {
     let mockGame;
     let myBot;
     let output;
@@ -112,6 +112,42 @@ describe.only('Movement Helpers Unit Tests', function() {
             expect(movement.rotateDirection(C, 0)).to.eql(C);
             done();
         });
+    });
+
+    describe.only('getDirectionsBetween Returns Values Correctly', function(done) {
+        it('rotateDirection returns all values if sum of input geq  7', function(done) {
+            expect(movement.getDirectionsBetween(0, 7, 0)).to.eql(movement.directions);
+            expect(movement.getDirectionsBetween(0, 0, 7)).to.eql(movement.directions);
+            expect(movement.getDirectionsBetween(0, 3, 4)).to.eql(movement.directions);
+            expect(movement.getDirectionsBetween(0, -1, 8)).to.eql(movement.directions);
+            done();
+        });
+
+        it('rotateDirection returns single index if left and right sum to zero', function(done) {
+            expect(movement.getDirectionsBetween(0, 0, 0)).to.deep.include(movement.directions[0]);
+            expect(movement.getDirectionsBetween(1, -1, 1)).to.deep.include(movement.directions[2]);
+            expect(movement.getDirectionsBetween(2, 2, -2)).to.deep.include(movement.directions[0]);
+            done();
+        });
+
+        it('rotateDirection returns empty array if left and right sum is negative', function(done) {
+            expect(movement.getDirectionsBetween(0, -1, 0)).to.eql([]);
+            expect(movement.getDirectionsBetween(1, 0, -1)).to.eql([]);
+            expect(movement.getDirectionsBetween(2, -2, -3)).to.eql([]);
+            done();
+        });
+
+        it('rotateDirection returns all values between left and right properly', function(done) {
+            expect(movement.getDirectionsBetween(0, 1, 0)).to.have.members([movement.directions[0], movement.directions[7]])
+            expect(movement.getDirectionsBetween(0, 0, 1)).to.have.members(movement.directions.slice(0, 2));
+            expect(movement.getDirectionsBetween(0, 6, 0)).to.have.members([movement.directions[0], ...movement.directions.slice(2, 8)]);
+            expect(movement.getDirectionsBetween(0, 0, 6)).to.have.members(movement.directions.slice(0, 7));
+            expect(movement.getDirectionsBetween(3, 0, 1)).to.have.members(movement.directions.slice(3, 5));
+            expect(movement.getDirectionsBetween(5, 0, 1)).to.have.members(movement.directions.slice(5, 7));
+            done();
+        });
+
+
     });
 
     describe('getDistanceXY Returns Values Correctly', function(done) {

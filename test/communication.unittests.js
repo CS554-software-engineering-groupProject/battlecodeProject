@@ -128,4 +128,60 @@ describe('Communication Helpers Unit Tests', function() {
             done();
         });
     });
+
+    describe('checkAndReportEnemyCastleDestruction implementation test', function(){
+        it('should push target coordinates into pendingMessages and return true when there is no robot at target', function(done) {
+
+            done();
+        });
+
+        it('should push target coordinates into pendingMessages and return true when the robot at target is not a castle', function(done) {
+            
+            done();
+        });
+
+        it('should return false if robot at target is castle', function(done) {
+            
+            done();
+        });
+    });
+
+    describe('sendCastleTalkMessage implementation test', function(){
+        it('should pop message from pendingMessages, castleTalk, and returns true if pendingMessages contains something', function(done) {
+
+            done();
+        });
+
+        it('should return false if pendingMessages is empty', function(done) {
+            
+            done();
+        });
+
+        it('should return false if robot at target is castle', function(done) {
+            
+            done();
+        });
+    });
+
+    describe('checkBaseSignalAndUpdateTarget implementation test', function(){
+        it('should change target, resets path, does not change squadSize and returns true, if base signals and attackerMoves is 1', function(done) {
+            
+            done();
+        });
+
+        it('should change target, resets path, changes squadSize to 0 and returns true, if base signals and attackerMoves is > 1', function(done) {
+            
+            done();
+        });
+
+        it('should return false if base is not signalling', function(done) {
+
+            done();
+        });
+
+        it('should return false if base signals -1', function(done) {
+            
+            done();
+        });
+    });
 });

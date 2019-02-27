@@ -415,7 +415,7 @@ describe('Movement Helpers Unit Tests', function() {
         });
     });
 
-    describe.skip('A* Pathfinding Tests', function() {
+    describe('A* Pathfinding Tests', function() {
         describe('initAStarMaps() tests', function() {
             it('should set defaults for infoMap except for at starting location', function(done) {
                 let returnValue;

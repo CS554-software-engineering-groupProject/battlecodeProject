@@ -7,7 +7,7 @@ const pilgrim = require('../projectUtils/psuteam7botCompiled.js').pilgrim;
 const expect = chai.expect;
 
 
-describe.only('Pilgrim Unit Tests', function() {
+describe('Pilgrim Unit Tests', function() {
     let mockGame;
     let myBot;
     let localCastle;

@@ -108,12 +108,12 @@ crusader.takeAttackerAction = (self) => {
     {
         if(movement.hasFuelToMove(self, self.path[self.path.length-1])) {
             self.attackerMoves++;
+            self.log('ATTACKER crusader ' + self.id + ' moving to rally point, Current: [' + self.me.x + ',' + self.me.y + ']')
+            return movement.moveAlongPath(self);
         } else {
             self.log('ATTACKER crusader ' + self.id + ' waiting for more fuel to move to rally point');
             return;
         }
-        self.log('ATTACKER crusader ' + self.id + ' moving to rally point, Current: [' + self.me.x + ',' + self.me.y + ']')
-        return movement.moveAlongPath(self);
     }
     else if(self.squadSize === 0)
     {

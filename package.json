@@ -8,7 +8,8 @@
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "sinon": "^7.2.4"
   },
   "scripts": {
     "test": "./projectUtils/test_script.sh",

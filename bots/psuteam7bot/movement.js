@@ -109,6 +109,44 @@ movement.rotateDirection = (direction, n) => {
 }
 
 /**
+ * Method to get directions between two different rotation indices from a starting direction index.
+ * Returns an array containing all directions from `rotationsLeft` rotations left or less from `dirIndex` 
+ * to `rotationsRight` rotations right or less from `dirIndex`.
+ * Used to get things like directions between a point (for example, anything perpendicular to or closer to
+ * the input direction would be `getDirectionsBetween(index, 2, 2)`).
+ * 
+ * @param dirIndex Starting index from which to make decisions
+ * @param rotationsLeft Non-negative number representing the max rotations to the left that should be included
+ * @param rotationsRight Non-negative number representing the max rotations to the right that should be included
+ * @return An array of directions that are between `rotationsLeft` rotations left of `dirIndex` and 
+ *         `rotationsRight` rotations right of `dirIndex`
+ * 
+ */
+movement.getDirectionsBetween = (dirIndex, rotationsLeft, rotationsRight) => {
+    const output = [];
+    const start = ((dirIndex-rotationsLeft) % 8 + 8) % 8;
+    const end = ((dirIndex+rotationsRight) % 8 + 8) % 8;
+    //console.log('s: ' + start + ' e: ' + end);
+
+    if(rotationsLeft + rotationsRight >= 7) {
+        return JSON.parse(JSON.stringify(movement.directions));
+    } else if (rotationsLeft + rotationsRight === 0) {
+        output.push(movement.directions[start]);
+        return output;
+    } else if (rotationsLeft + rotationsRight < 0) {
+        return output; //Empty
+    } else {
+        let i = start;
+        while (i !== end) {
+            output.push(movement.directions[i]);
+            i = (i+1) % 8;
+        }
+        output.push(movement.directions[end]); //Don't forget the end!
+        return output;
+    }
+}
+
+/**
 *Return difference of x-coord and y-coord between A and B
 *Input: A - a 'position/ location' object {x, y}
 *       B - a 'position/ location' object {x, y}
@@ -206,7 +244,7 @@ movement.isPassable = (location, fullMap, robotMap) => {
 
     if(x < 0 || y < 0)  //Map bound check
         return false;
-    else if(x > fullMap.length || y > fullMap.length)   //Map bound check
+    else if(x >= fullMap.length || y >= fullMap.length)   //Map bound check
         return false;
     return((robotMap[y][x] <= 0) && (fullMap[y][x])); //Returns true only if tile is empty and is passable
 }
@@ -462,9 +500,7 @@ movement.getDiagonalPatrolPosition = (myCastleLocation, fullMap) => {
  *         method thus needs to be returned by the action of whatever bot is calling it in order to make move.
  */
 movement.moveAlongPath = (self) => {
-    //self.log("me: [" + self.me.x + "," + self.me.y + "]")
     let nextMove = self.path.pop();
-    //self.log("nextMove: [" + nextMove.x + "," + nextMove.y + "]")
 
     //If next move is viable, do it
     if(movement.isPassable(nextMove, self.map, self.getVisibleRobotMap()) && movement.hasFuelToMove(self, nextMove)) {

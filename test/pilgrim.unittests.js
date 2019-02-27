@@ -190,6 +190,296 @@ describe.only('Pilgrim Unit Tests', function() {
         });
     });
 
+    describe('takeMinerAction() tests', function() {
+        it('should set target to depot of relatively less plentiful resource if no target', function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
+            const karbAlterations = [
+                {x: 3, y: 4, value:true},
+                {x: 1, y: 5, value:true}
+            ];
+            const fuelAlterations = [
+                {x: 4, y: 3, value:true},
+                {x: 5, y: 1, value:true}
+            ];
+            mockGame.alterMap("karbonite_map", karbAlterations);
+            mockGame.alterMap("fuel_map", fuelAlterations);
+
+            //Relatively more karbonite, target fuel
+            myBot.karbonite = 10;
+            myBot.fuel = myBot.karbonite*5-1;
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(myBot.target).to.not.be.null;
+            expect(myBot.target).eql({x: 4, y: 3});
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.false;
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.true;
+            expect(output).equals('move made');
+
+            //Relatively more fuel, target karbonite
+            myBot.karbonite = 10;
+            myBot.fuel = myBot.karbonite*5+1;
+            myBot.target = null;
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(myBot.target).to.not.be.null;
+            expect(myBot.target).eql({x: 3, y: 4});
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.true;
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.false;
+            expect(output).equals('move made');
+
+            //Relatively equal resources, target karbonite
+            myBot.karbonite = 10;
+            myBot.fuel = myBot.karbonite*5;
+            myBot.target = null;
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(myBot.target).to.not.be.null;
+            expect(myBot.target).eql({x: 3, y: 4});
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.true;
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.false;
+            expect(output).equals('move made');
+
+            //Edge case with 0 karbonite, target karbonite
+            myBot.karbonite = 0;
+            myBot.fuel = 3;
+            myBot.target = null;
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(myBot.target).to.not.be.null;
+            expect(myBot.target).eql({x: 3, y: 4});
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.true;
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.false;
+            expect(output).equals('move made');
+            
+            done();
+        });
+
+        
+        it('should give resources if near adjacent base and fuel or karbonite at carrying capacity', function(done) {
+            myBot.target = {x: myBot.me.x, y: myBot.me.y};
+            myBot.me.karbonite = 20;
+
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(output['action']).equals('give');
+            expect(output['dx']).equals(-1);
+            expect(output['dy']).equals(-1);
+
+            myBot.me.karbonite = 0;
+            myBot.me.fuel = 100;
+
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(output['action']).equals('give');
+            expect(output['dx']).equals(-1);
+            expect(output['dy']).equals(-1);
+
+            done();
+        });
+
+        it('should move towards base if not near castle, there is a path, and fuel or karbonite at carrying capacity', function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
+            const returningPilgrim = new MyRobot();
+            mockGame.createNewRobot(returningPilgrim, 5, 5, 0, 2);
+            returningPilgrim.path = [{x: 2, y: 2}];
+            returningPilgrim.target = {x: myBot.me.x+1, y: myBot.me.y+1};
+            returningPilgrim.me.karbonite = 20;
+
+            output = pilgrim.takeMinerAction(returningPilgrim);
+
+            expect(output).equals('move made');
+
+            done();
+        });
+
+        it('should update path to base if no path and fuel or karbonite at carrying capacity', function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
+            const returningPilgrim = new MyRobot();
+            mockGame.createNewRobot(returningPilgrim, 5, 5, 0, 2);
+            returningPilgrim.target = {x: localCastle.me.x, y: localCastle.me.y};
+            returningPilgrim.base = {x: localCastle.me.x, y: localCastle.me.y};
+            returningPilgrim.me.karbonite = 20;
+
+            output = pilgrim.takeMinerAction(returningPilgrim);
+
+            expect(returningPilgrim.path[0]).eql({x: localCastle.me.x, y: localCastle.me.y});
+            expect(output).equals('move made');
+
+            done();
+        });
+
+        it('should mine if not at carrying capacity and at target depot', function(done) {
+            myBot.target = {x: myBot.me.x, y: myBot.me.y};
+            myBot.me.karbonite = 19;
+            myBot.me.fuel = 99;
+
+            mockGame.alterMap("karbonite_map", [{x: myBot.me.x, y: myBot.me.y, value:true}])
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(output['action']).equals('mine');
+
+            done();
+        });
+
+        it('should move towards target if not at carrying capacity and not at target depot', function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
+            myBot.target = {x: myBot.me.x+1, y: myBot.me.y+1};
+            myBot.me.karbonite = 19;
+            myBot.me.karbonite = 99;
+
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(output).equals('move made');
+
+            done();
+        });
+    });
+
+    describe.only('takeMinerAction() tests', function() {
+        it('should set target to depot of relatively less plentiful resource if no target', function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
+            const karbAlterations = [
+                {x: 3, y: 4, value:true},
+                {x: 1, y: 5, value:true}
+            ];
+            const fuelAlterations = [
+                {x: 4, y: 3, value:true},
+                {x: 5, y: 1, value:true}
+            ];
+            mockGame.alterMap("karbonite_map", karbAlterations);
+            mockGame.alterMap("fuel_map", fuelAlterations);
+
+            //Relatively more karbonite, target fuel
+            myBot.karbonite = 10;
+            myBot.fuel = myBot.karbonite*5-1;
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(myBot.target).to.not.be.null;
+            expect(myBot.target).eql({x: 4, y: 3});
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.false;
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.true;
+            expect(output).equals('move made');
+
+            //Relatively more fuel, target karbonite
+            myBot.karbonite = 10;
+            myBot.fuel = myBot.karbonite*5+1;
+            myBot.target = null;
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(myBot.target).to.not.be.null;
+            expect(myBot.target).eql({x: 3, y: 4});
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.true;
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.false;
+            expect(output).equals('move made');
+
+            //Relatively equal resources, target karbonite
+            myBot.karbonite = 10;
+            myBot.fuel = myBot.karbonite*5;
+            myBot.target = null;
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(myBot.target).to.not.be.null;
+            expect(myBot.target).eql({x: 3, y: 4});
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.true;
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.false;
+            expect(output).equals('move made');
+
+            //Edge case with 0 karbonite, target karbonite
+            myBot.karbonite = 0;
+            myBot.fuel = 3;
+            myBot.target = null;
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(myBot.target).to.not.be.null;
+            expect(myBot.target).eql({x: 3, y: 4});
+            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.true;
+            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.false;
+            expect(output).equals('move made');
+            
+            done();
+        });
+
+        
+        it('should give resources if near adjacent base and fuel or karbonite at carrying capacity', function(done) {
+            myBot.target = {x: myBot.me.x, y: myBot.me.y};
+            myBot.me.karbonite = 20;
+
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(output['action']).equals('give');
+            expect(output['dx']).equals(-1);
+            expect(output['dy']).equals(-1);
+
+            myBot.me.karbonite = 0;
+            myBot.me.fuel = 100;
+
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(output['action']).equals('give');
+            expect(output['dx']).equals(-1);
+            expect(output['dy']).equals(-1);
+
+            done();
+        });
+
+        it('should move towards base if not near castle, there is a path, and fuel or karbonite at carrying capacity', function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
+            const returningPilgrim = new MyRobot();
+            mockGame.createNewRobot(returningPilgrim, 5, 5, 0, 2);
+            returningPilgrim.path = [{x: 2, y: 2}];
+            returningPilgrim.target = {x: myBot.me.x+1, y: myBot.me.y+1};
+            returningPilgrim.me.karbonite = 20;
+
+            output = pilgrim.takeMinerAction(returningPilgrim);
+
+            expect(output).equals('move made');
+
+            done();
+        });
+
+        it('should update path to base if no path and fuel or karbonite at carrying capacity', function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
+            const returningPilgrim = new MyRobot();
+            mockGame.createNewRobot(returningPilgrim, 5, 5, 0, 2);
+            returningPilgrim.target = {x: localCastle.me.x, y: localCastle.me.y};
+            returningPilgrim.base = {x: localCastle.me.x, y: localCastle.me.y};
+            returningPilgrim.me.karbonite = 20;
+
+            output = pilgrim.takeMinerAction(returningPilgrim);
+
+            expect(returningPilgrim.path[0]).eql({x: localCastle.me.x, y: localCastle.me.y});
+            expect(output).equals('move made');
+
+            done();
+        });
+
+        it('should mine if not at carrying capacity and at target depot', function(done) {
+            myBot.target = {x: myBot.me.x, y: myBot.me.y};
+            myBot.me.karbonite = 19;
+            myBot.me.fuel = 99;
+
+            mockGame.alterMap("karbonite_map", [{x: myBot.me.x, y: myBot.me.y, value:true}])
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(output['action']).equals('mine');
+
+            done();
+        });
+
+        it('should move towards target if not at carrying capacity and not at target depot', function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
+            myBot.target = {x: myBot.me.x+1, y: myBot.me.y+1};
+            myBot.me.karbonite = 19;
+            myBot.me.karbonite = 99;
+
+            output = pilgrim.takeMinerAction(myBot);
+
+            expect(output).equals('move made');
+
+            done();
+        });
+    });
+
 
     describe.skip('Role objectives tests', function(done) {
 
@@ -471,55 +761,27 @@ describe.only('Pilgrim Unit Tests', function() {
     });
 
     describe('Method tests', function() {
-        describe('findClosestResource()', function(done) {
-            beforeEach(function() {
-                mockGame = new mockBC19();
-                mockGame.initEmptyMaps(10);
-            });
-
+        describe('findClosestResource() tests', function(done) {
             it('should return closest non-occupied resource', function(done) {
                 let returnValue;
                 const myBot = new MyRobot();
                 myBot.target = {x: 1, y: 1};
+                myBot.occupiedResources = [{x: 1, y: 1}, {x: 2, y: 2}];
                 const friendlyBot1 = new MyRobot();
                 const friendlyBot2 = new MyRobot();
-                myBot.me = {
-                    id: 10,
-                    team: 0,
-                    unit: 2, //Pilgrim
-                    x: 0,
-                    y: 0
-                }
-                friendlyBot1.me = {
-                    id: 1,
-                    team: 0,
-                    unit: 2, //Pilgrim
-                    x: 1,
-                    y: 1
-                }
-                friendlyBot2.me = {
-                    id: 2,
-                    team: 0,
-                    unit: 2, //Pilgrim
-                    x: 2,
-                    y: 2
-                }
-                myBot._bc_game_state = friendlyBot1._bc_game_state = friendlyBot2._bc_game_state = {
-                    visible: [myBot.me, friendlyBot1.me, friendlyBot2.me],
-                    shadow: null
-                };
-                myBot.occupiedResources = [{x: 1, y: 1}, {x: 2, y: 2}];
-                myBot._bc_game_state.shadow = friendlyBot1._bc_game_state.shadow = friendlyBot2._bc_game_state.shadow = 
-                [[10,0,0,0,0],
-                 [0,1,0,0,0],
-                 [0,0,2,0,0],
-                 [0,0,0,0,0],
-                 [0,0,0,0,0]];
-                myBot.karbonite_map = [[false,false,false,false,false],
-                                       [false,true,false,false,false],
-                                       [false,false,true,false,false],
-                                       [false,false,false,true,false],
-                                       [false,false,true,false,true]];
+                const karbAlterations = [
+                    {x: 1, y: 1, value:true},
+                    {x: 2, y: 2, value:true},
+                    {x: 3, y: 3, value:true},
+                    {x: 4, y: 4, value:true},
+                    {x: 2, y: 4, value:true}
+                ]
+
+                mockGame.removeAllBots();
+                mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+                mockGame.createNewRobot(friendlyBot1, 1, 1, 0, 2);
+                mockGame.createNewRobot(friendlyBot2, 2, 2, 0, 2);
+                mockGame.alterMap("karbonite_map", karbAlterations);
     
                 returnValue = pilgrim.findClosestResource(myBot.me, myBot.karbonite_map, myBot.occupiedResources);
                 expect(returnValue).to.eql({x: 3, y: 3});
@@ -528,34 +790,60 @@ describe.only('Pilgrim Unit Tests', function() {
             });
         });
 
-        describe('isDepotOccupied()', function(done) {
-            beforeEach(function() {
-                mockGame = new mockBC19();
-                mockGame.initEmptyMaps(10);
-            });
-
+        describe('isDepotOccupied() tests', function(done) {
             it('should change nothing if target unoccupied', function(done) {
                 let returnValue;
                 const myBot = new MyRobot();
-                myBot._bc_game_state = {shadow: null};
-                myBot.me = {
-                    id: 1,
-                    unit: 2, //Pilgrim
-                    x: 0,
-                    y: 0
-                }
-                const startTarget = {x: 1, y: 1};
-                myBot._bc_game_state.shadow = 
-                [[1,0,0,0,0],
-                 [0,0,0,0,0],
-                 [0,0,0,0,0],
-                 [0,0,0,0,0],
-                 [0,0,0,0,0]];
-                myBot.karbonite_map = [[0,0,0,0,0],
-                                       [0,1,0,0,0],
-                                       [0,0,1,0,0],
-                                       [0,0,0,1,0],
-                                       [1,0,1,0,1]];
+                const startTarget = {x: 1, y: 1}
+                const karbAlterations = [
+                    {x: 1, y: 1, value:true},
+                    {x: 2, y: 2, value:true},
+                    {x: 3, y: 3, value:true},
+                    {x: 4, y: 4, value:true},
+                    {x: 0, y: 4, value:true},
+                    {x: 2, y: 4, value:true}
+                ];
+
+                mockGame.removeAllBots();
+                mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+                mockGame.alterMap("karbonite_map", karbAlterations);
+    
+                returnValue = pilgrim.isDepotOccupied(myBot, startTarget);
+                expect(returnValue).to.be.false;
+                expect(myBot.occupiedResources).to.eql([]);
+    
+                done();
+            });
+
+            it('should change nothing if target occupied by bot that isnt friendly pilgrim', function(done) {
+                let returnValue;
+                const myBot = new MyRobot();
+                const friendlyBot = new MyRobot();
+                const startTarget = {x: 1, y: 1}
+                const karbAlterations = [
+                    {x: 1, y: 1, value:true},
+                    {x: 2, y: 2, value:true},
+                    {x: 3, y: 3, value:true},
+                    {x: 4, y: 4, value:true},
+                    {x: 0, y: 4, value:true},
+                    {x: 2, y: 4, value:true}
+                ];
+
+                //Same team, non-pilgrim unit on target
+                mockGame.removeAllBots();
+                mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+                mockGame.createNewRobot(friendlyBot, 1, 1, 0, 3);
+                mockGame.alterMap("karbonite_map", karbAlterations);
+    
+                returnValue = pilgrim.isDepotOccupied(myBot, startTarget);
+                expect(returnValue).to.be.false;
+                expect(myBot.occupiedResources).to.eql([]);
+
+                //Pilgrim of different team on target
+                mockGame.removeAllBots();
+                mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+                mockGame.createNewRobot(friendlyBot, 1, 1, 1, 2);
+                mockGame.alterMap("karbonite_map", karbAlterations);
     
                 returnValue = pilgrim.isDepotOccupied(myBot, startTarget);
                 expect(returnValue).to.be.false;
@@ -568,36 +856,20 @@ describe.only('Pilgrim Unit Tests', function() {
                 let returnValue;
                 const myBot = new MyRobot();
                 const friendlyBot = new MyRobot();
-                myBot.me = {
-                    id: 1,
-                    team: 0,
-                    unit: 2, //Pilgrim
-                    x: 0,
-                    y: 0
-                }
-                friendlyBot.me = {
-                    id: 2,
-                    team: 0,
-                    unit: 2, //Pilgrim
-                    x: 1,
-                    y: 1
-                }
-                myBot._bc_game_state = friendlyBot._bc_game_state = {
-                    visible: [myBot.me, friendlyBot.me],
-                    shadow: null
-                };
-                const startTarget = {x: 1, y: 1};
-                myBot._bc_game_state.shadow = friendlyBot._bc_game_state.shadow = 
-                [[1,0,0,0,0],
-                 [0,2,0,0,0],
-                 [0,0,0,0,0],
-                 [0,0,0,0,0],
-                 [0,0,0,0,0]];
-                myBot.karbonite_map = [[0,0,0,0,0],
-                                       [0,1,0,0,0],
-                                       [0,0,1,0,0],
-                                       [0,0,0,1,0],
-                                       [1,0,1,0,1]];
+                const startTarget = {x: 1, y: 1}
+                const karbAlterations = [
+                    {x: 1, y: 1, value:true},
+                    {x: 2, y: 2, value:true},
+                    {x: 3, y: 3, value:true},
+                    {x: 4, y: 4, value:true},
+                    {x: 0, y: 4, value:true},
+                    {x: 2, y: 4, value:true}
+                ];
+
+                mockGame.removeAllBots();
+                mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+                mockGame.createNewRobot(friendlyBot, 1, 1, 0, 2);
+                mockGame.alterMap("karbonite_map", karbAlterations);
     
                 returnValue = pilgrim.isDepotOccupied(myBot, startTarget);
                 expect(returnValue).to.be.true;
@@ -607,7 +879,7 @@ describe.only('Pilgrim Unit Tests', function() {
             });
         });
 
-        describe('updateResourceTarget()', function(done) {
+        describe('updateResourceTarget() tests', function(done) {
             beforeEach(function() {
                 mockGame = new mockBC19();
                 mockGame.initEmptyMaps(10);

@@ -130,57 +130,164 @@ describe('Communication Helpers Unit Tests', function() {
     });
 
     describe('checkAndReportEnemyCastleDestruction implementation test', function(){
+        beforeEach(function() {
+            const myBot = new MyRobot();
+            mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+            myBot.target = {x: 2, y: 3};
+        });
+
         it('should push target coordinates into pendingMessages and return true when there is no robot at target', function(done) {
+            expect(myBot.pendingMessages.length).to.be.empty;
+            expect(myBot.pendingMessages).to.eql([]);
+            expect(communication.checkAndReportEnemyCastleDestruction(myBot)).to.equals(true);
+            expect(myBot.pendingMessages.length).to.equals(2);
+            expect(myBot.pendingMessages).to.eql([3, 2]);
 
             done();
         });
 
         it('should push target coordinates into pendingMessages and return true when the robot at target is not a castle', function(done) {
-            
+            const notCastle = new MyRobot();
+            mockGame.createNewRobot(notCastle, 2, 3, 1, 2);
+
+            expect(myBot.pendingMessages.length).to.be.empty;
+            expect(myBot.pendingMessages).to.eql([]);
+            expect(communication.checkAndReportEnemyCastleDestruction(myBot)).to.equals(true);
+            expect(myBot.pendingMessages.length).to.equals(2);
+            expect(myBot.pendingMessages).to.eql([3, 2]);
             done();
         });
 
-        it('should return false if robot at target is castle', function(done) {
-            
+        it('should return false if robot at target is a castle', function(done) {
+            const enemyCastle = new MyRobot();
+            mockGame.createNewRobot(enemyCastle, 2, 3, 1, 0);
+
+            expect(myBot.pendingMessages.length).to.be.empty;
+            expect(communication.checkAndReportEnemyCastleDestruction(myBot)).to.equals(false);
+            expect(myBot.pendingMessages.length).to.be.empty;
             done();
         });
     });
 
     describe('sendCastleTalkMessage implementation test', function(){
-        it('should pop message from pendingMessages, castleTalk, and returns true if pendingMessages contains something', function(done) {
+        beforeEach(function() {
+            const myBot = new MyRobot();
+            mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+        });
 
+        it('should pop message from pendingMessages, castleTalk, and returns true if pendingMessages contains something', function(done) {
+            myBot.pendingMessages = [3, 2];
+
+            expect(myBot.pendingMessages.length).to.equals(2);
+            expect(myBot.pendingMessages).to.eql([3, 2]);
+            expect(communication.sendCastleTalkMessage(myBot)).to.equals(true);
+            expect(myBot.pendingMessages.length).to.equals(1);
+            expect(myBot.pendingMessages).to.eql([3]);
             done();
         });
 
         it('should return false if pendingMessages is empty', function(done) {
+            myBot.pendingMessages = [];
             
-            done();
-        });
-
-        it('should return false if robot at target is castle', function(done) {
-            
+            expect(myBot.pendingMessages.length).to.not.be.empty;
+            expect(communication.sendCastleTalkMessage(myBot)).to.equals(false);
+            expect(myBot.pendingMessages.length).to.not.be.empty;
             done();
         });
     });
 
     describe('checkBaseSignalAndUpdateTarget implementation test', function(){
+        beforeEach(function() {
+            const myBot = new MyRobot();
+            const baseBot = new MyRobot();
+            const newPos = {x: 3, y: 4};
+            mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+            mockGame.createNewRobot(base, 4, 4, 0, 0);
+            myBot.attackerMoves = 1;
+            myBot.target = {x: 5, y: 5};
+            myBot.baseID = baseBot.me.id;
+            myBot.squadSize = 8;
+            myBot.path = [{x: 1, y:2}];
+        });
+
+        it('should return false if baseID is null and is never set', function(done) {
+            myBot.baseID = null;
+
+            expect(communication.checkBaseSignalAndUpdateTarget(myBot)).to.equals(false);
+            done();
+        });
+
         it('should change target, resets path, does not change squadSize and returns true, if base signals and attackerMoves is 1', function(done) {
-            
+            baseBot.signal = communication.positionToSignal(newPos, mockGame.game.map);
+            baseBot.signal_radius = mockGame.game.map.length * mockGame.game.map.length;
+            mockGame._setCommunication(baseBot);
+
+            expect(myBot.squadSize).equals(8);
+            expect(myBot.target).to.eql({x: 5, y: 5});
+            expect(myBot.path).to.not.be.empty;
+            expect(communication.checkBaseSignalAndUpdateTarget(myBot)).to.equals(true);
+            expect(myBot.target).to.eql(newPos);
+            expect(myBot.squadSize).equals(8);
+            expect(myBot.path).to.be.empty;
             done();
         });
 
         it('should change target, resets path, changes squadSize to 0 and returns true, if base signals and attackerMoves is > 1', function(done) {
-            
+            myBOt.attackerMoves = 3;
+
+            baseBot.signal = communication.positionToSignal(newPos, mockGame.game.map);
+            baseBot.signal_radius = mockGame.game.map.length * mockGame.game.map.length;
+            mockGame._setCommunication(baseBot);
+
+            expect(myBot.squadSize).equals(8);
+            expect(myBot.target).to.eql({x: 5, y: 5});
+            expect(myBot.path).to.not.be.empty;
+            expect(communication.checkBaseSignalAndUpdateTarget(myBot)).to.equals(true);
+            expect(myBot.target).to.eql(newPos);
+            expect(myBot.squadSize).equals(0);
+            expect(myBot.path).to.be.empty;
             done();
         });
 
         it('should return false if base is not signalling', function(done) {
 
+            expect(myBot.squadSize).equals(8);
+            expect(myBot.target).to.eql({x: 5, y: 5});
+            expect(myBot.path).to.not.be.empty;
+            expect(communication.checkBaseSignalAndUpdateTarget(myBot)).to.equals(false);
+            expect(myBot.squadSize).equals(8);
+            expect(myBot.target).to.eql({x: 5, y: 5});
+            expect(myBot.path).to.not.be.empty;
             done();
         });
 
         it('should return false if base signals -1', function(done) {
-            
+            baseBot.signal = -1;
+            baseBot.signal_radius = mockGame.game.map.length * mockGame.game.map.length;
+            mockGame._setCommunication(baseBot);
+
+            expect(myBot.squadSize).equals(8);
+            expect(myBot.target).to.eql({x: 5, y: 5});
+            expect(myBot.path).to.not.be.empty;
+            expect(communication.checkBaseSignalAndUpdateTarget(myBot)).to.equals(false);
+            expect(myBot.squadSize).equals(8);
+            expect(myBot.target).to.eql({x: 5, y: 5});
+            expect(myBot.path).to.not.be.empty;
+            done();
+        });
+
+        it('should return false if base signal radius is short', function(done) {
+            baseBot.signal = communication.positionToSignal(newPos, mockGame.game.map);
+            baseBot.signal_radius = 2;
+            mockGame._setCommunication(baseBot);
+
+            expect(myBot.squadSize).equals(8);
+            expect(myBot.target).to.eql({x: 5, y: 5});
+            expect(myBot.path).to.not.be.empty;
+            expect(communication.checkBaseSignalAndUpdateTarget(myBot)).to.equals(false);
+            expect(myBot.squadSize).equals(8);
+            expect(myBot.target).to.eql({x: 5, y: 5});
+            expect(myBot.path).to.not.be.empty;
             done();
         });
     });

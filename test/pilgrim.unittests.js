@@ -335,7 +335,7 @@ describe.only('Pilgrim Unit Tests', function() {
         });
     });
 
-    describe.only('takeMinerAction() tests', function() {
+    describe('takeMinerAction() tests', function() {
         it('should set target to depot of relatively less plentiful resource if no target', function(done) {
             let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
             const karbAlterations = [
@@ -626,11 +626,6 @@ describe.only('Pilgrim Unit Tests', function() {
     });
 
     describe('Mining tests', function() {
-        beforeEach(function() {
-            mockGame = new mockBC19();
-            mockGame.initEmptyMaps(10);
-        });
-
         it('should be able to mine if on a resource depot', function(done) {
             let returnValue;
             const myBot = new MyRobot();
@@ -880,33 +875,19 @@ describe.only('Pilgrim Unit Tests', function() {
         });
 
         describe('updateResourceTarget() tests', function(done) {
-            beforeEach(function() {
-                mockGame = new mockBC19();
-                mockGame.initEmptyMaps(10);
-            });
-
             it('should change nothing if target unoccupied', function(done) {
                 let returnValue;
                 const myBot = new MyRobot();
-                myBot._bc_game_state = {shadow: null};
                 const startTarget = myBot.target = {x: 1, y: 1};
-                myBot.me = {
-                    id: 1,
-                    unit: 2, //Pilgrim
-                    x: 0,
-                    y: 0
-                }
-                myBot._bc_game_state.shadow = 
-                [[1,0,0,0,0],
-                 [0,0,0,0,0],
-                 [0,0,0,0,0],
-                 [0,0,0,0,0],
-                 [0,0,0,0,0]];
-                myBot.karbonite_map = [[0,0,0,0,0],
-                                       [0,1,0,0,0],
-                                       [0,0,1,0,0],
-                                       [0,0,0,1,0],
-                                       [0,0,0,0,1]];
+                const karbAlterations = [
+                    {x: 1, y: 1, value:true},
+                    {x: 2, y: 2, value:true},
+                    {x: 3, y: 3, value:true},
+                    {x: 4, y: 4, value:true}
+                ];
+                mockGame.removeAllBots();
+                mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+                mockGame.alterMap("karbonite_map", karbAlterations);
     
                 returnValue = pilgrim.updateResourceTarget(myBot);
                 expect(myBot.occupiedResources).to.eql([]);
@@ -929,7 +910,22 @@ describe.only('Pilgrim Unit Tests', function() {
                     {x: 4, y: 4, value: true}
                 ];
 
+                //Should work for karbonite
+                mockGame.removeAllBots();
                 mockGame.alterMap("karbonite_map", karbAlterations);
+                mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+                mockGame.createNewRobot(friendlyBot1, 1, 1, 0, 2);
+                mockGame.createNewRobot(friendlyBot2, 2, 2, 0, 2);
+                
+    
+                returnValue = pilgrim.updateResourceTarget(myBot);
+                expect(myBot.occupiedResources).to.deep.include.members([{x: 1, y: 1}, {x: 2, y: 2}]);
+                expect(myBot.target).to.eql({x: 3, y: 3});
+
+                //Should work for fuel
+                mockGame.initEmptyMaps(10);
+                mockGame.removeAllBots();
+                mockGame.alterMap("fuel_map", karbAlterations);
                 mockGame.createNewRobot(myBot, 0, 0, 0, 2);
                 mockGame.createNewRobot(friendlyBot1, 1, 1, 0, 2);
                 mockGame.createNewRobot(friendlyBot2, 2, 2, 0, 2);

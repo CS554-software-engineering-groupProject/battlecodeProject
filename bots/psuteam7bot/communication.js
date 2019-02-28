@@ -101,7 +101,7 @@ communication.sendCastleTalkMessage = (self) => {
 }
 
 communication.checkBaseSignalAndUpdateTarget = (self) => {
-    if(self.baseID == null)
+    if(self.baseID === null)
         return false;
     
     const baseRobot = self.getVisibleRobots().filter((bot) => {

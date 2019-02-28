@@ -8,7 +8,7 @@ const movement = require('../projectUtils/psuteam7botCompiled.js').movement;
 const communication = require('../projectUtils/psuteam7botCompiled.js').communication;
 const expect = chai.expect;
 
-describe('Crusader Unit Tests', function() {
+describe.only('Crusader Unit Tests', function() {
     let mockGame;
     let myBot;
     let localCastle
@@ -64,26 +64,20 @@ describe('Crusader Unit Tests', function() {
 
             expect(myBot.base).to.eql({x: 0, y: 3});
             expect(myBot.role).equals("ATTACKER");
-            expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
-                signalPos,    //Castle signal (could be anything)
-                {x: 9, y: 6}  //Diagonal patrol (relative to localCastle)
-            ]);
+            expect(myBot.target).to.eql(signalPos);
             expect(output).equals('skipping attacker action');
 
             done();
         });
 
-        it("UNASSIGNED bots should use getAttackerPatrolPosition if radio signal from the base DNE", function(done) {
+        it("UNASSIGNED bots should use getMirrorCastle if radio signal from the base DNE", function(done) {
             let stubAttackerAction = mockGame.replaceMethod("crusader", "takeAttackerAction").returns('skipping attacker action');
 
             output = crusader.doAction(myBot);
 
             expect(myBot.base).to.eql({x: 0, y: 3});
             expect(myBot.role).equals("ATTACKER");
-            expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
-                {x: 9, y: 3}, //Mirror curent position (relative to crusader)
-                {x: 9, y: 6}  //Diagonal patrol (relative to localCastle)
-            ]);
+            expect(myBot.target).to.eql({x: 8, y: 3});
             expect(output).equals('skipping attacker action');
 
             done();
@@ -92,48 +86,24 @@ describe('Crusader Unit Tests', function() {
 
     describe('takeAttackerAction() tests', function() {
         it('ATTACKERS with no base should identify enemy castles', function(done) {
-            myBot.path = [{x: 3, y: 3}];
+            myBot.base = null;
             myBot.target = {x: 9, y: 3};
 
+            //Unknown, get mirror castle returns null?
             output = crusader.takeAttackerAction(myBot);
-
-            expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
-                {x: 8, y: 3}, //Mirror location (relative to myBot)
-                {x: 8, y: 6}  //Diagonal patrol (relative to myBot)
-            ]);
+            expect(myBot.base).to.eql({x:-1, y:-1});
+            expect(myBot.target).to.eql({x: 8, y: 3});
             expect(output['action']).equals('move');
 
             done();
         });
 
-        it('ATTACKERS with base but no potential castles should identify potential locations', function(done) {
+        it('ATTACKERS with no target should wait for signal from base and do nothing', function(done) {
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
-            myBot.path = [{x: 3, y: 3}];
-            myBot.target = {x: 9, y: 3};
 
             output = crusader.takeAttackerAction(myBot);
 
-            expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
-                {x: 9, y: 3}, //Mirror location (relative to localCastle)
-                {x: 9, y: 6}  //Diagonal patrol (relative to localCastle)
-            ]);
-            expect(output['action']).equals('move');
-
-            done();
-        });
-
-        it('ATTACKERS with no target should update based on potentialEnemyCastleLocations', function(done) {
-            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
-            myBot.path = [{x: 3, y: 3}];
-
-            output = crusader.takeAttackerAction(myBot);
-
-            expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
-                {x: 9, y: 3}, //Mirror location (relative to localCastle)
-                {x: 9, y: 6}  //Diagonal patrol (relative to localCastle)
-            ]);
-            expect(myBot.target).to.eql({x: 9, y: 3});
-            expect(output['action']).equals('move');
+            expect(output).to.be.undefined;
 
             done();
         });
@@ -162,33 +132,6 @@ describe('Crusader Unit Tests', function() {
             expect(output['action']).equals('attack');
             expect(output['dx']).equals(4);
             expect(output['dy']).equals(0);            
-
-            done();
-        });
-
-        it("ATTACKERS in attack range of castle but who didn't attack should get next potential castle", function(done) {
-            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
-            myBot.path = [{x: 3, y: 3}];
-
-            //If only one target left, should stop and do nothing
-            myBot.potentialEnemyCastleLocation = [{x: 9, y: 9}];
-            myBot.target = {x: 5, y: 3};
-
-            output = crusader.takeAttackerAction(myBot);
-
-            expect(myBot.potentialEnemyCastleLocation.length).equals(0);
-            expect(myBot.target).eql({x: 5, y: 3});
-            expect(output).to.be.undefined;  
-            
-            //If more than one target left, should alter potentialEnemyCastleLocation and set new target
-            myBot.potentialEnemyCastleLocation = [{x: 5, y: 3}, {x: 9, y: 9}];
-            myBot.target = {x: 5, y: 3};
-
-            output = crusader.takeAttackerAction(myBot);
-
-            expect(myBot.potentialEnemyCastleLocation).to.deep.include({x: 9, y: 9});
-            expect(myBot.target).eql({x: 9, y: 9});
-            expect(output['action']).equals('move');
 
             done();
         });

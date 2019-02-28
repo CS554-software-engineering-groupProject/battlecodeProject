@@ -363,6 +363,44 @@ movement.rotateDirection = (direction, n) => {
 };
 
 /**
+ * Method to get directions between two different rotation indices from a starting direction index.
+ * Returns an array containing all directions from `rotationsLeft` rotations left or less from `dirIndex` 
+ * to `rotationsRight` rotations right or less from `dirIndex`.
+ * Used to get things like directions between a point (for example, anything perpendicular to or closer to
+ * the input direction would be `getDirectionsBetween(index, 2, 2)`).
+ * 
+ * @param dirIndex Starting index from which to make decisions
+ * @param rotationsLeft Non-negative number representing the max rotations to the left that should be included
+ * @param rotationsRight Non-negative number representing the max rotations to the right that should be included
+ * @return An array of directions that are between `rotationsLeft` rotations left of `dirIndex` and 
+ *         `rotationsRight` rotations right of `dirIndex`
+ * 
+ */
+movement.getDirectionsBetween = (dirIndex, rotationsLeft, rotationsRight) => {
+    const output = [];
+    const start = ((dirIndex-rotationsLeft) % 8 + 8) % 8;
+    const end = ((dirIndex+rotationsRight) % 8 + 8) % 8;
+    //console.log('s: ' + start + ' e: ' + end);
+
+    if(rotationsLeft + rotationsRight >= 7) {
+        return JSON.parse(JSON.stringify(movement.directions));
+    } else if (rotationsLeft + rotationsRight === 0) {
+        output.push(movement.directions[start]);
+        return output;
+    } else if (rotationsLeft + rotationsRight < 0) {
+        return output; //Empty
+    } else {
+        let i = start;
+        while (i !== end) {
+            output.push(movement.directions[i]);
+            i = (i+1) % 8;
+        }
+        output.push(movement.directions[end]); //Don't forget the end!
+        return output;
+    }
+};
+
+/**
 *Return difference of x-coord and y-coord between A and B
 *Input: A - a 'position/ location' object {x, y}
 *       B - a 'position/ location' object {x, y}
@@ -460,9 +498,9 @@ movement.isPassable = (location, fullMap, robotMap) => {
 
     if(x < 0 || y < 0)  //Map bound check
         return false;
-    else if(x > fullMap.length || y > fullMap.length)   //Map bound check
+    else if(x >= fullMap.length || y >= fullMap.length)   //Map bound check
         return false;
-    return((robotMap[y][x] === 0) && (fullMap[y][x])); //Returns true only if tile is empty and is passable
+    return((robotMap[y][x] <= 0) && (fullMap[y][x])); //Returns true only if tile is empty and is passable
 };
 
 /**
@@ -716,28 +754,23 @@ movement.getDiagonalPatrolPosition = (myCastleLocation, fullMap) => {
  *         method thus needs to be returned by the action of whatever bot is calling it in order to make move.
  */
 movement.moveAlongPath = (self) => {
-    //self.log("me: [" + self.me.x + "," + self.me.y + "]")
     let nextMove = self.path.pop();
-    //self.log("nextMove: [" + nextMove.x + "," + nextMove.y + "]")
 
     //If next move is viable, do it
-    if(movement.isPassable(nextMove, self.map, self.getVisibleRobotMap())) {
+    if(movement.isPassable(nextMove, self.map, self.getVisibleRobotMap()) && movement.hasFuelToMove(self, nextMove)) {
         self.log("Unit " + self.me.id + " moving to: [" + nextMove.x + "," + nextMove.y + "]");
         return self.move(nextMove.x-self.me.x, nextMove.y-self.me.y);
-    //If nextMove is destination (because path is empty), readd destination to path and wait to be moveable
-    /*} else if (self.path.length === 0) {
-        self.log("Final path position occupied - wait until unoccupied")
+    //If nextMove is passable (i.e. just not enough fuel), readd next move to path and wait until enough fuel
+    } else if (movement.isPassable(nextMove, self.map, self.getVisibleRobotMap())) {
         self.path.push(nextMove);
-        return;*/
+        self.log("Unit " + self.me.id + " waiting for more fuel");
+        return;
     //If next move not viable, reset path by readding next move, attempt to adjust path accounting for bots
     } else {
         self.path.push(nextMove);
-        //If adjustment successful, pop off new next move and go to it
+        //If adjustment successful, recurse to move on new path
         if(movement.adjustPath(self, self.me)) {
-            //self.log(self.path);
-            nextMove = self.path.pop();
-            self.log("Unit " + self.me.id + " moving to: [" + nextMove.x + "," + nextMove.y + "]");
-            return self.move(nextMove.x-self.me.x, nextMove.y-self.me.y);
+            return movement.moveAlongPath(self)
         //Otherwise, just dont move (may want to fix)
         } else {
             self.log("bot " + self.me.id + " not moving due to path conflict");
@@ -959,28 +992,25 @@ movement.initAStarMaps = (self, location, accountForBots, closedMap, infoMap) =>
  * @return Boolean indicating whether cell matches destination, indicating end of A* process
  */
 movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) => {
+    //Sort list by distance and then potentially direction - small optimization?
+    openQueue.sort((a, b) => {
+        const aCell = infoMap[a.y][a.x];
+        const bCell = infoMap[b.y][b.x];
+        if(aCell.f < bCell.f) {
+            return -2;
+        } else if (aCell.f > bCell.f) {
+            return 2;
+        } else {
+            return 0;
+        }
+    });
     const moveablePositions = movement.getMoveablePositions(self.me.unit);
     const current = openQueue.shift();
     const currCell = infoMap[current.y][current.x];
     const targetDirIndex = movement.getDirectionIndex(movement.getRelativeDirection(current, destination));
     //Add to closedMap, as it is now being processed
     closedMap[current.y][current.x] = true;
-    //Sort list by distance and then potentially direction - small optimization?
-    moveablePositions.sort((a, b) => {
-        if(a.r2 > b.r2) {
-            return -2;
-        } else if (a.r2 < b.r2) {
-            return 2;
-        } else {
-            if (a.dirIndex === targetDirIndex) {
-                return -1;
-            } else if(b.dirIndex === targetDirIndex) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-    });
+
 
     //Iterate through all moveable positions, updating their values and adding them to queue if not destination
     let gNext;
@@ -995,25 +1025,23 @@ movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) =
            nextCoordinates.y < 0) {
             continue;
         }
+        const nextCell = infoMap[nextCoordinates.y][nextCoordinates.x];
+        //If destination found, we found a path! Update this last parent and return true to indicate successful completion
+        if(movement.positionsAreEqual(nextCoordinates, destination)) {
+            nextCell.parent = current;
+            return true;
+        }
         //If coordinates not already processed, do stuff
         if(!closedMap[nextCoordinates.y][nextCoordinates.x]) {
-            const nextCell = infoMap[nextCoordinates.y][nextCoordinates.x];
-            //If destination found, we found a path! Update this last parent and return true to indicate successful completion
-            if(movement.positionsAreEqual(nextCoordinates, destination)) {
+            gNext = currCell.g + movement.getDistance(current, nextCoordinates);
+            hNext = movement.getDistance(nextCoordinates, destination);
+            fNext = gNext+hNext;
+            if(nextCell.f > fNext) {
                 nextCell.parent = current;
-                return true;
-            //Otherwise, update cell information and push onto openQueue if possible improvement on path
-            } else {
-                gNext = currCell.g + movement.getDistance(current, nextCoordinates);
-                hNext = movement.getDistance(nextCoordinates, destination);
-                fNext = gNext+hNext;
-                if(nextCell.f > fNext) {
-                    nextCell.parent = current;
-                    nextCell.g = gNext;
-                    nextCell.h = hNext;
-                    nextCell.f = fNext;
-                    openQueue.push(nextCoordinates);
-                }
+                nextCell.g = gNext;
+                nextCell.h = hNext;
+                nextCell.f = fNext;
+                openQueue.push(nextCoordinates);
             }
         }        
     }
@@ -1043,6 +1071,12 @@ movement.createPathFromInfoMap = (location, destination, infoMap) => {
         }
     }
     return pathArray;
+};
+
+movement.hasFuelToMove = (self, target) => {
+    const dist = movement.getDistance(self.me, target);
+    const cost = SPECS.UNITS[self.me.unit].FUEL_PER_MOVE * dist;
+    return self.fuel >= cost;
 };
 
 const combat = {};
@@ -1245,7 +1279,7 @@ communication.initTeamCastleInformation = (self) => {
         });
         //Sort so nearest castle is self.teamCastles[0]
         self.teamCastles.sort((a,b) => {
-            if(movement.getDistance(self.me, a) > movement.getDistance(self.me, b)) {
+            if(movement.getDistance(self.me, a) < movement.getDistance(self.me, b)) {
                 return -1;
             } else {
                 return 1;
@@ -1253,6 +1287,75 @@ communication.initTeamCastleInformation = (self) => {
         });
         return true;
     }
+};
+
+/**
+ * Checks whether target tile is visible and is empty OR occupied and not a castle and report to allied castles if so
+ * Returns the x-coord or y-coord value of the target tile depending on the map reflection
+ *
+ */
+communication.checkAndReportEnemyCastleDestruction = (self) => {
+    const {x, y} = self.target;
+    const robotID = self.getVisibleRobotMap()[y][x];
+
+    //Case, empty target, castle is destroyed
+    if(robotID === 0)
+    {
+        //Add coords to pending messages, push y then x
+        self.pendingMessages.push(y);
+        self.pendingMessages.push(x);
+        return true;
+    }
+    else //Case target occupied or not in visible radius, -1 or there is a robotID > 0
+    {
+        //Check if robot is not a castle, if so, report castle destruction
+        if(robotID > 0 && self.getRobot(robotID).unit !== 0)
+        {
+            //Add coords to pending messages, push y then x
+            self.pendingMessages.push(y);
+            self.pendingMessages.push(x);
+            return true;
+        }
+    }
+    return false;
+};
+
+communication.sendCastleTalkMessage = (self) => {
+    if(self.pendingMessages.length > 0)
+    {
+        const message = self.pendingMessages.pop();
+        self.castleTalk(message);
+        self.log("Message sent to castle");
+        return true;
+    }
+    return false;
+};
+
+communication.checkBaseSignalAndUpdateTarget = (self) => {
+    if(self.baseID === null)
+        return false;
+    
+    const baseRobot = self.getVisibleRobots().filter((bot) => {
+        //Filter signalling base robot
+        return bot.id === self.baseID && bot.signal > 0;
+    });
+    if(baseRobot.length > 0)
+    {
+        //self.log("Found base bot");
+        //self.log(baseRobot[0].id);
+        if(baseRobot[0].signal > 0)
+        {
+            self.log("Received signal from base, updated target");
+            //self.log(baseRobot[0].signal)
+            //Reset target, path and set squadsize to 0, for all existing units of a base
+            self.target = communication.signalToPosition(baseRobot[0].signal, self.map);
+            self.path = [];
+            if(self.attackerMoves > 1)
+                self.squadSize = 0;
+            return true;
+        }
+    }
+    return false;
 };
 
 const pilgrim = {};
@@ -1484,8 +1587,8 @@ prophet.doAction = (self) => {
         }
 
         //Receive location of enemy base from Castle, if they are signaling to its adjacent square
-        const baseID = self.getVisibleRobotMap()[self.base.y][self.base.x];   //Get ID of the base Castle robot
-        const baseRobot = self.getRobot(baseID);    //Get robot reference of the base castle robot
+        self.baseID = self.getVisibleRobotMap()[self.base.y][self.base.x];   //Get ID of the base Castle robot
+        const baseRobot = self.getRobot(self.baseID);    //Get robot reference of the base castle robot
 
         //Receive signal just in case
         if(self.isRadioing(baseRobot))  //Check if base has broadcasted a signal on it's turn
@@ -1510,7 +1613,7 @@ prophet.doAction = (self) => {
         });
 
         //2 defenders towards mirror castle, should be enough to kill a crusader in 2 turns before it gets to attack range
-        if(nearbyDefenders.length < 2)
+        if(nearbyDefenders.length < 3)
         {
             self.log("Base defenders = " + JSON.stringify(nearbyDefenders.length) + ", Assigned as a defender");
             self.role = "DEFENDER";
@@ -1544,12 +1647,6 @@ prophet.takeDefenderAction = (self) =>  {
 
     if(attackable.length > 0)
     {
-        //Compensate guard post movement turn loss due to attacking
-        if(self.me.turn < 5)
-        {
-            --self.me.turn;
-        }
-
         let attacking = attackable[0];
         self.log("Attacking " + combat.UNITTYPE[attacking.unit] + " at " + attacking.x + ", " +  attacking.y);
         return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
@@ -1557,8 +1654,10 @@ prophet.takeDefenderAction = (self) =>  {
 
 
     //Limited movement towards enemy castle (movement towards guard post)
-    if(self.me.turn < 4)
+    if(self.attackerMoves < 5)
     {
+        //Reusing attacker move naming convention
+        self.attackerMoves++;
         if(self.path.length === 0)
         {
             if(movement.aStarPathfinding(self, self.me, self.potentialEnemyCastleLocation[0], false)) {
@@ -1613,7 +1712,6 @@ prophet.takeAttackerAction = (self) => {
     //Attack visible enemies
     if(attackable.length > 0)
     {
-        --self.me.turn;
         let attacking = attackable[0];
         self.log("Attacking " + combat.UNITTYPE[attacking.unit] + " at " + attacking.x + ", " +  attacking.y);
         return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
@@ -1624,7 +1722,9 @@ prophet.takeAttackerAction = (self) => {
     {
         //Assign new target waypoint
         self.potentialEnemyCastleLocation.shift();
-        self.target = self.potentialEnemyCastleLocation[0];
+        if(self.potentialEnemyCastleLocation.length != 0) {
+            self.target = self.potentialEnemyCastleLocation[0];
+        }
     }
 
     //TODO No more patrol waypoint, do nothing
@@ -1648,10 +1748,16 @@ prophet.takeAttackerAction = (self) => {
     }
 
     //If first seven turns, move away from allied base towards enemy base, else check if squadSize threshold is met and is 0
-    if(self.me.turn < 6)
+    if(self.attackerMoves < 6)
     {
-        self.log('ATTACKER prophet ' + self.id + ' moving to rally point, Current: [' + self.me.x + ',' + self.me.y + ']');
-        return movement.moveAlongPath(self);
+        if(movement.hasFuelToMove(self, self.path[self.path.length-1])) {
+            self.attackerMoves++;
+            self.log('ATTACKER prophet ' + self.id + ' moving to rally point, Current: [' + self.me.x + ',' + self.me.y + ']');
+            return movement.moveAlongPath(self);
+        } else {
+            self.log('ATTACKER prophet ' + self.id + ' waiting for more fuel to move to rally point');
+            return;
+        }
     }
     else if(self.squadSize === 0)
     {
@@ -1676,45 +1782,52 @@ prophet.takeAttackerAction = (self) => {
     return;
 };
 
-
+/**
+ * Method for prophets to flee from enemies in their blindspot (0-15 R^2).
+ * 
+ * @param self MyRobot prophet doing fleeing
+ * @param visibleRobots Visible bots for prophet
+ * @return Boolean indicating whether the bot should flee due to an enemy in the blindspot
+ */
 prophet.fleeBehavior = (self, visibleRobots) => {
     let minUnattackable = combat.filterByTeam(self, visibleRobots, -1);
     minUnattackable = combat.filterByRange(minUnattackable, self.me, 0, SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0]-1);
-
     
     //Set 'fleeing behavior?' (whenattack target < min attack range)
     if(minUnattackable.length > 0)
     {
         const attacker = minUnattackable[0];
-        const direction = movement.getRelativeDirection(self.me, attacker);
+        const direction = movement.getRelativeDirection(attacker, self.me);
         const directionIndex = movement.getDirectionIndex(direction);
-        const moveablePositions = movement.getMoveablePositions(self);
+        const fleeDirections = movement.getDirectionsBetween(directionIndex, 2, 2);
 
         //Filter for opposite directions perpendicular/ away potential moveable position and is passable
-        moveablePositions.filter((location) => {
-            if((directionIndex <= location.dirIndex + 2 && directionIndex >= location.dirIndex - 2) 
-                && location.r2 <= SPECS.UNITS[self.me.unit].SPEED
-                && movement.isPassable(location))
-                return true;
-
-            return false;
+        const fleeMoves = movement.getMoveablePositions(self.me.unit).filter((location) => {
+            const locDirection = movement.directions[location.dirIndex];
+            const move = {x: location.x+self.me.x, y: location.y+self.me.y};
+            if(fleeDirections.indexOf(locDirection) >= 0
+                && movement.isPassable(move, self.map, self.getVisibleRobotMap())) {
+                    return true;
+                } else {
+                    return false;
+                }
         });
 
         //No possible location to flee to, return false
-        if(moveablePositions.length === 0)
+        if(fleeMoves.length === 0)
         {
             return false;
-        }
+        }        
 
         let minDiffDir = 3;
         let maxDist = 0;
-        let bestLoc = null;
+        let bestLoc = fleeMoves[0];
 
         //Get moveable position with lower than minDiffDir and greater than maxDist
-        for(let i = 0; i < moveablePositions.length; ++i)
+        for(let i = 0; i < fleeMoves.length; ++i)
         {
-            const current = moveablePositions[i];
-            const diffDir = Math.abs(current.dirIndex-directionIndex);
+            const current = fleeMoves[i];
+            const diffDir = Math.min(Math.abs(current.dirIndex-directionIndex), (current.dirIndex+8-directionIndex));
             if(diffDir <= minDiffDir && current.r2 >= maxDist)
             {
                 bestLoc = {x: current.x, y: current.y};
@@ -1722,18 +1835,14 @@ prophet.fleeBehavior = (self, visibleRobots) => {
                 maxDist = current.r2;
             }
         }
-
-        if(bestLoc != null)
-        {
-            //There is a fleeing coord
-            //Store retreat position and current position in path (for backtrack after fleeing behavior is done)
-            self.path.unshift(bestLoc, self.me);
-            self.log("Prophet " + self.id + "Fleeing from attacker" + attacker.unit + " " + attacker.id + " to x: " + bestLoc.x + ", y: " + bestLoc[0].y);
-            return true;
-        }
+        //Store retreat position and current position in path (for backtrack after fleeing behavior is done)
+        self.path.push({x: self.me.x, y: self.me.y});
+        self.path.push({x: bestLoc.x+self.me.x, y: bestLoc.y+self.me.y});
+        self.log("Prophet " + self.id + "Fleeing from attacker" + attacker.unit + " " + attacker.id + " to x: " + bestLoc.x + ", y: " + bestLoc.y);
+        return true;
+    } else {
         return false;
     }
-    return false;
 };
 
 const castle = {};
@@ -1745,11 +1854,18 @@ castle.doAction = (self) => {
   
     castle.recordPosition(self);
     castle.findPosition(self);
+    if(self.me.turn === 5)
+    {
+        self.enemyCastles = movement.getEnemyCastleLocations(self.teamCastles, self.map);
+        self.log("Enemy castles: ");
+        self.log(self.enemyCastles);
+    }
+
     //On first turn:
     //  1. add to castleBuildQueue with pilgrims for each local karbonite depot
     //  2. add to castleBuildQueue with pilgrims for each local fuel depot
-    //  3. add to castleBuildQueue a single prophet targeting the mirror castle.
-    //This ensures that all local depots are filled and a prophet will be built after
+    //  3. add to castleBuildQueue a single crusader targeting the mirror castle.
+    //This ensures that all local depots are filled and a crusader will be built after
     if(self.me.turn === 1)
     {
         const karboniteDepots = movement.getResourcesInRange(self.me, 16, self.karbonite_map);
@@ -1761,27 +1877,37 @@ castle.doAction = (self) => {
             self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         });
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map);
-        self.castleBuildQueue.push({unit: "PROPHET", x: mirrorCastle.x, y: mirrorCastle.y});
+        self.target = mirrorCastle;
         self.log(self.castleBuildQueue);
         return castle.buildFromQueue(self);
     }
     else if (self.castleBuildQueue.length > 0) 
     {
+        if(self.me.turn > 5)
+        {
+            castle.checkUnitCastleTalk(self);
+            castle.signalNewUnitTarget(self);
+        }
         self.log("BUILD QUEUE NON-EMPTY");
         self.log(self.castleBuildQueue);
         const botsInQueue = self.castleBuildQueue.length;
-        //Keep queue at reasonable size, adding another prophet as necessary so prophets are continually build
+        //Keep queue at reasonable size, adding another crusader as necessary so crusaders are continually build
         if (botsInQueue <= 5) {
-            self.castleBuildQueue.push(self.castleBuildQueue[botsInQueue-1]);
+            self.castleBuildQueue.push({unit: "CRUSADER", x: self.target.x, y: self.target.y});
         }
         return castle.buildFromQueue(self);
     }
     else 
     {
+        castle.checkUnitCastleTalk(self);
+        castle.signalNewUnitTarget(self);
+        self.log("BUILD QUEUE EMPTY, ATTEMPTING TO BUILD CRUSADER");
         //Check if there are enough resources to produce this unit.
-       if(self.fuel >= SPECS['PROPHET'].CONSTRUCTION_FUEL && self.karbonite >= SPECS['PROPHET'].CONSTRUCTION_KARBONITE){
-           return castle.findUnitPlace(self, 'PROPHET');
+       if(self.fuel >= SPECS.UNITS[SPECS.CRUSADER].CONSTRUCTION_FUEL && self.karbonite >= SPECS.UNITS[SPECS.CRUSADER].CONSTRUCTION_KARBONITE) {
+            self.castleBuildQueue.push({unit: "CRUSADER", x: self.target.x, y: self.target.y});
+            return castle.buildFromQueue(self);
        }
+       self.log("NOT ENOUGH RESOURCE");
        return;
     }
 
@@ -1828,10 +1954,12 @@ castle.buildFromQueue = (self) => {
 
 castle.recordPosition = (self) => {
     let turn = self.me.turn;
-    if(turn == 1){
+    if(turn === 1|| turn === 2){
+        //self.log("Sent x-coord: " + self.me.x);
         self.castleTalk(self.me.x);
     }
-    if(turn == 2){
+    if(turn === 3|| turn === 4){
+        //self.log("Sent y-coord: " + self.me.x);
         self.castleTalk(self.me.y);
     }
     
@@ -1842,23 +1970,29 @@ castle.recordPosition = (self) => {
  * Output: positions of other friendly castles.
  */
 castle.findPosition = (self) => {
-    const bots = self.getVisibleRobotMap().filter(bots =>{
-        return bots.team === self.me.team && bots.units === 0;
+    const bots = self.getVisibleRobots().filter(bots =>{
+        return bots.team === self.me.team && bots.castle_talk;
     });
     let turn = self.me.turn;
+    self.log("turn: " + turn);
     //let storeFriendlyCastles;
 
     bots.forEach(foundCastle => {
-        self.teamCastles.forEach(teamCastle =>{
-            if(foundCastle.id == teamCastle.id){
-                if(turn == 2){
-                    teamCastle.x = foundCastle.castle_talk;
-                }
-                if(turn == 3){
+        if(turn === 2){
+            //self.log("Received id: " + foundCastle.id + ", x-coord: " + foundCastle.castle_talk);
+            self.teamCastles.push({id: foundCastle.id, x: foundCastle.castle_talk});
+        }
+        if(turn === 4){
+            self.teamCastles.forEach(teamCastle => {
+                if(foundCastle.id === teamCastle.id)
+                {
+                    //self.log("Received y-coord: " + foundCastle.castle_talk);
                     teamCastle.y = foundCastle.castle_talk;
                 }
-            }
-        });
+            });
+            //self.log("Team castles: ");
+            //self.log(self.teamCastles);
+        }
     });
 };
 /** Castle should calculate the locations of the enemy castles using the recorded postions. Use mirror castle method. 
@@ -1878,6 +2012,105 @@ castle.mirrorCastle = (myLocation, fullMap) => {
     else
     {
         return {x: Ax, y: y};
+    }
+};
+
+/** Each castle should be able to check for messages from their friendly castles 
+ * Use of this.getVisibleRobots() to see the robots in the vicinity 
+ * 
+ * Input: self, this is the reference to the object to the calling method.
+ * Output: message from other castles
+ * castle.checkMessage = (self) => {
+    const visibleRobots = this.getVisibleRobotMap().filter(bots =>{
+        return bots.team === self.me.team && bots.unit === 0;
+    })
+    const filterdCastle;
+    for(i = 0; i< filterdCastle ; i ++)
+    {  
+        const id = 0;
+        this.castle_talk(id);
+        return castle.checkMessage(self)
+    }
+    return;
+}
+ */
+
+
+ /**
+  * Check castle talk message from units other than castles, if found, treat it as the x-coord or y-coord of a destroyed enemy castle
+  * remove the destroyed enemy castle from the array of enemy castles, and set self.target to null
+  */
+ castle.checkUnitCastleTalk = (self) => {
+    const alliedUnits = self.getVisibleRobots().filter(bot =>{
+        return bot.team === self.me.team && bot.castle_talk;
+    });
+    const length = alliedUnits.length;
+    let enemyCastlesLength = self.enemyCastles.length;
+    
+
+    for(let i = 0; i < length; ++i)
+    {  
+        self.log("Castle talk received: " + alliedUnits[i].castle_talk);
+        //self.log("Enemy castles: ");
+        //self.log(self.enemyCastles);
+        let messageValue = alliedUnits[i].castle_talk;
+        
+        //Castle talk is in the range 0-63 inclusive, reserved for coords - assume as destroyed enemy castle loc
+        if(messageValue >= 0 && messageValue < 64)
+        {
+            //Look for a partial message from the bot in receivedMessages
+            for(let j = 0; j < self.receivedMessages.length; ++j)
+            {
+                if(alliedUnits[i].id === self.receivedMessages[j].id)
+                {
+                    self.receivedMessages[j].y = messageValue;
+                    const enemyCastle = self.receivedMessages.splice(j, 1)[0];
+                    j -= 1;
+                    //Remove from enemy Castles array if match coords and store in pending message
+                    for(let k = 0; k < enemyCastlesLength; ++k)
+                    {
+                        if(movement.positionsAreEqual(enemyCastle, self.enemyCastles[k]))
+                        {
+                            const removedCastle = self.enemyCastles.splice(k,1)[0];
+                            enemyCastlesLength = self.enemyCastles.length;
+                            //self.log("Enemy castle removed from array----------------------------------------------------------------------------------------")
+                            //self.log(self.target);
+                            //self.log(removedCastle);
+                            if(movement.positionsAreEqual(self.target, removedCastle) && enemyCastlesLength > 0)
+                            {
+                                self.target = self.enemyCastles[0];
+                                self.pendingMessages.push(communication.positionToSignal(self.target, self.map));
+                                //self.log("Signal stored-------------------------------------------------------------------------------------------");
+                                //self.log(self.pendingMessages);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            //No partial message yet, add partial message to receivedMessages
+            self.receivedMessages.push({id: alliedUnits[i].id, x: messageValue});
+        }
+    }
+    return;
+ };
+
+ /**
+  * Checks whether there are pending messages to broadcast, pop it from the list and broadcast it if there is enough fuel
+  */
+castle.signalNewUnitTarget = (self) =>{
+    if(self.pendingMessages.length > 0)
+    {
+        if(self.fuel > self.map.length)
+        {
+            const newTarget = self.pendingMessages.pop();
+            self.signal(newTarget, self.map.length*self.map.length);
+            //self.log("Signal sent to units, " + newTarget + "---------------------------------------------------------------------------------------------------------");
+        }
+        else
+        {
+            self.log("Not enough fuel to send signal");
+        }
     }
 };
 
@@ -1907,6 +2140,147 @@ church.doAction = (self)=> {
     //
 };
 
+const crusader = {};
+
+crusader.doAction = (self) => {
+    
+    if (self.role === 'UNASSIGNED') {
+        self.log("UNASSIGNED crusader " + self.id + " taking turn");
+        self.base = movement.findAdjacentBase(self);
+        self.log("Set base as " + JSON.stringify(self.base));
+
+        //If for some unknown reason can't find base (e.g. created by base, but then base is destroyed on enemy turn before this bot's turn)
+        if(self.base == null)
+        {
+            self.squadSize = 0;
+            self.role = "ATTACKER";
+            return;
+        }
+
+        //Receive location of enemy base from Castle, if they are signaling to its adjacent square
+        self.baseID = self.getVisibleRobotMap()[self.base.y][self.base.x];   //Get ID of the base Castle robot
+        const baseRobot = self.getRobot(self.baseID);    //Get robot reference of the base castle robot
+
+        //Receive signal just in case
+        if(self.isRadioing(baseRobot))  //Check if base has broadcasted a signal on it's turn
+        {
+            //Get the message using baseRobot.signal and translate to position using helper function
+            self.target = communication.signalToPosition(baseRobot.signal, self.map);
+        }
+        else
+        {
+            self.log("UNASSIGNED crusader didn't receive signal from base, getting mirror coord");
+            self.target = movement.getMirrorCastle(self.me, self.map);
+        }
+
+        self.squadSize = 4; //-1 trigger crusader, need to change squad detection if trigger crusader is to be part of squad
+        self.role = "ATTACKER";
+    }
+
+    if(self.role === "ATTACKER")
+        return crusader.takeAttackerAction(self);
+
+    //Should not fall through unless still UNASSIGNED or something horrible happened
+    self.log('crusader ' + self.role + ' ' + self.me.id + ' still UNASSIGNED!!!');
+    return;
+};
+
+//ATTACKER Behavior
+crusader.takeAttackerAction = (self) => {
+    self.log("ATTACKER crusader " + self.id + " taking turn");
+
+    //If no base
+    if(self.base === null)
+    {
+        //Set opposite of current coord as target
+        self.base = {x:-1, y:-1};
+        self.target = movement.getMirrorCastle(self.me, self.map);
+    }
+
+    //Checks for target update from base
+    communication.checkBaseSignalAndUpdateTarget(self);
+    communication.sendCastleTalkMessage(self);
+
+    const visibleRobots = self.getVisibleRobots();
+    const attackable = combat.filterByAttackable(self, visibleRobots);
+
+    //Attack visible enemies
+    if(attackable.length > 0)
+    {
+        let attacking = attackable[0];
+        self.log("Attacking " + combat.UNITTYPE[attacking.unit] + " at " + attacking.x + ", " +  attacking.y);
+        return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
+    }
+
+    //Still no target, and no update from base, do nothing
+    if(self.target === null)
+    {
+        self.log("No target, waiting for signal from base...");
+        return;
+    }
+
+    //If target is not enemy castle, report to team castles
+    if(communication.checkAndReportEnemyCastleDestruction(self))
+    {
+        //Enemy castle destroyed, waiting for next order
+        self.log("Enemy castle destroyed, message stored");
+        self.target = null;
+        return;
+    }
+
+    //If no path yet
+    if(self.path.length === 0)
+    {
+        if(movement.aStarPathfinding(self, self.me, self.target, false)) 
+        {
+            self.log(self.path);
+        } 
+        else 
+        {
+            self.log('Cannot get path to enemy base');
+            return;
+        }
+    }
+
+    //If first seven turns, move away from allied base towards enemy base, else check if squadSize threshold is met and is 0
+    if(self.attackerMoves < 6)
+    {
+        if(movement.hasFuelToMove(self, self.path[self.path.length-1])) {
+            self.attackerMoves++;
+            self.log('ATTACKER crusader ' + self.id + ' moving to rally point, Current: [' + self.me.x + ',' + self.me.y + ']');
+            return movement.moveAlongPath(self);
+        } else {
+            self.log('ATTACKER crusader ' + self.id + ' waiting for more fuel to move to rally point');
+            return;
+        }
+    }
+    else if(self.squadSize === 0)
+    {
+        if(self.fuel < 100)
+        {
+            self.log('Low Fuel, Global fuel < 100, ATTACKER crusader ' + self.id + ' Standing by.');
+            return;
+        }
+        self.log('ATTACKER crusader ' + self.id + ' moving towards enemy base, Current: [' + self.me.x + ',' + self.me.y + ']');
+        return movement.moveAlongPath(self);
+    }
+    
+    let squad = combat.filterByRange(visibleRobots, self.me, 0, 49);
+    squad = combat.filterByUnitType(squad, "CRUSADER");
+
+    //Check if threshold is reached, then just move towards enemy base
+    if(squad.length >= self.squadSize) 
+    {
+        self.log('ATTACKER crusader ' + self.id + ' squad threshold reached! Deathballing');
+        self.squadSize = 0;
+
+        return;
+    }
+    //Should not fall through unless attacker with squadSize threshold not reached yet
+    self.log('crusader ' + self.role + ' ' + self.me.id + ' doing nothing');
+    return;
+};
+
 class MyRobot extends BCAbstractRobot {
     constructor() {
         super();
@@ -1918,9 +2292,13 @@ class MyRobot extends BCAbstractRobot {
         this.path = [];                                  //Array representing sequence of moves towards target. `path.pop()` gets next move
         this.previous = null;                            //Previous tile traversed by unit like {x: _, y: _}, initialized to the spawning/ starting location
         this.potentialEnemyCastleLocation = null;
+        this.attackerMoves = 0;
         this.occupiedResources = [];
         this.squadSize = null;                           //Squad size for squad movements
         this.castleBuildQueue = [];                      //Queue for what units the castle should build. NOT related to which castles should build when
+        this.baseID = null;                              //ID of original castle/church robot
+        this.pendingMessages = [];                       //Stores castle signal to units for new targets
+        this.receivedMessages = [];                      //Store partially received castle talk signal
     }
     turn() {
         if(this.previous == null) {
@@ -1940,6 +2318,9 @@ class MyRobot extends BCAbstractRobot {
                 case SPECS.PROPHET:
                     this.myType = prophet;
                     break;
+                case SPECS.CRUSADER:
+                    this.myType = crusader;
+                    break;
             }
         }
         return this.myType.doAction(this);
@@ -1951,4 +2332,4 @@ var robot = new MyRobot();
 /* eslint-enable no-unused-vars */
 var robot = new MyRobot();
 
-module.exports = {castle,church,combat,communication,movement,pilgrim,prophet,MyRobot};
+module.exports = {castle,church,combat,communication,crusader,movement,pilgrim,prophet,MyRobot};

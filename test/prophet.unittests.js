@@ -8,7 +8,7 @@ const movement = require('../projectUtils/psuteam7botCompiled.js').movement;
 const communication = require('../projectUtils/psuteam7botCompiled.js').communication;
 const expect = chai.expect;
 
-describe.only('Prophet Unit Tests', function() {
+describe('Prophet Unit Tests', function() {
     let mockGame;
     let myBot;
     let localCastle
@@ -428,7 +428,7 @@ describe.only('Prophet Unit Tests', function() {
 
     });
 
-    describe.only('fleeBehavior() tests', function() {
+    describe('fleeBehavior() tests', function() {
         it('should return false if no enemies in blindspot', function(done) {
             mockGame.createNewRobot(new MyRobot(), 5, 3, 1, 3);
             mockGame.createNewRobot(new MyRobot(), 4, 3, 0, 3);

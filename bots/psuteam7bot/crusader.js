@@ -56,6 +56,7 @@ crusader.takeAttackerAction = (self) => {
     if(self.base === null)
     {
         //Set opposite of current coord as target
+        self.base = {x:-1, y:-1};
         self.target = movement.getMirrorCastle(self.me, self.map);
     }
 

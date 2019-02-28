@@ -6,6 +6,8 @@ import { setFlagsFromString } from 'v8';
 
 const church = {};
 
+church.UNITTYPE = ["CASTLE", "CHURCH", "PILGRIM", "CRUSADER", "PROPHET" , "PREACHER"]
+
 church.doAction = (self) => {
 
     self.log("church" + self.id + "taking turn.");

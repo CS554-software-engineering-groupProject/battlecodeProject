@@ -1051,7 +1051,7 @@ describe('Movement Helpers Unit Tests', function() {
         });
     });
 
-    describe('findNearestLocation() Tests', function() {
+    describe.skip('findNearestLocation() Tests', function() {
         let output;
         let myBot = new MyRobot();
         let target = {x: 3, y: 3};

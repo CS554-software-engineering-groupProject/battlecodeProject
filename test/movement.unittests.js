@@ -1065,7 +1065,7 @@ describe('Movement Helpers Unit Tests', function() {
         });
 
         it('should prioritize closest cells to target', function(done) {
-            let mapAlterations = null;
+            let mapAlterations;
             target = {x: 4, y: 0};
 
             output = movement.findNearestLocation(myBot, target);

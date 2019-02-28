@@ -5,4 +5,6 @@
 */*/.eslintrc*
 package-lock.json
 /node_modules
-/projectUtils/*Compiled.js
+/coverage
+/.nyc_output
+

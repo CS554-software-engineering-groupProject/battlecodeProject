@@ -8,7 +8,7 @@ const movement = require('../projectUtils/psuteam7botCompiled.js').movement;
 const communication = require('../projectUtils/psuteam7botCompiled.js').communication;
 const expect = chai.expect;
 
-describe.only('Crusader Unit Tests', function() {
+describe('Crusader Unit Tests', function() {
     let mockGame;
     let myBot;
     let localCastle
@@ -86,6 +86,7 @@ describe.only('Crusader Unit Tests', function() {
 
     describe('takeAttackerAction() tests', function() {
         it('ATTACKERS with no base should identify enemy castles', function(done) {
+            let stubCheckEnemyCastle = mockGame.replaceMethod("communication", "checkAndReportEnemyCastleDestruction").returns(false);
             myBot.base = null;
             myBot.target = {x: 9, y: 3};
 

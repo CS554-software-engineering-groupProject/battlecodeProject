@@ -114,7 +114,7 @@ describe('Movement Helpers Unit Tests', function() {
         });
     });
 
-    describe.only('getDirectionsBetween Returns Values Correctly', function(done) {
+    describe('getDirectionsBetween Returns Values Correctly', function(done) {
         it('rotateDirection returns all values if sum of input geq  7', function(done) {
             expect(movement.getDirectionsBetween(0, 7, 0)).to.eql(movement.directions);
             expect(movement.getDirectionsBetween(0, 0, 7)).to.eql(movement.directions);

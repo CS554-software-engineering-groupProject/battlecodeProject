@@ -198,7 +198,7 @@ describe.only('Communication Helpers Unit Tests', function() {
         });
     });
 
-    describe('checkBaseSignalAndUpdateTarget implementation test', function(){
+    describe.only('checkBaseSignalAndUpdateTarget implementation test', function(){
         let myBot;
         let baseBot;
         let newPos;
@@ -224,7 +224,7 @@ describe.only('Communication Helpers Unit Tests', function() {
 
         it('should change target, resets path, does not change squadSize and returns true, if base signals and attackerMoves is 1', function(done) {
             baseBot.me.signal = communication.positionToSignal(newPos, mockGame.game.map);
-            baseBot.me.signal_radius = 25;
+            baseBot.me.signal_radius = 32;
             mockGame._setCommunication(baseBot);
 
             expect(myBot.squadSize).equals(8);
@@ -241,7 +241,7 @@ describe.only('Communication Helpers Unit Tests', function() {
             myBot.attackerMoves = 3;
 
             baseBot.me.signal = communication.positionToSignal(newPos, mockGame.game.map);
-            baseBot.me.signal_radius = 25;
+            baseBot.me.signal_radius = 32;
             mockGame._setCommunication(baseBot);
 
             expect(myBot.squadSize).equals(8);

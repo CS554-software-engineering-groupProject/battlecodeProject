@@ -223,13 +223,13 @@ describe.only('Communication Helpers Unit Tests', function() {
         });
 
         it('should change target, resets path, does not change squadSize and returns true, if base signals and attackerMoves is 1', function(done) {
-            baseBot.signal = communication.positionToSignal(newPos, mockGame.game.map);
-            baseBot.signal_radius = mockGame.game.map.length * mockGame.game.map.length;
+            baseBot.me.signal = communication.positionToSignal(newPos, mockGame.game.map);
+            baseBot.me.signal_radius = 25;
             mockGame._setCommunication(baseBot);
 
             expect(myBot.squadSize).equals(8);
             expect(myBot.target).to.eql({x: 5, y: 5});
-            expect(myBot.path).to.be.empty;
+            expect(myBot.path).have.lengthOf(1);
             expect(communication.checkBaseSignalAndUpdateTarget(myBot)).to.equals(true);
             expect(myBot.target).to.eql(newPos);
             expect(myBot.squadSize).equals(8);
@@ -240,13 +240,13 @@ describe.only('Communication Helpers Unit Tests', function() {
         it('should change target, resets path, changes squadSize to 0 and returns true, if base signals and attackerMoves is > 1', function(done) {
             myBot.attackerMoves = 3;
 
-            baseBot.signal = communication.positionToSignal(newPos, mockGame.game.map);
-            baseBot.signal_radius = mockGame.game.map.length * mockGame.game.map.length;
+            baseBot.me.signal = communication.positionToSignal(newPos, mockGame.game.map);
+            baseBot.me.signal_radius = 25;
             mockGame._setCommunication(baseBot);
 
             expect(myBot.squadSize).equals(8);
             expect(myBot.target).to.eql({x: 5, y: 5});
-            expect(myBot.path).to.be.empty;
+            expect(myBot.path).have.lengthOf(1);
             expect(communication.checkBaseSignalAndUpdateTarget(myBot)).to.equals(true);
             expect(myBot.target).to.eql(newPos);
             expect(myBot.squadSize).equals(0);
@@ -267,8 +267,8 @@ describe.only('Communication Helpers Unit Tests', function() {
         });
 
         it('should return false if base signals -1', function(done) {
-            baseBot.signal = -1;
-            baseBot.signal_radius = mockGame.game.map.length * mockGame.game.map.length;
+            baseBot.me.signal = -1;
+            baseBot.me.signal_radius = mockGame.game.map.length * mockGame.game.map.length;
             mockGame._setCommunication(baseBot);
 
             expect(myBot.squadSize).equals(8);
@@ -282,8 +282,8 @@ describe.only('Communication Helpers Unit Tests', function() {
         });
 
         it('should return false if base signal radius is short', function(done) {
-            baseBot.signal = communication.positionToSignal(newPos, mockGame.game.map);
-            baseBot.signal_radius = 2;
+            baseBot.me.signal = communication.positionToSignal(newPos, mockGame.game.map);
+            baseBot.me.signal_radius = 2;
             mockGame._setCommunication(baseBot);
 
             expect(myBot.squadSize).equals(8);

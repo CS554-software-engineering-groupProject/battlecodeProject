@@ -21,20 +21,19 @@ crusader.doAction = (self) => {
         }
 
         //Receive location of enemy base from Castle, if they are signaling to its adjacent square
-        const baseID = self.getVisibleRobotMap()[self.base.y][self.base.x];   //Get ID of the base Castle robot
-        const baseRobot = self.getRobot(baseID);    //Get robot reference of the base castle robot
+        self.baseID = self.getVisibleRobotMap()[self.base.y][self.base.x];   //Get ID of the base Castle robot
+        const baseRobot = self.getRobot(self.baseID);    //Get robot reference of the base castle robot
 
         //Receive signal just in case
         if(self.isRadioing(baseRobot))  //Check if base has broadcasted a signal on it's turn
         {
             //Get the message using baseRobot.signal and translate to position using helper function
-            self.potentialEnemyCastleLocation = [communication.signalToPosition(baseRobot.signal, self.map)];
-            self.potentialEnemyCastleLocation.push(movement.getDiagonalPatrolPosition(self.base, self.map));
+            self.target = communication.signalToPosition(baseRobot.signal, self.map);
         }
         else
         {
-            self.log("UNASSIGNED crusader didn't receive signal from base, using getAttackerPatrolRoute");
-            self.potentialEnemyCastleLocation = movement.getAttackerPatrolRoute(self.base, self.map);
+            self.log("UNASSIGNED crusader didn't receive signal from base, getting mirror coord");
+            self.target = movement.getMirrorCastle(self.me, self.map);
         }
 
         self.squadSize = 4; //-1 trigger crusader, need to change squad detection if trigger crusader is to be part of squad
@@ -54,24 +53,16 @@ crusader.takeAttackerAction = (self) => {
     self.log("ATTACKER crusader " + self.id + " taking turn");
 
     //If no base
-    if(self.base == null)
+    if(self.base === null)
     {
         //Set opposite of current coord as target
-        self.potentialEnemyCastleLocation = movement.getAttackerPatrolRoute(self.me, self.map);
+        self.base = {x:-1, y:-1};
+        self.target = movement.getMirrorCastle(self.me, self.map);
     }
 
-
-    //If no target
-    if(self.potentialEnemyCastleLocation === null)
-    {
-        //Get potential enemy castle locations if Castle didn't send signal
-        self.potentialEnemyCastleLocation = movement.getAttackerPatrolRoute(self.base, self.map);
-    }
-
-    if(self.target === null)
-    {     
-        self.target = self.potentialEnemyCastleLocation[0];
-    }
+    //Checks for target update from base
+    communication.checkBaseSignalAndUpdateTarget(self);
+    communication.sendCastleTalkMessage(self);
 
     const visibleRobots = self.getVisibleRobots();
     const attackable = combat.filterByAttackable(self, visibleRobots);
@@ -84,19 +75,19 @@ crusader.takeAttackerAction = (self) => {
         return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
     }
 
-    //No enemy castle at target and there are more waypoint to check
-    if(self.potentialEnemyCastleLocation.length > 0 && movement.getDistance(self.me, self.target) <= 16)
+    //Still no target, and no update from base, do nothing
+    if(self.target === null)
     {
-        //Assign new target waypoint
-        self.potentialEnemyCastleLocation.shift();
-        if(self.potentialEnemyCastleLocation.length != 0) {
-            self.target = self.potentialEnemyCastleLocation[0];
-        }
+        self.log("No target, waiting for signal from base...")
+        return;
     }
 
-    //TODO No more patrol waypoint, do nothing
-    if(self.potentialEnemyCastleLocation.length === 0)
+    //If target is not enemy castle, report to team castles
+    if(communication.checkAndReportEnemyCastleDestruction(self))
     {
+        //Enemy castle destroyed, waiting for next order
+        self.log("Enemy castle destroyed, message stored")
+        self.target = null;
         return;
     }
 
@@ -128,11 +119,15 @@ crusader.takeAttackerAction = (self) => {
     }
     else if(self.squadSize === 0)
     {
+        if(self.fuel < 100)
+        {
+            self.log('Low Fuel, Global fuel < 100, ATTACKER crusader ' + self.id + ' Standing by.')
+            return;
+        }
         self.log('ATTACKER crusader ' + self.id + ' moving towards enemy base, Current: [' + self.me.x + ',' + self.me.y + ']')
         return movement.moveAlongPath(self);
     }
     
-
     let squad = combat.filterByRange(visibleRobots, self.me, 0, 49);
     squad = combat.filterByUnitType(squad, "CRUSADER");
 

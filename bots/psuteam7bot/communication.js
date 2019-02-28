@@ -58,6 +58,73 @@ communication.initTeamCastleInformation = (self) => {
     }
 }
 
+/**
+ * Checks whether target tile is visible and is empty OR occupied and not a castle and report to allied castles if so
+ * Returns the x-coord or y-coord value of the target tile depending on the map reflection
+ *
+ */
+communication.checkAndReportEnemyCastleDestruction = (self) => {
+    const {x, y} = self.target;
+    const robotID = self.getVisibleRobotMap()[y][x];
 
+    //Case, empty target, castle is destroyed
+    if(robotID === 0)
+    {
+        //Add coords to pending messages, push y then x
+        self.pendingMessages.push(y);
+        self.pendingMessages.push(x);
+        return true;
+    }
+    else //Case target occupied or not in visible radius, -1 or there is a robotID > 0
+    {
+        //Check if robot is not a castle, if so, report castle destruction
+        if(robotID > 0 && self.getRobot(robotID).unit !== 0)
+        {
+            //Add coords to pending messages, push y then x
+            self.pendingMessages.push(y);
+            self.pendingMessages.push(x);
+            return true;
+        }
+    }
+    return false;
+}
+
+communication.sendCastleTalkMessage = (self) => {
+    if(self.pendingMessages.length > 0)
+    {
+        const message = self.pendingMessages.pop();
+        self.castleTalk(message);
+        self.log("Message sent to castle");
+        return true;
+    }
+    return false;
+}
+
+communication.checkBaseSignalAndUpdateTarget = (self) => {
+    if(self.baseID === null)
+        return false;
+    
+    const baseRobot = self.getVisibleRobots().filter((bot) => {
+        //Filter signalling base robot
+        return bot.id === self.baseID && bot.signal > 0;
+    });
+    if(baseRobot.length > 0)
+    {
+        //self.log("Found base bot");
+        //self.log(baseRobot[0].id);
+        if(baseRobot[0].signal > 0)
+        {
+            self.log("Received signal from base, updated target")
+            //self.log(baseRobot[0].signal)
+            //Reset target, path and set squadsize to 0, for all existing units of a base
+            self.target = communication.signalToPosition(baseRobot[0].signal, self.map);
+            self.path = [];
+            if(self.attackerMoves > 1)
+                self.squadSize = 0;
+            return true;
+        }
+    }
+    return false;
+}
 
 export default communication;

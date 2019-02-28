@@ -138,10 +138,10 @@ describe.only('Communication Helpers Unit Tests', function() {
         });
 
         it('should push target coordinates into pendingMessages and return true when there is no robot at target', function(done) {
-            expect(myBot.pendingMessages.length).is.empty;
+            expect(myBot.pendingMessages).to.be.empty;
             expect(myBot.pendingMessages).to.eql([]);
             expect(communication.checkAndReportEnemyCastleDestruction(myBot)).to.equals(true);
-            expect(myBot.pendingMessages.length).to.equals(2);
+            expect(myBot.pendingMessages).to.have.lengthOf(2);
             expect(myBot.pendingMessages).to.eql([3, 2]);
 
             done();
@@ -151,10 +151,10 @@ describe.only('Communication Helpers Unit Tests', function() {
             const notCastle = new MyRobot();
             mockGame.createNewRobot(notCastle, 2, 3, 1, 2);
 
-            expect(myBot.pendingMessages.length).is.empty;
+            expect(myBot.pendingMessages).to.be.empty;
             expect(myBot.pendingMessages).to.eql([]);
             expect(communication.checkAndReportEnemyCastleDestruction(myBot)).to.equals(true);
-            expect(myBot.pendingMessages.length).to.equals(2);
+            expect(myBot.pendingMessages).to.have.lengthOf(2);
             expect(myBot.pendingMessages).to.eql([3, 2]);
             done();
         });
@@ -163,9 +163,9 @@ describe.only('Communication Helpers Unit Tests', function() {
             const enemyCastle = new MyRobot();
             mockGame.createNewRobot(enemyCastle, 2, 3, 1, 0);
 
-            expect(myBot.pendingMessages.length).is.empty;
+            expect(myBot.pendingMessages).to.be.empty;
             expect(communication.checkAndReportEnemyCastleDestruction(myBot)).to.equals(false);
-            expect(myBot.pendingMessages.length).is.empty;
+            expect(myBot.pendingMessages).to.be.empty;
             done();
         });
     });
@@ -180,10 +180,10 @@ describe.only('Communication Helpers Unit Tests', function() {
         it('should pop message from pendingMessages, castleTalk, and returns true if pendingMessages contains something', function(done) {
             myBot.pendingMessages = [3, 2];
 
-            expect(myBot.pendingMessages.length).to.equals(2);
+            expect(myBot.pendingMessages).to.have.lengthOf(2);
             expect(myBot.pendingMessages).to.eql([3, 2]);
             expect(communication.sendCastleTalkMessage(myBot)).to.equals(true);
-            expect(myBot.pendingMessages.length).to.equals(1);
+            expect(myBot.pendingMessages).to.have.lengthOf(1);
             expect(myBot.pendingMessages).to.eql([3]);
             done();
         });
@@ -191,9 +191,9 @@ describe.only('Communication Helpers Unit Tests', function() {
         it('should return false if pendingMessages is empty', function(done) {
             myBot.pendingMessages = [];
             
-            expect(myBot.pendingMessages.length).is.not.empty;
+            expect(myBot.pendingMessages).to.be.empty;
             expect(communication.sendCastleTalkMessage(myBot)).to.equals(false);
-            expect(myBot.pendingMessages.length).is.not.empty;
+            expect(myBot.pendingMessages).to.be.empty;
             done();
         });
     });
@@ -229,11 +229,11 @@ describe.only('Communication Helpers Unit Tests', function() {
 
             expect(myBot.squadSize).equals(8);
             expect(myBot.target).to.eql({x: 5, y: 5});
-            expect(myBot.path).is.not.empty;
+            expect(myBot.path).to.be.empty;
             expect(communication.checkBaseSignalAndUpdateTarget(myBot)).to.equals(true);
             expect(myBot.target).to.eql(newPos);
             expect(myBot.squadSize).equals(8);
-            expect(myBot.path).is.empty;
+            expect(myBot.path).to.be.empty;
             done();
         });
 
@@ -246,11 +246,11 @@ describe.only('Communication Helpers Unit Tests', function() {
 
             expect(myBot.squadSize).equals(8);
             expect(myBot.target).to.eql({x: 5, y: 5});
-            expect(myBot.path).is.not.empty;
+            expect(myBot.path).to.be.empty;
             expect(communication.checkBaseSignalAndUpdateTarget(myBot)).to.equals(true);
             expect(myBot.target).to.eql(newPos);
             expect(myBot.squadSize).equals(0);
-            expect(myBot.path).is.empty;
+            expect(myBot.path).to.be.empty;
             done();
         });
 
@@ -258,11 +258,11 @@ describe.only('Communication Helpers Unit Tests', function() {
 
             expect(myBot.squadSize).equals(8);
             expect(myBot.target).to.eql({x: 5, y: 5});
-            expect(myBot.path).is.not.empty;
+            expect(myBot.path).to.have.lengthOf(1);
             expect(communication.checkBaseSignalAndUpdateTarget(myBot)).to.equals(false);
             expect(myBot.squadSize).equals(8);
             expect(myBot.target).to.eql({x: 5, y: 5});
-            expect(myBot.path).is.not.empty;
+            expect(myBot.path).to.have.lengthOf(1);
             done();
         });
 
@@ -273,11 +273,11 @@ describe.only('Communication Helpers Unit Tests', function() {
 
             expect(myBot.squadSize).equals(8);
             expect(myBot.target).to.eql({x: 5, y: 5});
-            expect(myBot.path).is.not.empty;
+            expect(myBot.path).to.have.lengthOf(1);
             expect(communication.checkBaseSignalAndUpdateTarget(myBot)).to.equals(false);
             expect(myBot.squadSize).equals(8);
             expect(myBot.target).to.eql({x: 5, y: 5});
-            expect(myBot.path).is.not.empty;
+            expect(myBot.path).to.have.lengthOf(1);
             done();
         });
 
@@ -288,11 +288,11 @@ describe.only('Communication Helpers Unit Tests', function() {
 
             expect(myBot.squadSize).equals(8);
             expect(myBot.target).to.eql({x: 5, y: 5});
-            expect(myBot.path).is.not.empty;
+            expect(myBot.path).to.have.lengthOf(1);
             expect(communication.checkBaseSignalAndUpdateTarget(myBot)).to.equals(false);
             expect(myBot.squadSize).equals(8);
             expect(myBot.target).to.eql({x: 5, y: 5});
-            expect(myBot.path).is.not.empty;
+            expect(myBot.path).to.have.lengthOf(1);
             done();
         });
     });

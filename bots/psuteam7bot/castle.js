@@ -64,7 +64,7 @@ castle.findUnitPlace = (self, unitType) => {
             if(movement.isPassable(location, self.map, self.getVisibleRobotMap()))
             {
                 //Send signal starting at turn 3 so you don't overrride location communication at start
-                if(self.me.turn > 2) {
+                if(self.me.turn > 4) {
                     self.castleTalk(SPECS[unitType]);
                 }
 

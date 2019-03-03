@@ -143,7 +143,13 @@ castle.findPosition = (self) => {
                     teamCastle.y = foundCastle.castle_talk;
                 }  
                 if(turn >= 5){
-                    if(foundCastle.castle_talk >= 1){
+                    if(foundCastle.castle_talk == 100){
+                        teamCastle.signalBuilding = true;
+                    }
+                    else if(foundCastle.castle_talk == 101){
+                        teamCastle.signalBuilding = false;
+                    }
+                    else if(foundCastle.castle_talk >= 1){
                         teamCastle.buildCounter[combat.UNITTYPE[foundCastle.castle_talk]]++;
                         teamCastle.buildCounter.total++;
                     }
@@ -201,7 +207,7 @@ castle.makeDecision = (self, otherCastles) => {
     const checkSignal = otherCastles.indexOf(castle =>{
         return castle.signalBuilding
     });
-    
+
     if(checkSignal < 0){
         otherCastles(0).signalBuilding = true
         self.castleTalk(100);

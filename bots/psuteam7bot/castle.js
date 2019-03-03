@@ -194,7 +194,12 @@ castle.mirrorCastle = (myLocation, fullMap) => {
 castle.makeDecision = (self) => {
     if(findPosition.this.signal == true)
     {
-        /** Algorithm:
+        
+
+    }
+}
+
+/** Algorithm:
          * If the signal is true, call this.buildUnit.
          * After calling this method,
          * check if the position is available 
@@ -202,9 +207,6 @@ castle.makeDecision = (self) => {
          * these procedures are done in method findPosition
          * call that method 
          *  */
-
-    }
-}
 
 /** Each castle should be able to check for messages from their friendly castles 
  * Use of this.getVisibleRobots() to see the robots in the vicinity 

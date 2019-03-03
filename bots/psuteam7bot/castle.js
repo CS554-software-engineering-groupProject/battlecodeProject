@@ -107,8 +107,7 @@ castle.recordPosition = (self) => {
     else if(turn <= 4){
         self.castleTalk(self.me.y);
     }
-
-    if(turn > 2){
+    else{
         const bots = self.getVisibleRobotMap().filter(bots =>{
             return bots.team === self.me.team && bots.units === 0;
         })

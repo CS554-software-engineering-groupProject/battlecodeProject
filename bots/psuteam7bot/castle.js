@@ -101,10 +101,10 @@ castle.buildFromQueue = (self) => {
 
 castle.recordPosition = (self) => {
     let turn = self.me.turn;
-    if(turn == 1){
+    if(turn <= 2){
         self.castleTalk(self.me.x);
     }
-    if(turn == 2){
+    else if(turn <= 4){
         self.castleTalk(self.me.y);
     }
 

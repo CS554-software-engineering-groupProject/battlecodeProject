@@ -19,18 +19,19 @@ castle.doAction = (self) => {
     //This ensures that all local depots are filled and a prophet will be built after
     if(self.me.turn === 1)
     {
+        
         const karboniteDepots = movement.getResourcesInRange(self.me, 16, self.karbonite_map);
         karboniteDepots.forEach(depot => {
-            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y, buildCounter:buildCounter});
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
 
         const fuelDepots = movement.getResourcesInRange(self.me, 16, self.fuel_map)
         fuelDepots.forEach(depot => {
-            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y, buildCounter:buildCounter});
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
         
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
-        self.castleBuildQueue.push({unit: "PROPHET", x: mirrorCastle.x, y: mirrorCastle.y, buildCounter:buildCounter});
+        self.castleBuildQueue.push({unit: "PROPHET", x: mirrorCastle.x, y: mirrorCastle.y});
         self.log(self.castleBuildQueue)
         return castle.buildFromQueue(self);
     }
@@ -46,7 +47,8 @@ castle.doAction = (self) => {
         return castle.buildFromQueue(self);
     }
     else 
-    {
+    {   
+        self.log(JSON.stringify(self.teamCastles))
         const botsInQueue = self.castleBuildQueue.length;
         //Keep queue at reasonable size, adding another prophet as necessary so prophets are continually build
         if (botsInQueue <= 5) {
@@ -131,7 +133,7 @@ castle.findPosition = (self) => {
     bots.forEach(foundCastle => {
         //Init an item in teamCastles for each on turn 2 once signals being sent
         if (turn == 2) {
-            teamCastles.push({id: foundCastle.id, x: maxDist, y: maxDist, buildCounter: buildCounter, signalBuilding:false})
+            teamCastles.push({id: foundCastle.id, x: maxDist, y: maxDist, buildCounter: buildCounter, signalBuilding: false})
         }
 
         self.teamCastles.forEach(teamCastle =>{
@@ -190,11 +192,14 @@ castle.makeDecision = (self, otherCastles) => {
 
     const visibleEnemies= combat.getVisibleEnemies(self);
     const attackableEnemies = combat.filterByAttackable(self, visibleEnemies);
+
     
     //if there are any attackable enemies nearby, castle will start attacking instead of building any other units
     if(attackableEnemies > 0){
         const dx = attackableEnemies[0].x - self.me.x;
         const dy = attackableEnemies[0].y - self.me.y;
+
+        self.log('Attackable enemies attacking');
         return self.attack(dx, dy);
     }
 
@@ -209,13 +214,13 @@ castle.makeDecision = (self, otherCastles) => {
     });
 
     if(checkSignal < 0){
-        otherCastles(0).signalBuilding = true
+        otherCastles[0].signalBuilding = true
         self.castleTalk(100);
         return self.buildFromQueue(self)
         
     }
     else{
-        otherCastles(0).signalBuilding = false
+        otherCastles[0].signalBuilding = false
         self.castleTalk(101);
         return
     }  

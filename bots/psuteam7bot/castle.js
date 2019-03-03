@@ -155,7 +155,7 @@ castle.findPosition = (self) => {
                 if(turn == 2){
                     teamCastle.x = foundCastle.castle_talk;
                 }
-                if(turn == 3){
+                if(turn == 4){
                     teamCastle.y = foundCastle.castle_talk;
                 }
             }

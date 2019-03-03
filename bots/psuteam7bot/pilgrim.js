@@ -219,4 +219,58 @@ pilgrim.updateResourceTarget = (self) => {
 }
 
 
+pilgrim.findBestDepots = (self) => {
+    const priorityQueue = [];
+
+    for(let i = 0; i <= 10; i++) {
+        priorityQueue.push([]);
+    }
+
+    for(let y = 0; y < self.map.length; y++) {
+        for(let x = 0; x < self.map.length; x++) {
+            if(self.karbonite_map[y][x] || self.fuel_map[y][x]) {
+                const nextCheck = {x: x, y: y}
+                const {count, dist} = pilgrim.countLocalDepots(self, nextCheck);
+                if(count >= 10) {
+                    let betterIndex = priorityQueue[9].findIndex(depot => {
+                        return movement.getDistance(nextCheck, {x: depot.x, y: depot.y}) <= 9 && 
+                                (depot.count > count || (depot.count == count && depot.dist < dist));
+                    })
+                    if(betterIndex < 0) {
+                        priorityQueue[9].push({x: x, y: y, count: count, dist: dist});
+                    }
+                   
+                } else {
+                    let betterIndex = priorityQueue[count-1].findIndex(depot => {
+                        return movement.getDistance(nextCheck, {x: depot.x, y: depot.y}) <= 9 && depot.dist < dist;
+                    })
+                    if(betterIndex < 0) {
+                        priorityQueue[count-1].push({x: x, y: y, count: count, dist: dist});
+                    }
+                }
+            }
+        }
+    }
+    return priorityQueue;
+}
+
+pilgrim.countLocalDepots = (self, location) => {
+    let count = 0;
+    let dist = 0;
+    for(let y = location.y-3; y <= location.y+3; y++) {
+        for(let x = location.x-3; x <= location.x+3; x++) {
+            if(self._bc_check_on_map(x, y)) {
+                if(self.karbonite_map[y][x] || self.fuel_map[y][x]) {
+                    ++count;
+                    dist += movement.getDistance(location, {x: x, y: y});
+                }
+            }
+        }
+    }
+    return { count, dist};
+}
+
+
+
+
 export default pilgrim;

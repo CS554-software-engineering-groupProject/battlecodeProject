@@ -190,6 +190,10 @@ castle.makeDecision = (self, otherCastles) => {
         self.castleTalk(100);
         self.buildFromQueue(self)
     }
+    else{
+        otherCastles(0).signalBuilding = false
+        self.castleTalk(101);
+    }
 
 
     

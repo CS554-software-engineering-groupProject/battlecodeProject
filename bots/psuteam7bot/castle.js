@@ -182,6 +182,8 @@ castle.mirrorCastle = (myLocation, fullMap) => {
 
 castle.makeDecision = (self, otherCastles) => {
     
+    const visibleEnemies= combat.getVisibleEnemies(self);
+
     const checkSignal = otherCastles.indexOf(castle =>{
                             return castle.signalBuilding
                         });

@@ -188,15 +188,14 @@ castle.makeDecision = (self, otherCastles) => {
     if(checkSignal < 0){
         otherCastles(0).signalBuilding = true
         self.castleTalk(100);
-        self.buildFromQueue(self)
+        return self.buildFromQueue(self)
+        
     }
     else{
         otherCastles(0).signalBuilding = false
         self.castleTalk(101);
-    }
-
-
-    
+        return
+    }    
 }
 
 /** Each castle should be able to check for messages from their friendly castles 

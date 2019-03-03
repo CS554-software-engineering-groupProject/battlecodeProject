@@ -483,6 +483,29 @@ describe('Pilgrim Unit Tests', function() {
                 done();
             });
         });
-
     });
+
+    describe.only('findBestDepots() tests', function() {
+        it('should do things', function(done) {
+            //for (let i = 0; i < 10; i++) {
+                let myBot = new MyRobot();
+                let mockGame = new mockBC19();
+    
+                mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+
+                console.log('Map size: ' + mockGame.game.map.length);
+    
+                console.time('test');
+                output = pilgrim.findBestDepots(myBot)
+                console.timeEnd('test');
+    
+                console.log(output);
+            //}
+            
+
+            done();
+        })
+
+    })
+
 });

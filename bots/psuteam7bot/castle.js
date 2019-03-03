@@ -48,7 +48,6 @@ castle.doAction = (self) => {
     }
     else 
     {   
-        self.log(JSON.stringify(self.teamCastles))
         const botsInQueue = self.castleBuildQueue.length;
         //Keep queue at reasonable size, adding another prophet as necessary so prophets are continually build
         if (botsInQueue <= 5) {
@@ -66,9 +65,9 @@ castle.findUnitPlace = (self, unitType) => {
             if(movement.isPassable(location, self.map, self.getVisibleRobotMap()))
             {
                 //Send signal starting at turn 3 so you don't overrride location communication at start
-                if(self.me.turn > 4) {
+                /*if(self.me.turn > 4) {
                     self.castleTalk(SPECS[unitType]);
-                }
+                }*/
 
                 self.log('castle ' + self.id + ' building unit ' + unitType + ' at [' + (self.me.x+i) + ',' + (self.me.y+j) +']'); 
                 return self.buildUnit(SPECS[unitType], i, j);       
@@ -117,9 +116,9 @@ castle.recordPosition = (self) => {
  */
 castle.findPosition = (self) => {
     //Filter by those that have a castle talk, since apparently unit does not appear if not in vision radius
-    const bots = self.getVisibleRobotMap().filter(bots =>{
+    const bots = self.getVisibleRobots().filter(bots =>{
         return bots.team === self.me.team && bots.castle_talk > 0;
-    })
+    });
     let turn = self.me.turn;
     const buildCounter = {
         pilgrims:0,
@@ -145,16 +144,20 @@ castle.findPosition = (self) => {
                     teamCastle.y = foundCastle.castle_talk;
                 }  
                 if(turn >= 5){
+                    self.log("castle_talk: " + foundCastle.castle_talk)
                     if(foundCastle.castle_talk == 100){
                         teamCastle.signalBuilding = true;
                     }
                     else if(foundCastle.castle_talk == 101){
                         teamCastle.signalBuilding = false;
                     }
-                    else if(foundCastle.castle_talk >= 1){
-                        teamCastle.buildCounter[combat.UNITTYPE[foundCastle.castle_talk]]++;
+                    /*else if(foundCastle.castle_talk >= 1){
+                        self.log("Castle talk: " + foundCastle.castle_talk);
+                        self.log("Output: " + combat.UNITTYPE[foundCastle.castle_talk]);
+                        teamCastle.buildCounter[combat.UNITTYPE[foundCastle.castle_talk].toLowerCase()]++;
                         teamCastle.buildCounter.total++;
-                    }
+                        self.log(teamCastle.buildCounter);
+                    }*/
                 }
             }
         });
@@ -206,18 +209,22 @@ castle.makeDecision = (self, otherCastles) => {
     //if there are any enemies in a visible range, castle will start building PHROPHETS
     if(visibleEnemies.length > 0){
         self.log('Enemies in the visible range, building phrophets');
-        return castle.findUnitPlace(self, 'PHROPHETS');
+        return castle.findUnitPlace(self, 'PROPHET');
     }
 
     //otherwise castles will signal which castle has done building the units and will take decisions accordingly
-    const checkSignal = otherCastles.indexOf(castle =>{
+    const checkSignal = otherCastles.findIndex(castle =>{
         return castle.signalBuilding
     });
 
-    if(checkSignal < 0){
+    self.log("Signal: " +  checkSignal);
+    self.log(JSON.stringify(self.getVisibleRobots().filter(bots => {return bots.castle_talk > 0})));
+    self.log(JSON.stringify(otherCastles));
+
+    if(checkSignal <= 0){
         otherCastles[0].signalBuilding = true
         self.castleTalk(100);
-        return self.buildFromQueue(self)
+        return castle.buildFromQueue(self)
         
     }
     else{

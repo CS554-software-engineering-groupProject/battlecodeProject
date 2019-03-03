@@ -131,7 +131,7 @@ castle.findPosition = (self) => {
     bots.forEach(foundCastle => {
         //Init an item in teamCastles for each on turn 2 once signals being sent
         if (turn == 2) {
-            teamCastles.push({id: foundCastle.id, x: maxDist, y: maxDist, buildCounter: buildCounter})
+            teamCastles.push({id: foundCastle.id, x: maxDist, y: maxDist, buildCounter: buildCounter, signalBuilding:false})
         }
 
         self.teamCastles.forEach(teamCastle =>{

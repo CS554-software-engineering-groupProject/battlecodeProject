@@ -192,8 +192,9 @@ castle.makeDecision = (self, otherCastles) => {
         return self.attack(dx, dy);
     }
 
+    //if there are any enemies in a visible range, castle will start building PHROPHETS.
     if(visibleEnemies.length > 0){
-        return castle.findUnitPlace(self, 'PHOPHETS');
+        return castle.findUnitPlace(self, 'PHROPHETS');
     }
 
     const checkSignal = otherCastles.indexOf(castle =>{

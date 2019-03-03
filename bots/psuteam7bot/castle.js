@@ -194,6 +194,7 @@ castle.mirrorCastle = (myLocation, fullMap) => {
 
 
 
+
 /** Algorithm:
          * If the signal is true, call this.buildUnit.
          * After calling this method,

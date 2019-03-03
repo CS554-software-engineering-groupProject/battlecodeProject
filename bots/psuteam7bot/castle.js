@@ -186,8 +186,12 @@ castle.makeDecision = (self, otherCastles) => {
                             return castle.signalBuilding
                         });
     if(checkSignal < 0){
-        
+        otherCastles(0).signalBuilding = true
+        self.castleTalk(100);
+        self.buildFromQueue(self)
     }
+
+
     
 }
 

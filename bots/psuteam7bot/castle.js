@@ -47,9 +47,13 @@ castle.doAction = (self) => {
     }
     else 
     {
-       return castle.makeDecision(self, self.teamCastles);
+        const botsInQueue = self.castleBuildQueue.length;
+        //Keep queue at reasonable size, adding another prophet as necessary so prophets are continually build
+        if (botsInQueue <= 5) {
+            self.castleBuildQueue.push(self.castleBuildQueue[botsInQueue-1]);
+        }
+        return castle.makeDecision(self, self.teamCastles);
     }
-
 }
 
 castle.findUnitPlace = (self, unitType) => {

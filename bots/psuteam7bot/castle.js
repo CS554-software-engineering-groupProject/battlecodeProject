@@ -183,7 +183,8 @@ castle.mirrorCastle = (myLocation, fullMap) => {
 castle.makeDecision = (self, otherCastles) => {
 
     const visibleEnemies= combat.getVisibleEnemies(self);
-
+    const attackableEnemies = combat.filterByAttackable(self, visibleEnemies);
+    
     if(visibleEnemies.length > 0){
         return castle.findUnitPlace(self, 'PHOPHETS');
     }

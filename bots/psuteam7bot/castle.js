@@ -181,9 +181,12 @@ castle.mirrorCastle = (myLocation, fullMap) => {
 }
 
 castle.makeDecision = (self, otherCastles) => {
-    
+
     const visibleEnemies= combat.getVisibleEnemies(self);
 
+    if(visibleEnemies.length > 0){
+        
+    }
     const checkSignal = otherCastles.indexOf(castle =>{
                             return castle.signalBuilding
                         });
@@ -197,7 +200,8 @@ castle.makeDecision = (self, otherCastles) => {
         otherCastles(0).signalBuilding = false
         self.castleTalk(101);
         return
-    }    
+    }  
+
 }
 
 /** Each castle should be able to check for messages from their friendly castles 

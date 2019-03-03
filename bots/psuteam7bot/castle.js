@@ -163,9 +163,14 @@ castle.findPosition = (self) => {
         });
     });
     self.teamCastles.sort((a,b) => {
-        if(movement.getDistance(self.me, a) > movement.getDistance(self.me, b)) {
+        /*if(movement.getDistance(self.me, a) > movement.getDistance(self.me, b)) {
             return -1;
         } else {
+            return 1;
+        }*/
+        if(a.id == self.me.id) {
+            return -1;
+        } else if (b.id == self.me.id) {
             return 1;
         }
     });

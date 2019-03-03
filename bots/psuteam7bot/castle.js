@@ -181,8 +181,7 @@ castle.mirrorCastle = (myLocation, fullMap) => {
 }
 
 castle.makeDecision = (self, otherCastles) => {
-    
-    otherCastles.forEach(castle =>{
+    otherCastles.indexOf(castle =>{
        
     });
 }

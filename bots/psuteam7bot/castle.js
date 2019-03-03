@@ -107,22 +107,6 @@ castle.recordPosition = (self) => {
     else if(turn <= 4){
         self.castleTalk(self.me.y);
     }
-    else{
-        const bots = self.getVisibleRobotMap().filter(bots =>{
-            return bots.team === self.me.team && bots.units === 0;
-        })
-        
-        bots.forEach(foundCastle => {
-            self.teamCastles.forEach(teamCastle =>{
-                if(foundCastle.id == teamCastle.id){
-                    if(foundCastle.castle_talk >= 1){
-                        teamCastle.buildCounter[combat.UNITTYPE[foundCastle.castle_talk]]++;
-                        teamCastle.buildCounter.total++;
-                    }
-                }
-            })
-        });
-    }
 }
 
 /**Find positions of the friendly castles. 
@@ -157,9 +141,15 @@ castle.findPosition = (self) => {
                 }
                 if(turn == 4){
                     teamCastle.y = foundCastle.castle_talk;
+                }  
+                if(turn >= 5){
+                    if(foundCastle.castle_talk >= 1){
+                        teamCastle.buildCounter[combat.UNITTYPE[foundCastle.castle_talk]]++;
+                        teamCastle.buildCounter.total++;
+                    }
                 }
             }
-        })
+        });
     });
     self.teamCastles.sort((a,b) => {
         if(movement.getDistance(self.me, a) > movement.getDistance(self.me, b)) {

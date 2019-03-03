@@ -205,7 +205,7 @@ castle.makeDecision = (self, otherCastles) => {
 
     //if there are any enemies in a visible range, castle will start building PHROPHETS
     if(visibleEnemies.length > 0){
-        self.log('Enemies in the visible range');
+        self.log('Enemies in the visible range, building phrophets');
         return castle.findUnitPlace(self, 'PHROPHETS');
     }
 
@@ -221,6 +221,8 @@ castle.makeDecision = (self, otherCastles) => {
         
     }
     else{
+
+        self.log('Not building units, differeing to other castles')
         otherCastles[0].signalBuilding = false
         self.castleTalk(101);
         return

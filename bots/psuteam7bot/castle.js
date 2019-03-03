@@ -185,6 +185,7 @@ castle.makeDecision = (self, otherCastles) => {
     const visibleEnemies= combat.getVisibleEnemies(self);
     const attackableEnemies = combat.filterByAttackable(self, visibleEnemies);
     
+    //if there are any attackable enemies nearby, castle will start attacking instead of building any other units
     if(attackableEnemies > 0){
         const dx = attackableEnemies[0].x - self.me.x;
         const dy = attackableEnemies[0].y - self.me.y;
@@ -194,7 +195,7 @@ castle.makeDecision = (self, otherCastles) => {
     if(visibleEnemies.length > 0){
         return castle.findUnitPlace(self, 'PHOPHETS');
     }
-    
+
     const checkSignal = otherCastles.indexOf(castle =>{
                             return castle.signalBuilding
                         });

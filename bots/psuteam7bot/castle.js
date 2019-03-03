@@ -185,6 +185,9 @@ castle.makeDecision = (self, otherCastles) => {
     const checkSignal = otherCastles.indexOf(castle =>{
                             return castle.signalBuilding
                         });
+    if(checkSignal < 0){
+        
+    }
     
 }
 

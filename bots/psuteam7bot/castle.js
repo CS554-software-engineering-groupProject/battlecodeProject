@@ -199,8 +199,9 @@ castle.makeDecision = (self, otherCastles) => {
 
     //otherwise castles will signal which castle has done building the units and will take decisions accordingly
     const checkSignal = otherCastles.indexOf(castle =>{
-                            return castle.signalBuilding
-                        });
+        return castle.signalBuilding
+    });
+    
     if(checkSignal < 0){
         otherCastles(0).signalBuilding = true
         self.castleTalk(100);

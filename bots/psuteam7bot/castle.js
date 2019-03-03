@@ -185,7 +185,7 @@ castle.makeDecision = (self, otherCastles) => {
     const visibleEnemies= combat.getVisibleEnemies(self);
 
     if(visibleEnemies.length > 0){
-        return castle.findUnitPlace(self, 'PHOPHETS')
+        return castle.findUnitPlace(self, 'PHOPHETS');
     }
     const checkSignal = otherCastles.indexOf(castle =>{
                             return castle.signalBuilding

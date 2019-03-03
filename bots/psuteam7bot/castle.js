@@ -191,13 +191,18 @@ castle.mirrorCastle = (myLocation, fullMap) => {
     }
 }
 
+castle.storeValue = (self,) => {
+    
+}
+
 castle.makeDecision = (self) => {
     if(findPosition.this.signal == true)
     {
         
-
     }
 }
+
+
 
 /** Algorithm:
          * If the signal is true, call this.buildUnit.

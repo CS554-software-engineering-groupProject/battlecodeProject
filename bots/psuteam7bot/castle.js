@@ -34,7 +34,7 @@ castle.doAction = (self) => {
         self.log(self.castleBuildQueue)
         return castle.buildFromQueue(self);
     }
-    else if (self.castleBuildQueue.length > 0) 
+    else if (self.me.turn <= 4) 
     {
         self.log("BUILD QUEUE NON-EMPTY")
         self.log(self.castleBuildQueue)
@@ -47,11 +47,7 @@ castle.doAction = (self) => {
     }
     else 
     {
-        //Check if there are enough resources to produce this unit.
-       if(self.fuel >= SPECS['PROPHET'].CONSTRUCTION_FUEL && self.karbonite >= SPECS['PROPHET'].CONSTRUCTION_KARBONITE){
-           return castle.findUnitPlace(self, 'PROPHET');
-       }
-       return;
+       return castle.makeDecision(self, self.teamCastles);
     }
 
 }

@@ -190,6 +190,9 @@ castle.mirrorCastle = (myLocation, fullMap) => {
     }
 }
 
+castle.makeDecision = (self, otherCastles) => {
+    
+}
 
 /** Each castle should be able to check for messages from their friendly castles 
  * Use of this.getVisibleRobots() to see the robots in the vicinity 

@@ -277,11 +277,18 @@ castle.signalNewUnitTarget = (self) =>{
  */
 castle.findBestDepots = (self, searchAggressively) => {
     let clusters = [];
+    
+    const mapHorizonal = movement.isHorizontalReflection(self.map);
+    const castleDistXY = movement.getDistanceXY(self.me, movement.getMirrorCastle(self.me, self.map));
+    const castleDistance = castleDistXY.x + castleDistXY.y;
+    const competitionIndex = 2/3; //Alter this value from 0 to 1 to affect how far we search for clusters
+    const rangeLimit = Math.ceil(castleDistance*competitionIndex);
+    const midPoint = {x: self.me.x+castleDistXY.x, y: self.me.y+castleDistXY.y};
 
     for(let y = 0; y < self.map.length; y++) {
         for(let x = 0; x < self.map.length; x++) {
             if(self.karbonite_map[y][x] || self.fuel_map[y][x]) {
-                let currentCheck = {x: x, y: y}
+                let currentCheck = {x: x, y: y, count: -1, dist: -1};
                 currentCheck = castle.processLocalDepots(self, currentCheck);
                 let nearbyIndex = clusters.findIndex(depot => {
                     return movement.getDistance(currentCheck, depot) <= 9 && depot.count >= currentCheck.count;
@@ -296,21 +303,68 @@ castle.findBestDepots = (self, searchAggressively) => {
             }
         }
     }
-    //If you are the only team castle, don't do much processing
-    if(self.teamCastles.length <= 1) {
-        /*let maxDist;
-        if(movement.isHorizontalReflection(self.map)) {
-            maxDist = Math.abs(self.me.x - self.map.length/2) + Math.ceil
+    //Filter for those within reasonable range for which we can compete
+    clusters = clusters.filter(target => {
+        const {x, y} = movement.getDistanceXY(self.me, target);
+        //If equal horizontally, compete for anything semi-near to midline in y-direction
+        if(mapHorizonal) {
+            return x <= rangeLimit;
+        //If equal vertically, compete for anything semi-near to midline in x-direction
+        } else {
+            return y <= rangeLimit;
         }
-        const maxDist = movement.getDistance(self.me, 
-        clusters = clusters.filter(target => {
-            if(movement.isHorizontalReflection(self.map)) {
-                return Math.abs(self.me.x - self.map.length/2) + Math.ceil
-            } else {
-                return false;
-            }
+    });
+    //Sort by prioritizing more concentrated clusters
+    clusters.sort((a,b) => {
+        if(a.count > b.count) {
+            return -1;
+        } else if (a.count < b.count) {
+            return 1;
+        } else {
+            return 0;
+        }
+    })
 
-        });*/
+    //If search aggressively, prioritze targets just past midpoint to compete with oppoenent
+    if(searchAggressively) {
+        clusters.sort((a,b) => {
+            let aNearMidpoint;
+            let bNearMidpoint;
+            if(mapHorizonal) {
+                aNearMidpoint = a.x <= rangeLimit && a.x >= midPoint.x;
+                bNearMidpoint = b.x <= rangeLimit && b.x >= midPoint.x;
+            } else {
+                aNearMidpoint = a.y <= rangeLimit && a.y >= midPoint.y;
+                bNearMidpoint = b.y <= rangeLimit && b.y >= midPoint.y;
+            }
+            if (aNearMidpoint && !bNearMidpoint) {
+                return -1;
+            } else if (!aNearMidpoint && bNearMidpoint) {
+                return 1;
+            } else {
+                return b.count - a.count;
+            }
+        })
+    //Otherwise, prioritize things closer to you
+    } else {
+        clusters.sort((a,b) => {
+            let aBeforeMidpoint;
+            let bBeforeMidpoint;
+            if(mapHorizonal) {
+                aBeforeMidpoint = a.x <= midPoint.x+2;
+                bBeforeMidpoint = b.x <= midPoint.x+2;
+            } else {
+                aBeforeMidpoint = a.y <= midPoint.y+2;
+                bBeforeMidpoint = b.y <= midPoint.y+2;
+            }
+            if (aBeforeMidpoint && !bBeforeMidpoint) {
+                return -1;
+            } else if (!aBeforeMidpoint && bBeforeMidpoint) {
+                return 1;
+            } else {
+                return b.count - a.count;
+            }
+        })
     }
     return clusters;
 }

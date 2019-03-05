@@ -57,7 +57,6 @@ castle.doAction = (self) => {
     }
 }
 /** Method to check if any of the adjacent tile is available. Place the unit if true.
- * 
  */
 castle.findUnitPlace = (self, unitType) => {
     for(let i = -1; i<= 1; i++){   

@@ -242,24 +242,4 @@ castle.makeDecision = (self, otherCastles) => {
 
 }
 
-/** Each castle should be able to check for messages from their friendly castles 
- * Use of this.getVisibleRobots() to see the robots in the vicinity 
- * 
- * Input: self, this is the reference to the object to the calling method.
- * Output: message from other castles
- * castle.checkMessage = (self) => {
-    const visibleRobots = this.getVisibleRobotMap().filter(bots =>{
-        return bots.team === self.me.team && bots.unit === 0;
-    })
-    const filterdCastle;
-    for(i = 0; i< filterdCastle ; i ++)
-    {  
-        const id = 0;
-        this.castle_talk(id);
-        return castle.checkMessage(self)
-    }
-    return;
-}
- */
-
 export default castle;

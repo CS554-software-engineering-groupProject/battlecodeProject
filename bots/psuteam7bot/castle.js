@@ -272,4 +272,70 @@ castle.signalNewUnitTarget = (self) =>{
     }
 }
 
+/**
+ * Method t
+ */
+castle.findBestDepots = (self, searchAggressively) => {
+    let clusters = [];
+
+    for(let y = 0; y < self.map.length; y++) {
+        for(let x = 0; x < self.map.length; x++) {
+            if(self.karbonite_map[y][x] || self.fuel_map[y][x]) {
+                let currentCheck = {x: x, y: y}
+                currentCheck = castle.processLocalDepots(self, currentCheck);
+                let nearbyIndex = clusters.findIndex(depot => {
+                    return movement.getDistance(currentCheck, depot) <= 9 && depot.count >= currentCheck.count;
+                });
+                //If nothing nearby, add to clusters
+                if(nearbyIndex < 0) {
+                    clusters.push(currentCheck)
+                //If nearby cluster but current better, add to cluster
+                } else if (clusters[nearbyIndex].count > currentCheck.count || clusters[nearbyIndex].dist > currentCheck.count) {
+                    clusters[nearbyIndex] = currentCheck;
+                }
+            }
+        }
+    }
+    //If you are the only team castle, don't do much processing
+    if(self.teamCastles.length <= 1) {
+        /*let maxDist;
+        if(movement.isHorizontalReflection(self.map)) {
+            maxDist = Math.abs(self.me.x - self.map.length/2) + Math.ceil
+        }
+        const maxDist = movement.getDistance(self.me, 
+        clusters = clusters.filter(target => {
+            if(movement.isHorizontalReflection(self.map)) {
+                return Math.abs(self.me.x - self.map.length/2) + Math.ceil
+            } else {
+                return false;
+            }
+
+        });*/
+    }
+    return clusters;
+}
+
+/**
+ * Method to determine how many resource depots are around a given location.
+ * @param self MyRobot object to access map
+ * @param location Location to evaluate
+ * @return Object contain location coordinates, count of number of depots within +/- 3 tiles in
+ * x and y direction, plus sum of all R^2 distances to depots (smaller number means closer to all tiles)
+ */
+castle.processLocalDepots = (self, location) => {
+    let count = 0;
+    let dist = 0;
+    for(let y = location.y-3; y <= location.y+3; y++) {
+        for(let x = location.x-3; x <= location.x+3; x++) {
+            if(self._bc_check_on_map(x, y)) {
+                if(self.karbonite_map[y][x] || self.fuel_map[y][x]) {
+                    ++count;
+                    dist += movement.getDistance(location, {x: x, y: y});
+                }
+            }
+        }
+    }
+    return { x: location.x, y: location. y, count: count, dist: dist};
+}
+
 export default castle;

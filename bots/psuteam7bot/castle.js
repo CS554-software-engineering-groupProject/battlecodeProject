@@ -56,9 +56,11 @@ castle.doAction = (self) => {
         return castle.makeDecision(self, self.teamCastles);
     }
 }
-
+/** Method to check if any of the adjacent tile is available. Place the unit if true.
+ * 
+ */
 castle.findUnitPlace = (self, unitType) => {
-    //Check if any of the adjacent tile is available. Place the unit if true.
+
     for(let i = -1; i<= 1; i++){   
         for(let j = -1; j<= 1; j++){
             const location = {x: (self.me.x + i), y: (self.me.y +j)} 
@@ -196,6 +198,9 @@ castle.mirrorCastle = (myLocation, fullMap) => {
     }
 }
 
+/**
+ * 
+ */
 castle.makeDecision = (self, otherCastles) => {
 
     const visibleEnemies= combat.getVisibleEnemies(self);

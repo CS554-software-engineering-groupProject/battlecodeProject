@@ -44,11 +44,6 @@ castle.doAction = (self) => {
     }
     else if (self.me.turn <= 4) 
     {
-        if(self.me.turn > 5)
-        {
-            castle.checkUnitCastleTalk(self);
-            castle.signalNewUnitTarget(self);
-        }
         self.log("BUILD QUEUE NON-EMPTY")
         self.log(self.castleBuildQueue)
         const botsInQueue = self.castleBuildQueue.length;
@@ -65,7 +60,7 @@ castle.doAction = (self) => {
         const botsInQueue = self.castleBuildQueue.length;
         //Keep queue at reasonable size, adding another prophet as necessary so prophets are continually build
         if (botsInQueue <= 5) {
-            self.castleBuildQueue.push(self.castleBuildQueue[botsInQueue-1]);
+            self.castleBuildQueue.push({unit: "CRUSADER", x: self.target.x, y: self.target.y});
         }
         return castle.makeDecision(self, self.teamCastles);
     }
@@ -329,7 +324,7 @@ castle.signalNewUnitTarget = (self) =>{
         {
             const newTarget = self.pendingMessages.pop();
             self.signal(newTarget, self.map.length*self.map.length);
-            //self.log("Signal sent to units, " + newTarget + "---------------------------------------------------------------------------------------------------------");
+            self.log("Signal sent to units, " + newTarget + "---------------------------------------------------------------------------------------------------------");
         }
         else
         {

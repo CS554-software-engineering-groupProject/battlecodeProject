@@ -95,12 +95,10 @@ castle.buildFromQueue = (self) => {
     }
 }
 
-
 /** Each castle will try to locate and record the positions of the friendly castles at the start of the game
  * Input: self = this is the reference to the object to the calling method. 
  * Output: returnPosition = return value containing the positions of the friendly castle       
  *  */
-
 castle.recordPosition = (self) => {
     let turn = self.me.turn;
     if(turn <= 2){
@@ -128,7 +126,6 @@ castle.findPosition = (self) => {
         total:0
     }
     const maxDist = -2*Math.pow(self.map.length, 2)-1
-
 
     bots.forEach(foundCastle => {
         //Init an item in teamCastles for each on turn 2 once signals being sent
@@ -197,8 +194,10 @@ castle.mirrorCastle = (myLocation, fullMap) => {
     }
 }
 
-/**
- * 
+/** Method to make decision about attacking the enemy units
+ * 1. if attackable anemies around, start attacking on your own
+ * 2. if enemies in visible range, create prophets and attack
+ * 3. otherwise signal other friendly castles about status on the units build
  */
 castle.makeDecision = (self, otherCastles) => {
 

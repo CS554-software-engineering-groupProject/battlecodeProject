@@ -128,8 +128,8 @@ castle.recordPosition = (self) => {
  */
 castle.findPosition = (self) => {
     //Filter by those that have a castle talk, since apparently unit does not appear if not in vision radius
-    const bots = self.getVisibleRobots().filter(bots =>{
-        return bots.team === self.me.team && bots.castle_talk > 0;
+    const bots = self.getVisibleRobots().filter(bot =>{
+        return bot.team === self.me.team && bot.castle_talk > 0;
     });
     let turn = self.me.turn;
     const buildCounter = {
@@ -144,6 +144,7 @@ castle.findPosition = (self) => {
         //Init an item in teamCastles for each on turn 2 once signals being sent
         if (turn == 2) {
             self.teamCastles.push({id: foundCastle.id, x: maxDist, y: maxDist, buildCounter: buildCounter, signalBuilding: false})
+            self.log("Adding castle id="+foundCastle.id)
         }
 
         self.teamCastles.forEach(teamCastle =>{

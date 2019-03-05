@@ -26,20 +26,23 @@ castle.doAction = (self) => {
     //This ensures that all local depots are filled and a crusader will be built after
     if(self.me.turn === 1)
     {
+        
         const karboniteDepots = movement.getResourcesInRange(self.me, 16, self.karbonite_map);
         karboniteDepots.forEach(depot => {
             self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
+
         const fuelDepots = movement.getResourcesInRange(self.me, 16, self.fuel_map)
         fuelDepots.forEach(depot => {
             self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
+        
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
         self.target = mirrorCastle;
         self.log(self.castleBuildQueue)
         return castle.buildFromQueue(self);
     }
-    else if (self.castleBuildQueue.length > 0) 
+    else if (self.me.turn <= 4) 
     {
         if(self.me.turn > 5)
         {
@@ -59,25 +62,27 @@ castle.doAction = (self) => {
     {
         castle.checkUnitCastleTalk(self);
         castle.signalNewUnitTarget(self);
-        self.log("BUILD QUEUE EMPTY, ATTEMPTING TO BUILD CRUSADER")
-        //Check if there are enough resources to produce this unit.
-       if(self.fuel >= SPECS.UNITS[SPECS.CRUSADER].CONSTRUCTION_FUEL && self.karbonite >= SPECS.UNITS[SPECS.CRUSADER].CONSTRUCTION_KARBONITE) {
-            self.castleBuildQueue.push({unit: "CRUSADER", x: self.target.x, y: self.target.y});
-            return castle.buildFromQueue(self);
-       }
-       self.log("NOT ENOUGH RESOURCE")
-       return;
+        const botsInQueue = self.castleBuildQueue.length;
+        //Keep queue at reasonable size, adding another prophet as necessary so prophets are continually build
+        if (botsInQueue <= 5) {
+            self.castleBuildQueue.push(self.castleBuildQueue[botsInQueue-1]);
+        }
+        return castle.makeDecision(self, self.teamCastles);
     }
-
 }
-
+/** Method to check if any of the adjacent tile is available. Place the unit if true.
+ */
 castle.findUnitPlace = (self, unitType) => {
-    //Check if any of the adjacent tile is available. Place the unit if true.
     for(let i = -1; i<= 1; i++){   
         for(let j = -1; j<= 1; j++){
             const location = {x: (self.me.x + i), y: (self.me.y +j)} 
             if(movement.isPassable(location, self.map, self.getVisibleRobotMap()))
             {
+                //Send signal starting at turn 3 so you don't overrride location communication at start
+                /*if(self.me.turn > 4) {
+                    self.castleTalk(SPECS[unitType]);
+                }*/
+
                 self.log('castle ' + self.id + ' building unit ' + unitType + ' at [' + (self.me.x+i) + ',' + (self.me.y+j) +']'); 
                 return self.buildUnit(SPECS[unitType], i, j);       
             }
@@ -85,7 +90,6 @@ castle.findUnitPlace = (self, unitType) => {
     }
     return;
 }
-
 
 /**
  * Method to build next unit pushed on `castleBuildQueue`. Currently no checks that should be implemented
@@ -104,23 +108,18 @@ castle.buildFromQueue = (self) => {
     }
 }
 
-
 /** Each castle will try to locate and record the positions of the friendly castles at the start of the game
  * Input: self = this is the reference to the object to the calling method. 
  * Output: returnPosition = return value containing the positions of the friendly castle       
  *  */
-
 castle.recordPosition = (self) => {
     let turn = self.me.turn;
-    if(turn === 1|| turn === 2){
-        //self.log("Sent x-coord: " + self.me.x);
+    if(turn <= 2){
         self.castleTalk(self.me.x);
     }
-    if(turn === 3|| turn === 4){
-        //self.log("Sent y-coord: " + self.me.x);
+    else if(turn <= 4){
         self.castleTalk(self.me.y);
     }
-    
 }
 
 /**Find positions of the friendly castles. 
@@ -128,31 +127,66 @@ castle.recordPosition = (self) => {
  * Output: positions of other friendly castles.
  */
 castle.findPosition = (self) => {
+    //Filter by those that have a castle talk, since apparently unit does not appear if not in vision radius
     const bots = self.getVisibleRobots().filter(bots =>{
-        return bots.team === self.me.team && bots.castle_talk;
-    })
+        return bots.team === self.me.team && bots.castle_talk > 0;
+    });
     let turn = self.me.turn;
-    self.log("turn: " + turn);
-    //let storeFriendlyCastles;
+    const buildCounter = {
+        pilgrims:0,
+        crusader:0,
+        prophet:0,
+        total:0
+    }
+    const maxDist = -2*Math.pow(self.map.length, 2)-1
 
     bots.forEach(foundCastle => {
-        if(turn === 2){
-            //self.log("Received id: " + foundCastle.id + ", x-coord: " + foundCastle.castle_talk);
-            self.teamCastles.push({id: foundCastle.id, x: foundCastle.castle_talk})
+        //Init an item in teamCastles for each on turn 2 once signals being sent
+        if (turn == 2) {
+            self.teamCastles.push({id: foundCastle.id, x: maxDist, y: maxDist, buildCounter: buildCounter, signalBuilding: false})
         }
-        if(turn === 4){
-            self.teamCastles.forEach(teamCastle => {
-                if(foundCastle.id === teamCastle.id)
-                {
-                    //self.log("Received y-coord: " + foundCastle.castle_talk);
-                    teamCastle.y = foundCastle.castle_talk;
+
+        self.teamCastles.forEach(teamCastle =>{
+            if(foundCastle.id == teamCastle.id){
+                if(turn == 2){
+                    teamCastle.x = foundCastle.castle_talk;
                 }
-            })
-            //self.log("Team castles: ");
-            //self.log(self.teamCastles);
+                if(turn == 4){
+                    teamCastle.y = foundCastle.castle_talk;
+                }  
+                if(turn >= 5){
+                    self.log("castle_talk: " + foundCastle.castle_talk)
+                    if(foundCastle.castle_talk == 100){
+                        teamCastle.signalBuilding = true;
+                    }
+                    else if(foundCastle.castle_talk == 101){
+                        teamCastle.signalBuilding = false;
+                    }
+                    /*else if(foundCastle.castle_talk >= 1){
+                        self.log("Castle talk: " + foundCastle.castle_talk);
+                        self.log("Output: " + combat.UNITTYPE[foundCastle.castle_talk]);
+                        teamCastle.buildCounter[combat.UNITTYPE[foundCastle.castle_talk].toLowerCase()]++;
+                        teamCastle.buildCounter.total++;
+                        self.log(teamCastle.buildCounter);
+                    }*/
+                }
+            }
+        });
+    });
+    self.teamCastles.sort((a,b) => {
+        /*if(movement.getDistance(self.me, a) > movement.getDistance(self.me, b)) {
+            return -1;
+        } else {
+            return 1;
+        }*/
+        if(a.id == self.me.id) {
+            return -1;
+        } else if (b.id == self.me.id) {
+            return 1;
         }
     });
 }
+
 /** Castle should calculate the locations of the enemy castles using the recorded postions. Use mirror castle method. 
  * Input : the location of the friendly castles
  * Output: mirrored images of the enemy castles
@@ -173,25 +207,56 @@ castle.mirrorCastle = (myLocation, fullMap) => {
     }
 }
 
-/** Each castle should be able to check for messages from their friendly castles 
- * Use of this.getVisibleRobots() to see the robots in the vicinity 
- * 
- * Input: self, this is the reference to the object to the calling method.
- * Output: message from other castles
- * castle.checkMessage = (self) => {
-    const visibleRobots = this.getVisibleRobotMap().filter(bots =>{
-        return bots.team === self.me.team && bots.unit === 0;
-    })
-    const filterdCastle;
-    for(i = 0; i< filterdCastle ; i ++)
-    {  
-        const id = 0;
-        this.castle_talk(id);
-        return castle.checkMessage(self)
-    }
-    return;
-}
+/** Method to make decision about attacking the enemy units
+ * 1. if attackable anemies around, start attacking on your own
+ * 2. if enemies in visible range, create prophets and attack
+ * 3. otherwise signal other friendly castles about status on the units build
  */
+castle.makeDecision = (self, otherCastles) => {
+
+    const visibleEnemies= combat.getVisibleEnemies(self);
+    const attackableEnemies = combat.filterByAttackable(self, visibleEnemies);
+
+    
+    //if there are any attackable enemies nearby, castle will start attacking instead of building any other units
+    if(attackableEnemies > 0){
+        const dx = attackableEnemies[0].x - self.me.x;
+        const dy = attackableEnemies[0].y - self.me.y;
+
+        self.log('Attackable enemies attacking');
+        return self.attack(dx, dy);
+    }
+
+    //if there are any enemies in a visible range, castle will start building PHROPHETS
+    if(visibleEnemies.length > 0){
+        self.log('Enemies in the visible range, building phrophets');
+        return castle.findUnitPlace(self, 'PROPHET');
+    }
+
+    //otherwise castles will signal which castle has done building the units and will take decisions accordingly
+    const checkSignal = otherCastles.findIndex(castle =>{
+        return castle.signalBuilding
+    });
+
+    self.log("Signal: " +  checkSignal);
+    self.log(JSON.stringify(self.getVisibleRobots().filter(bots => {return bots.castle_talk > 0})));
+    self.log(JSON.stringify(otherCastles));
+
+    if(checkSignal <= 0){
+        otherCastles[0].signalBuilding = true
+        self.castleTalk(100);
+        return castle.buildFromQueue(self)
+        
+    }
+    else{
+
+        self.log('Not building units, differeing to other castles')
+        otherCastles[0].signalBuilding = false
+        self.castleTalk(101);
+        return
+    }  
+
+}
 
 
  /**

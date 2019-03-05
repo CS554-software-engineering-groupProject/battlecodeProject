@@ -273,7 +273,17 @@ castle.signalNewUnitTarget = (self) =>{
 }
 
 /**
- * Method t
+ * Function that gets an array of locations representing positions close to a number of resource depots. Prioritizes bigger clusters
+ *  and filters by locations that are nearer from a range limit (dictated by the `competitionIndex` param in the function) 
+ * and closer to castle calling the method that other team castles. Also will resort and prioritize locations closer to the 
+ * mirror castle if trying to be aggressive in identifying depots to compete with enemy for. NOTE: All sorting places higher 
+ * priority locations lower in the list (i.e. `clusters[0]` will be highest priority)
+ * 
+ * @param self Castle calling method
+ * @param searchAggressively Boolean indicating whether to prioritize depots that the enemy might be targeting. If true, sorts to
+ * prioritize locations that are past the midpoint between calling castle and it's mirror castle but before the range limit definied
+ * in the function
+ * @return Returns an array of objects that include a location and other information about a tile close to other resource depots
  */
 castle.findBestDepots = (self, searchAggressively) => {
     let clusters = [];
@@ -283,7 +293,7 @@ castle.findBestDepots = (self, searchAggressively) => {
     const castleDistance = castleDistXY.x + castleDistXY.y;
     const competitionIndex = 2/3; //Alter this value from 0 to 1 to affect how far we search for clusters
     const rangeLimit = Math.ceil(castleDistance*competitionIndex);
-    const midPoint = {x: self.me.x+castleDistXY.x, y: self.me.y+castleDistXY.y};
+    const midPoint = {x: self.me.x+(castleDistXY.x/2), y: self.me.y+(castleDistXY.y/2)};
 
     for(let y = 0; y < self.map.length; y++) {
         for(let x = 0; x < self.map.length; x++) {
@@ -303,39 +313,34 @@ castle.findBestDepots = (self, searchAggressively) => {
             }
         }
     }
-    //Filter for those within reasonable range for which we can compete
+    //Filter for those within reasonable range for which we can compete and aren't closer to another friendly castle
     clusters = clusters.filter(target => {
         const {x, y} = movement.getDistanceXY(self.me, target);
+        let closerTeamCastle = false;
+        self.teamCastles.forEach(castle => {
+            if(castle.id != self.me.id && movement.getDistance(self.me, target) > movement.getDistance(castle, target)) {
+                closerTeamCastle = true;
+            } 
+        });
         //If equal horizontally, compete for anything semi-near to midline in y-direction
         if(mapHorizonal) {
-            return x <= rangeLimit;
+            return !closerTeamCastle && y <= rangeLimit;
         //If equal vertically, compete for anything semi-near to midline in x-direction
         } else {
-            return y <= rangeLimit;
+            return !closerTeamCastle && x <= rangeLimit;
         }
     });
-    //Sort by prioritizing more concentrated clusters
-    clusters.sort((a,b) => {
-        if(a.count > b.count) {
-            return -1;
-        } else if (a.count < b.count) {
-            return 1;
-        } else {
-            return 0;
-        }
-    })
-
-    //If search aggressively, prioritze targets just past midpoint to compete with oppoenent
+    //If search aggressively, prioritze targets just past midpoint to compete with opponent
     if(searchAggressively) {
         clusters.sort((a,b) => {
             let aNearMidpoint;
             let bNearMidpoint;
             if(mapHorizonal) {
-                aNearMidpoint = a.x <= rangeLimit && a.x >= midPoint.x;
-                bNearMidpoint = b.x <= rangeLimit && b.x >= midPoint.x;
-            } else {
                 aNearMidpoint = a.y <= rangeLimit && a.y >= midPoint.y;
                 bNearMidpoint = b.y <= rangeLimit && b.y >= midPoint.y;
+            } else {
+                aNearMidpoint = a.x <= rangeLimit && a.x >= midPoint.x;
+                bNearMidpoint = b.x <= rangeLimit && b.x >= midPoint.x;
             }
             if (aNearMidpoint && !bNearMidpoint) {
                 return -1;
@@ -351,11 +356,11 @@ castle.findBestDepots = (self, searchAggressively) => {
             let aBeforeMidpoint;
             let bBeforeMidpoint;
             if(mapHorizonal) {
-                aBeforeMidpoint = a.x <= midPoint.x+2;
-                bBeforeMidpoint = b.x <= midPoint.x+2;
-            } else {
                 aBeforeMidpoint = a.y <= midPoint.y+2;
                 bBeforeMidpoint = b.y <= midPoint.y+2;
+            } else {
+                aBeforeMidpoint = a.x <= midPoint.x+2;
+                bBeforeMidpoint = b.x <= midPoint.x+2;
             }
             if (aBeforeMidpoint && !bBeforeMidpoint) {
                 return -1;

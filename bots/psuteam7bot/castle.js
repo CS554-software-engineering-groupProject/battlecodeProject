@@ -36,7 +36,10 @@ castle.doAction = (self) => {
         })
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
         self.target = mirrorCastle;
-        self.log(self.castleBuildQueue)
+        self.log(self.castleBuildQueue);
+        /*//Testing aggressive searching
+        self.resourceClusters = castle.findBestDepots(self, true);
+        self.resourceClusters = 0;*/
         return castle.buildFromQueue(self);
     }
     else if (self.castleBuildQueue.length > 0) 
@@ -70,6 +73,14 @@ castle.doAction = (self) => {
     }
 
 }
+
+castle.initializeStrategy = (self) => {
+    const castleCount = self.teamCastles.length;
+    const mapSize = self.map.length;
+    const enemyCastleDistXY = movement.getDistanceXY(self.me, movement.getMirrorCastle(self.me, self.map));
+    const enemyCastleDistance = castleDistXY.x + castleDistXY.y;
+}
+
 
 castle.findUnitPlace = (self, unitType) => {
     //Check if any of the adjacent tile is available. Place the unit if true.
@@ -318,9 +329,17 @@ castle.findBestDepots = (self, searchAggressively) => {
         const {x, y} = movement.getDistanceXY(self.me, target);
         let closerTeamCastle = false;
         self.teamCastles.forEach(castle => {
-            if(castle.id != self.me.id && movement.getDistance(self.me, target) > movement.getDistance(castle, target)) {
-                closerTeamCastle = true;
-            } 
+            if(castle.id != self.me.id) {
+                //Filter out if another castle is closer to target
+                if(movement.getDistance(self.me, target) > movement.getDistance(castle, target)) {
+                    closerTeamCastle = true;
+                }
+            } else {
+                //Filter out if this castle is close enough to target to have created initial pilgrims for it
+                if(movement.getDistance(castle, target) <= 16) {
+                    closerTeamCastle = true;
+                }
+            }
         });
         //If equal horizontally, compete for anything semi-near to midline in y-direction
         if(mapHorizonal) {
@@ -395,6 +414,15 @@ castle.processLocalDepots = (self, location) => {
         }
     }
     return { x: location.x, y: location. y, count: count, dist: dist};
+}
+
+
+castle.getNextClusterLocation = (self) => {
+    if(self.currentCluster < 0) {
+        self.resourceClusters = castle.findBestDepots(self, false);
+        self.currentCluster = 0;
+    }
+    return self.resourceClusters[self.currentCluster];
 }
 
 export default castle;

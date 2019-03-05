@@ -60,7 +60,6 @@ castle.doAction = (self) => {
  * 
  */
 castle.findUnitPlace = (self, unitType) => {
-
     for(let i = -1; i<= 1; i++){   
         for(let j = -1; j<= 1; j++){
             const location = {x: (self.me.x + i), y: (self.me.y +j)} 

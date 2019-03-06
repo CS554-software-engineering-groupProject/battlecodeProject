@@ -91,8 +91,25 @@ castle.findUnitPlace = (self, unitType) => {
  */
 castle.buildFromQueue = (self) => {
     const nextBuild = self.castleBuildQueue[0];
+    const botsOnMap = combat.getVisibleAllies(self).length;
+    let buildCount = 0  
+    let fuelCap = 0 
+    if(self.me.turn > 20) {
+        /*Take lesser of 1. bots built and 2. bots on map
+          1. Case for when castle destroyed and new one starts building - ensures it starts sooner rather than when 
+             bots at destroyed castle eventually eliminated
+          2. Case for when you've built a lot but bots keep getting destroyed - ensures that you don't stop building
+             if you need more on the map
+        */
+        buildCount = Math.min(self.teamCastles[0].buildCounter.total, botsOnMap);
+        fuelCap = 50+5*buildCount; //25+25*self.teamCastles.length;
+    }
+    //If past very start of game and fuel amount low, don't build a unit
+    if(self.fuel < fuelCap) {
+        self.log('not building unit to conserve fuel');
+        return;
     //If you are able to build next unit, signal coordinates so it knows where to go and build it
-    if(self.fuel >= SPECS.UNITS[SPECS[nextBuild.unit]].CONSTRUCTION_FUEL && 
+    } else if(self.fuel >= SPECS.UNITS[SPECS[nextBuild.unit]].CONSTRUCTION_FUEL && 
        self.karbonite >= SPECS.UNITS[SPECS[nextBuild.unit]].CONSTRUCTION_KARBONITE) {
         self.castleBuildQueue.shift();
         self.signal(communication.positionToSignal(nextBuild, self.map), 2);
@@ -162,6 +179,7 @@ castle.findPosition = (self) => {
                 if(turn >= 5){
                     self.log("castle_talk: " + foundCastle.castle_talk)
                     if(foundCastle.castle_talk == 100){
+                        teamCastle.buildCounter.total++;
                         teamCastle.signalBuilding = true;
                     }
                     else if(foundCastle.castle_talk == 101){
@@ -242,8 +260,8 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
     });
 
     self.log("Signal: " +  checkSignal);
-    self.log(JSON.stringify(self.getVisibleRobots().filter(bots => {return bots.castle_talk > 0})));
-    self.log(JSON.stringify(otherCastles));
+    //self.log(JSON.stringify(self.getVisibleRobots().filter(bots => {return bots.castle_talk > 0})));
+    //self.log(JSON.stringify(otherCastles));
 
     if(checkSignal <= 0 && !otherCastles[0].mirrorCastleDestroyed) {
         otherCastles[0].signalBuilding = true

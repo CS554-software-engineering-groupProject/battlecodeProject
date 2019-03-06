@@ -58,8 +58,11 @@ castle.doAction = (self) => {
         castle.checkUnitCastleTalk(self);
         const hasSignalToSend = castle.signalNewUnitTarget(self);
         const botsInQueue = self.castleBuildQueue.length;
+        //If there are still pilgrims to build, prioritize that
+        if(botsInQueue > 0 && self.castleBuildQueue[0].unit == "PILGRIM") {
+            return castle.buildFromQueue(self);
         //Keep queue at reasonable size, adding another prophet as necessary so prophets are continually build
-        if (botsInQueue <= 5) {
+        } else if (botsInQueue <= 5) {
             self.castleBuildQueue.push({unit: "CRUSADER", x: self.target.x, y: self.target.y});
         }
         return castle.makeDecision(self, self.teamCastles, hasSignalToSend);

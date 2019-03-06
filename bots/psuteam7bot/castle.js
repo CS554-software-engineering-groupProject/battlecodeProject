@@ -138,7 +138,14 @@ castle.findPosition = (self) => {
     bots.forEach(foundCastle => {
         //Init an item in teamCastles for each on turn 2 once signals being sent
         if (turn == 2) {
-            self.teamCastles.push({id: foundCastle.id, x: maxDist, y: maxDist, buildCounter: buildCounter, signalBuilding: false})
+            self.teamCastles.push({
+                id: foundCastle.id,
+                x: maxDist, 
+                y: maxDist, 
+                buildCounter: buildCounter, 
+                signalBuilding: false,
+                mirrorCastleDestroyed: false
+            })
             self.log("Adding castle id="+foundCastle.id)
         }
 
@@ -292,6 +299,11 @@ castle.makeDecision = (self, otherCastles) => {
                         {
                             const removedCastle = self.enemyCastles.splice(k,1)[0];
                             enemyCastlesLength = self.enemyCastles.length;
+                            self.teamCastles.forEach(tc => {
+                                if(movement.positionsAreEqual(enemyCastle, movement.getMirrorCastle(tc, self.map))) {
+                                    tc.mirrorCastleDestroyed = true;
+                                }
+                            })
                             //self.log("Enemy castle removed from array----------------------------------------------------------------------------------------")
                             //self.log(self.target);
                             //self.log(removedCastle);

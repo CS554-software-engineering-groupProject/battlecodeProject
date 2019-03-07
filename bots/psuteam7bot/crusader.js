@@ -119,11 +119,6 @@ crusader.takeAttackerAction = (self) => {
     }
     else if(self.squadSize === 0)
     {
-        if(self.fuel < 100)
-        {
-            self.log('Low Fuel, Global fuel < 100, ATTACKER crusader ' + self.id + ' Standing by.')
-            return;
-        }
         self.log('ATTACKER crusader ' + self.id + ' moving towards enemy base, Current: [' + self.me.x + ',' + self.me.y + ']')
         return movement.moveAlongPath(self);
     }

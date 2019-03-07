@@ -28,13 +28,21 @@ prophet.doAction = (self) => {
         if(self.isRadioing(baseRobot))  //Check if base has broadcasted a signal on it's turn
         {
             //Get the message using baseRobot.signal and translate to position using helper function
-            self.potentialEnemyCastleLocation = [communication.signalToPosition(baseRobot.signal, self.map)];
-            self.potentialEnemyCastleLocation.push(movement.getDiagonalPatrolPosition(self.base, self.map));
+            self.target = communication.signalToPosition(baseRobot.signal, self.map);
         }
         else
         {
-            self.log("UNASSIGNED prophet didn't receive signal from base, using getAttackerPatrolRoute");
-            self.potentialEnemyCastleLocation = movement.getAttackerPatrolRoute(self.base, self.map);
+            self.log("UNASSIGNED prophet didn't receive signal from base, getting mirror coord");
+            self.target = movement.getMirrorCastle(self.me, self.map);
+        }
+
+        const {x, y} = self.target;
+        //If target is a resource depot, set role as destroyer
+        if(self.karbonite_map[y][x] || self.fuel_map[y][x])
+        {
+            self.log("Target is a resource depot, Assigned as a destroyer");
+            self.role = "DESTROYER";
+            return prophet.takeDestroyerAction(self);
         }
 
         const nearbyDefenders = self.getVisibleRobots().filter((robotElement) => {
@@ -279,5 +287,66 @@ prophet.fleeBehavior = (self, visibleRobots) => {
     }
 }
 
+//DEFENDER Behavior
+prophet.takeDefenderAction = (self) =>  {
+    self.log("DESTROYER prophet " + self.id + " taking turn");
+    //Use attacker moves to check whether 
+    if(self.target === null)
+    {     
+        self.target = self.potentialEnemyCastleLocation[0];
+    }
+
+    const visibleRobots = self.getVisibleRobots();
+    const attackable = combat.filterByAttackable(self, visibleRobots);
+
+    if(prophet.fleeBehavior(self, visibleRobots))
+    {
+        return movement.moveAlongPath(self);
+    }
+
+    //Attack visible enemies
+    if(attackable.length > 0)
+    {
+        let attacking = attackable[0];
+        self.log("Attacking " + combat.UNITTYPE[attacking.unit] + " at " + attacking.x + ", " +  attacking.y);
+        return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
+    }
+
+    //If no path yet
+    if(self.path.length === 0)
+    {
+        if(movement.aStarPathfinding(self, self.me, self.target, false)) 
+        {
+            self.log(self.path);
+        } 
+        else 
+        {
+            self.log('Cannot get path to position');
+            return;
+        }
+    }
+
+    if(self.squadSize === 0)
+    {
+        self.log('DESTROYER prophet ' + self.id + ' moving towards target, Current: [' + self.me.x + ',' + self.me.y + ']')
+        return movement.moveAlongPath(self);
+    }
+    
+
+    let squad = combat.filterByRange(visibleRobots, self.me, 0, 64);
+    squad = combat.filterByUnitType(squad, "PROPHET");
+
+    //Check if threshold is reached, then just move towards enemy base
+    if(squad.length >= self.squadSize) 
+    {
+        self.log('DESTROYER prophet ' + self.id + ' squad threshold reached! Moving to target')
+        self.squadSize = 0;
+
+        return;
+    }
+    //Should not fall through unless destroyer with squadSize threshold not reached yet
+    self.log('prophet ' + self.role + ' ' + self.me.id + ' doing nothing')
+    return;
+}
 
 export default prophet;

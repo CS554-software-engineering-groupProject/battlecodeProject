@@ -237,8 +237,8 @@ describe('Communication Helpers Unit Tests', function() {
             done();
         });
 
-        it('should change target, resets path, changes squadSize to 0 and returns true, if base signals and attackerMoves is > 1', function(done) {
-            myBot.attackerMoves = 3;
+        it('should change target, resets path, changes squadSize to 0 and returns true, if base signals and attackerMoves is > 5', function(done) {
+            myBot.attackerMoves = 6;
 
             baseBot.me.signal = communication.positionToSignal(newPos, mockGame.game.map);
             baseBot.me.signal_radius = 32;

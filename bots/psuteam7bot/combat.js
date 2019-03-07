@@ -4,6 +4,7 @@ import movement from "./movement.js";
 const combat = {};
 
 combat.UNITTYPE = ["CASTLE", "CHURCH", "PILGRIM", "CRUSADER", "PROPHET" , "PREACHER"]
+combat.TARGETPRIORITY = [0, 1, 5, 4, 3, 2]
 
 /**
  * Method to filter a list of robot elements (attackable, visible, etc.) by unit type

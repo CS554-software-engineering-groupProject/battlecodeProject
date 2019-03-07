@@ -287,21 +287,17 @@ prophet.fleeBehavior = (self, visibleRobots) => {
     }
 }
 
-//DEFENDER Behavior
-prophet.takeDefenderAction = (self) =>  {
+//Destroyer Behavior
+prophet.takeDestroyerAction = (self) =>  {
     self.log("DESTROYER prophet " + self.id + " taking turn");
-    //Use attacker moves to check whether 
-    if(self.target === null)
-    {     
-        self.target = self.potentialEnemyCastleLocation[0];
-    }
 
     const visibleRobots = self.getVisibleRobots();
     const attackable = combat.filterByAttackable(self, visibleRobots);
 
+    //Flee from enemies
     if(prophet.fleeBehavior(self, visibleRobots))
     {
-        return movement.moveAlongPath(self);
+       return movement.moveAlongPath(self);
     }
 
     //Attack visible enemies
@@ -310,6 +306,12 @@ prophet.takeDefenderAction = (self) =>  {
         let attacking = attackable[0];
         self.log("Attacking " + combat.UNITTYPE[attacking.unit] + " at " + attacking.x + ", " +  attacking.y);
         return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
+    }
+
+    if(movement.positionsAreEqual(self.target, self.me))
+    {
+        self.log('At target, Waiting...');
+        return;
     }
 
     //If no path yet
@@ -326,27 +328,8 @@ prophet.takeDefenderAction = (self) =>  {
         }
     }
 
-    if(self.squadSize === 0)
-    {
-        self.log('DESTROYER prophet ' + self.id + ' moving towards target, Current: [' + self.me.x + ',' + self.me.y + ']')
-        return movement.moveAlongPath(self);
-    }
-    
-
-    let squad = combat.filterByRange(visibleRobots, self.me, 0, 64);
-    squad = combat.filterByUnitType(squad, "PROPHET");
-
-    //Check if threshold is reached, then just move towards enemy base
-    if(squad.length >= self.squadSize) 
-    {
-        self.log('DESTROYER prophet ' + self.id + ' squad threshold reached! Moving to target')
-        self.squadSize = 0;
-
-        return;
-    }
-    //Should not fall through unless destroyer with squadSize threshold not reached yet
-    self.log('prophet ' + self.role + ' ' + self.me.id + ' doing nothing')
-    return;
+    self.log('DESTROYER prophet ' + self.id + ' moving towards target, Current: [' + self.me.x + ',' + self.me.y + ']')
+    return movement.moveAlongPath(self);
 }
 
 export default prophet;

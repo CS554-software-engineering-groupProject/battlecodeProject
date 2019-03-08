@@ -63,7 +63,7 @@ prophet.doAction = (self) => {
         else
         {
             self.log("Base defenders = " + JSON.stringify(nearbyDefenders.length) + ", Assigned as an attacker");
-            self.squadSize = 9; //-2, account for 1 defender and 1 trigger prophet, need to change squad detection if trigger prophet is to be part of squad
+            self.squadSize = 7; 
             self.role = "ATTACKER";
         }
     }
@@ -96,9 +96,8 @@ prophet.takeDefenderAction = (self) =>  {
         return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
     }
 
-
     //Limited movement towards enemy castle (movement towards guard post)
-    if(self.attackerMoves < 5)
+    if(self.attackerMoves < 3)
     {
         //Reusing attacker move naming convention
         self.attackerMoves++;

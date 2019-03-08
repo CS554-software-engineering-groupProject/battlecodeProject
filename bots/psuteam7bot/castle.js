@@ -546,7 +546,7 @@ castle.processLocalDepots = (self, location) => {
             }
         }
     }
-    return { x: location.x, y: location. y, count: count, dist: dist};
+    return { x: location.x, y: location.y, count: count, dist: dist};
 }
 
 

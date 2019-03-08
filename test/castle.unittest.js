@@ -18,7 +18,7 @@ describe('Castle Helpers Unit Tests', function(){
 
     });
 
-    describe.only('findDepotClusters() tests', function() {
+    describe('findDepotClusters() tests', function() {
         it('should only get one location per cluster', function(done) {
             myBot = new MyRobot();
             const karbAlterations = [
@@ -175,5 +175,30 @@ describe('Castle Helpers Unit Tests', function(){
             done();
         });       
     })
+
+    describe('processLocalDepots() tests', function() {
+        it('should get number of depots within +/- 3 units of location', function(done) {
+            myBot = new MyRobot();
+            const karbAlterations = [
+                {x: 3, y: 0, value:true},
+                {x: 0, y: 3, value:true},
+                {x: 3, y: 3, value:true}
+            ]
+            const fuelAlterations = [
+                {x: 4, y: 4, value:true},
+                {x: 0, y: 0, value:true}
+            ]
+
+            mockGame.alterMap("karbonite_map", karbAlterations);
+            mockGame.alterMap("fuel_map", fuelAlterations);
+            mockGame.createNewRobot(myBot, 0, 0, 0, 0);
+
+            output = castle.processLocalDepots(myBot, myBot.me);
+
+            expect(output).eql({x: myBot.me.x, y: myBot.me.y, count: 4, dist: 36});
+
+            done();
+        });
+    });
 
 });

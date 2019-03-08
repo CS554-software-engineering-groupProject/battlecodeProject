@@ -75,6 +75,9 @@ prophet.doAction = (self) => {
     if(self.role === "ATTACKER")
         return prophet.takeAttackerAction(self);
 
+    if(self.role === "DESTROYER")
+        return prophet.takeDestroyerAction(self);
+
     //Should not fall through unless still UNASSIGNED or something horrible happened
     self.log('prophet ' + self.role + ' ' + self.me.id + ' still UNASSIGNED!!!')
     return;

@@ -16,13 +16,13 @@ describe('Prophet Unit Tests', function() {
     let output;
 
     beforeEach(function() {
-        mapLength = 10;
+        mapLength = 20;
         myBot = new MyRobot();
         localCastle = new MyRobot();
         mockGame = new mockBC19('../projectUtils/psuteam7botCompiled.js');
         mockGame.initEmptyMaps(mapLength);
         //Alter so map is viewed as horizontally symmetric
-        mockGame.alterMap("map", [{x: 0, y: 0, value: false}, {x: 9, y: 0, value: false}])
+        mockGame.alterMap("map", [{x: 0, y: 0, value: false}, {x: 19, y: 0, value: false}])
         mockGame.createNewRobot(localCastle, 0, 3, 0, 0);
         mockGame.createNewRobot(myBot, 1, 3, 0, 4);
     });
@@ -64,26 +64,20 @@ describe('Prophet Unit Tests', function() {
 
             expect(myBot.base).to.eql({x: 0, y: 3});
             expect(myBot.role).equals("DEFENDER");
-            expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
-                signalPos,    //Castle signal (could be anything)
-                {x: 9, y: 6}  //Diagonal patrol (relative to localCastle)
-            ]);
+            expect(myBot.target).to.eql(signalPos);
             expect(output).equals('skipping defender action');
 
             done();
         });
 
-        it("UNASSIGNED bots should use getAttackerPatrolPosition if radio signal from the base DNE", function(done) {
+        it("UNASSIGNED bots should use getMirrorCastle if radio signal from the base DNE", function(done) {
             let stubDefenderAction = mockGame.replaceMethod("prophet", "takeDefenderAction").returns('skipping defender action');
 
             output = prophet.doAction(myBot);
 
             expect(myBot.base).to.eql({x: 0, y: 3});
             expect(myBot.role).equals("DEFENDER");
-            expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
-                {x: 9, y: 3}, //Mirror curent position (relative to prophet)
-                {x: 9, y: 6}  //Diagonal patrol (relative to localCastle)
-            ]);
+            expect(myBot.target).to.eql({x: 18, y: 3});
             expect(output).equals('skipping defender action');
 
             done();
@@ -136,47 +130,24 @@ describe('Prophet Unit Tests', function() {
     describe('takeAttackerAction() tests', function() {
         it('ATTACKERS with no base should identify enemy castles', function(done) {
             myBot.path = [{x: 3, y: 3}];
-            myBot.target = {x: 9, y: 3};
+            myBot.target = {x: 19, y: 3};
 
             output = prophet.takeAttackerAction(myBot);
 
-            expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
-                {x: 8, y: 3}, //Mirror location (relative to myBot)
-                {x: 8, y: 6}  //Diagonal patrol (relative to myBot)
-            ]);
+            expect(myBot.target).to.eql({x: 18, y: 3});
             expect(output['action']).equals('move');
 
             done();
         });
 
-        it('ATTACKERS with base but no potential castles should identify potential locations', function(done) {
-            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
-            myBot.path = [{x: 3, y: 3}];
-            myBot.target = {x: 9, y: 3};
-
-            output = prophet.takeAttackerAction(myBot);
-
-            expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
-                {x: 9, y: 3}, //Mirror location (relative to localCastle)
-                {x: 9, y: 6}  //Diagonal patrol (relative to localCastle)
-            ]);
-            expect(output['action']).equals('move');
-
-            done();
-        });
-
-        it('ATTACKERS with no target should update based on potentialEnemyCastleLocations', function(done) {
+        it('ATTACKERS with no target should wait for signal from base', function(done) {
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
             myBot.path = [{x: 3, y: 3}];
 
             output = prophet.takeAttackerAction(myBot);
 
-            expect(myBot.potentialEnemyCastleLocation).to.deep.include.members([
-                {x: 9, y: 3}, //Mirror location (relative to localCastle)
-                {x: 9, y: 6}  //Diagonal patrol (relative to localCastle)
-            ]);
-            expect(myBot.target).to.eql({x: 9, y: 3});
-            expect(output['action']).equals('move');
+            expect(myBot.target).to.eql(null);
+            expect(output).to.be.undefined;
 
             done();
         });
@@ -184,7 +155,7 @@ describe('Prophet Unit Tests', function() {
         it('ATTACKERS with enemies in attackable range should just attack enemies', function(done) {
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
             myBot.path = [{x: 3, y: 3}];
-            myBot.target = {x: 9, y: 3};
+            myBot.target = {x: 19, y: 3};
 
             //Teammate in attackable range
             mockGame.createNewRobot(new MyRobot(), 1, 7, 0, 2);
@@ -209,37 +180,10 @@ describe('Prophet Unit Tests', function() {
             done();
         });
 
-        it("ATTACKERS in attack range of castle but who didn't attack should get next potential castle", function(done) {
-            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
-            myBot.path = [{x: 3, y: 3}];
-
-            //If only one target left, should stop and do nothing
-            myBot.potentialEnemyCastleLocation = [{x: 9, y: 9}];
-            myBot.target = {x: 5, y: 3};
-
-            output = prophet.takeAttackerAction(myBot);
-
-            expect(myBot.potentialEnemyCastleLocation.length).equals(0);
-            expect(myBot.target).eql({x: 5, y: 3});
-            expect(output).to.be.undefined;  
-            
-            //If more than one target left, should alter potentialEnemyCastleLocation and set new target
-            myBot.potentialEnemyCastleLocation = [{x: 5, y: 3}, {x: 9, y: 9}];
-            myBot.target = {x: 5, y: 3};
-
-            output = prophet.takeAttackerAction(myBot);
-
-            expect(myBot.potentialEnemyCastleLocation).to.deep.include({x: 9, y: 9});
-            expect(myBot.target).eql({x: 9, y: 9});
-            expect(output['action']).equals('move');
-
-            done();
-        });
-
         it("ATTACKERS with an empty path should create a path to target", function(done) {
             let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
-            myBot.target = {x: 9, y: 3};
+            myBot.target = {x: 19, y: 3};
             myBot.attackerMoves = 6;
             myBot.squadSize = 0;
 
@@ -256,7 +200,7 @@ describe('Prophet Unit Tests', function() {
             let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
             myBot.path = [{x: 3, y: 3}];
-            myBot.target = {x: 9, y: 3};
+            myBot.target = {x: 19, y: 3};
 
             //Enough fuel, still turns to move
             myBot.attackerMoves = 5;
@@ -281,7 +225,7 @@ describe('Prophet Unit Tests', function() {
         it("ATTACKERS after 6 turns should wait for squad and adjust squadSize accordingly", function(done) {
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
             myBot.path = [{x: 3, y: 3}];
-            myBot.target = {x: 9, y: 3};
+            myBot.target = {x: 19, y: 3};
             myBot.attackerMoves = 6;
             myBot.squadSize = 2;
 
@@ -323,7 +267,7 @@ describe('Prophet Unit Tests', function() {
             let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
             myBot.path = [{x: 3, y: 3}];
-            myBot.target = {x: 9, y: 3};
+            myBot.target = {x: 19, y: 3};
             myBot.attackerMoves = 6;
             myBot.squadSize = 0;
 
@@ -339,10 +283,9 @@ describe('Prophet Unit Tests', function() {
 
     describe('takeDefenderAction() tests', function() {
         it('DEFENDERS with enemies in attackable range should just attack enemies', function(done) {
-            myBot.potentialEnemyCastleLocation = [{x: 9, y: 9}];
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
             myBot.path = [{x: 3, y: 3}];
-            myBot.target = {x: 9, y: 3};
+            myBot.target = {x: 19, y: 3};
             myBot.attackerMoves = 0;
 
             //Teammate in attackable range
@@ -371,18 +314,17 @@ describe('Prophet Unit Tests', function() {
         });
 
 
-        it("DEFENDERS for first 5 turns should attempt to set path to target if empty", function(done) {
-            myBot.potentialEnemyCastleLocation = [{x: 9, y: 3}];
+        it("DEFENDERS for first 3 turns should attempt to set path to target if empty", function(done) {
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
-            myBot.target = {x: 9, y: 3};
-            myBot.attackerMoves = 3;
+            myBot.target = {x: 19, y: 3};
+            myBot.attackerMoves = 1;
 
             expect(myBot.path.length).equals(0);
             output = prophet.takeDefenderAction(myBot);
 
             expect(myBot.path[0]).to.eql(myBot.target);
             expect(output['action']).equals('move');
-            expect(myBot.attackerMoves).equals(4);
+            expect(myBot.attackerMoves).equals(2);
 
             //Create impassable terrain so myBot can't get path
             const mapAlterations = [
@@ -406,22 +348,21 @@ describe('Prophet Unit Tests', function() {
 
             expect(myBot.path.length).equals(0);
             expect(output).to.be.undefined;
-            expect(myBot.attackerMoves).equals(5);
+            expect(myBot.attackerMoves).equals(3);
             
 
             done();
         });
 
-        it("DEFENDERS after first 5 turns should wait if no enemies to attack", function(done) {
-            myBot.potentialEnemyCastleLocation = [{x: 9, y: 3}];
+        it("DEFENDERS after first 3 turns should wait if no enemies to attack", function(done) {
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
-            myBot.target = {x: 9, y: 3};
-            myBot.attackerMoves = 5;
+            myBot.target = {x: 19, y: 3};
+            myBot.attackerMoves = 3;
 
             output = prophet.takeDefenderAction(myBot);
 
             expect(output).to.be.undefined;
-            expect(myBot.attackerMoves).equals(5);           
+            expect(myBot.attackerMoves).equals(3);           
 
             done();
         });

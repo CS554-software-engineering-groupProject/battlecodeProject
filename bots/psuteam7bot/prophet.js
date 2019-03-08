@@ -49,7 +49,6 @@ prophet.doAction = (self) => {
             if(robotElement.team === self.me.team && robotElement.unit === self.me.unit)
             {
                 const distance = movement.getDistance(self.base, robotElement);
-                //30, assuming defender moved at max speed (r^2= 4) for 5 turns (4*5 = 20), + 10 to account for the possibility of prophet spawning in different starting tiles
                 return distance <= 64;
             }
         });
@@ -105,7 +104,7 @@ prophet.takeDefenderAction = (self) =>  {
         self.attackerMoves++;
         if(self.path.length === 0)
         {
-            if(movement.aStarPathfinding(self, self.me, self.potentialEnemyCastleLocation[0], false)) {
+            if(movement.aStarPathfinding(self, self.me, self.target, false)) {
                 self.log(self.path)
             } else {
                 self.log('Cannot get path to guard post')
@@ -127,24 +126,16 @@ prophet.takeAttackerAction = (self) => {
     self.log("ATTACKER prophet " + self.id + " taking turn");
 
     //If no base
-    if(self.base == null)
+    if(self.base === null)
     {
         //Set opposite of current coord as target
-        self.potentialEnemyCastleLocation = movement.getAttackerPatrolRoute(self.me, self.map);
+        self.base = {x:-1, y:-1};
+        self.target = movement.getMirrorCastle(self.me, self.map);
     }
 
-
-    //If no target
-    if(self.potentialEnemyCastleLocation === null)
-    {
-        //Get potential enemy castle locations if Castle didn't send signal
-        self.potentialEnemyCastleLocation = movement.getAttackerPatrolRoute(self.base, self.map);
-    }
-
-    if(self.target === null)
-    {     
-        self.target = self.potentialEnemyCastleLocation[0];
-    }
+    //Checks for target update from base
+    communication.checkBaseSignalAndUpdateTarget(self);
+    communication.sendCastleTalkMessage(self);
 
     const visibleRobots = self.getVisibleRobots();
     const attackable = combat.filterByAttackable(self, visibleRobots);
@@ -162,19 +153,19 @@ prophet.takeAttackerAction = (self) => {
         return self.attack(attacking.x - self.me.x, attacking.y - self.me.y);
     }
 
-    //No enemy castle at target and there are more waypoint to check
-    if(self.potentialEnemyCastleLocation.length > 0 && movement.getDistance(self.me, self.target) <= 49)
+    //Still no target, and no update from base, do nothing
+    if(self.target === null)
     {
-        //Assign new target waypoint
-        self.potentialEnemyCastleLocation.shift();
-        if(self.potentialEnemyCastleLocation.length != 0) {
-            self.target = self.potentialEnemyCastleLocation[0];
-        }
+        self.log("No target, waiting for signal from base...")
+        return;
     }
 
-    //TODO No more patrol waypoint, do nothing
-    if(self.potentialEnemyCastleLocation.length === 0)
+    //If target is not enemy castle, report to team castles
+    if(communication.checkAndReportEnemyCastleDestruction(self))
     {
+        //Enemy castle destroyed, waiting for next order
+        self.log("Enemy castle destroyed, message stored")
+        self.target = null;
         return;
     }
 

@@ -44,11 +44,6 @@ castle.doAction = (self) => {
     }
     else if (self.me.turn <= 4) 
     {
-        if(self.me.turn > 5)
-        {
-            castle.checkUnitCastleTalk(self);
-            castle.signalNewUnitTarget(self);
-        }
         self.log("BUILD QUEUE NON-EMPTY")
         self.log(self.castleBuildQueue)
         const botsInQueue = self.castleBuildQueue.length;
@@ -61,13 +56,16 @@ castle.doAction = (self) => {
     else 
     {
         castle.checkUnitCastleTalk(self);
-        castle.signalNewUnitTarget(self);
+        const hasSignalToSend = castle.signalNewUnitTarget(self);
         const botsInQueue = self.castleBuildQueue.length;
+        //If there are still pilgrims to build, prioritize that
+        if(botsInQueue > 0 && self.castleBuildQueue[0].unit == "PILGRIM") {
+            return castle.buildFromQueue(self);
         //Keep queue at reasonable size, adding another prophet as necessary so prophets are continually build
-        if (botsInQueue <= 5) {
-            self.castleBuildQueue.push(self.castleBuildQueue[botsInQueue-1]);
+        } else if (botsInQueue <= 5) {
+            self.castleBuildQueue.push({unit: "CRUSADER", x: self.target.x, y: self.target.y});
         }
-        return castle.makeDecision(self, self.teamCastles);
+        return castle.makeDecision(self, self.teamCastles, hasSignalToSend);
     }
 }
 /** Method to check if any of the adjacent tile is available. Place the unit if true.
@@ -96,8 +94,25 @@ castle.findUnitPlace = (self, unitType) => {
  */
 castle.buildFromQueue = (self) => {
     const nextBuild = self.castleBuildQueue[0];
+    const botsOnMap = combat.getVisibleAllies(self).length;
+    let buildCount = 0  
+    let fuelCap = 0 
+    if(self.me.turn > 20) {
+        /*Take lesser of 1. bots built and 2. bots on map
+          1. Case for when castle destroyed and new one starts building - ensures it starts sooner rather than when 
+             bots at destroyed castle eventually eliminated
+          2. Case for when you've built a lot but bots keep getting destroyed - ensures that you don't stop building
+             if you need more on the map
+        */
+        buildCount = Math.min(self.teamCastles[0].buildCounter.total, botsOnMap);
+        fuelCap = 50+5*buildCount; //25+25*self.teamCastles.length;
+    }
+    //If past very start of game and fuel amount low, don't build a unit
+    if(self.fuel < fuelCap) {
+        self.log('not building unit to conserve fuel');
+        return;
     //If you are able to build next unit, signal coordinates so it knows where to go and build it
-    if(self.fuel >= SPECS.UNITS[SPECS[nextBuild.unit]].CONSTRUCTION_FUEL && 
+    } else if(self.fuel >= SPECS.UNITS[SPECS[nextBuild.unit]].CONSTRUCTION_FUEL && 
        self.karbonite >= SPECS.UNITS[SPECS[nextBuild.unit]].CONSTRUCTION_KARBONITE) {
         self.castleBuildQueue.shift();
         self.signal(communication.positionToSignal(nextBuild, self.map), 2);
@@ -128,8 +143,8 @@ castle.recordPosition = (self) => {
  */
 castle.findPosition = (self) => {
     //Filter by those that have a castle talk, since apparently unit does not appear if not in vision radius
-    const bots = self.getVisibleRobots().filter(bots =>{
-        return bots.team === self.me.team && bots.castle_talk > 0;
+    const bots = self.getVisibleRobots().filter(bot =>{
+        return bot.team === self.me.team && bot.castle_talk > 0;
     });
     let turn = self.me.turn;
     const buildCounter = {
@@ -141,9 +156,19 @@ castle.findPosition = (self) => {
     const maxDist = -2*Math.pow(self.map.length, 2)-1
 
     bots.forEach(foundCastle => {
-        //Init an item in teamCastles for each on turn 2 once signals being sent
-        if (turn == 2) {
-            self.teamCastles.push({id: foundCastle.id, x: maxDist, y: maxDist, buildCounter: buildCounter, signalBuilding: false})
+        const addedToTeamCastles = self.teamCastles.findIndex(c => {
+            return c.id === foundCastle.id;
+        })
+        //Init an item in teamCastles if not already in teamCastles for initial turns
+        if (addedToTeamCastles < 0 && turn < 5) {
+            self.teamCastles.push({
+                id: foundCastle.id,
+                x: 0, 
+                y: 0, 
+                buildCounter: buildCounter, 
+                signalBuilding: false,
+                mirrorCastleDestroyed: false
+            })
         }
 
         self.teamCastles.forEach(teamCastle =>{
@@ -157,6 +182,7 @@ castle.findPosition = (self) => {
                 if(turn >= 5){
                     self.log("castle_talk: " + foundCastle.castle_talk)
                     if(foundCastle.castle_talk == 100){
+                        teamCastle.buildCounter.total++;
                         teamCastle.signalBuilding = true;
                     }
                     else if(foundCastle.castle_talk == 101){
@@ -212,7 +238,7 @@ castle.mirrorCastle = (myLocation, fullMap) => {
  * 2. if enemies in visible range, create prophets and attack
  * 3. otherwise signal other friendly castles about status on the units build
  */
-castle.makeDecision = (self, otherCastles) => {
+castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
 
     const visibleEnemies= combat.getVisibleEnemies(self);
     const attackableEnemies = combat.filterByAttackable(self, visibleEnemies);
@@ -225,10 +251,8 @@ castle.makeDecision = (self, otherCastles) => {
 
         self.log('Attackable enemies attacking');
         return self.attack(dx, dy);
-    }
-
     //if there are any enemies in a visible range, castle will start building PHROPHETS
-    if(visibleEnemies.length > 0){
+    } else if(visibleEnemies.length > 0){
         self.log('Enemies in the visible range, building phrophets');
         return castle.findUnitPlace(self, 'PROPHET');
     }
@@ -239,14 +263,19 @@ castle.makeDecision = (self, otherCastles) => {
     });
 
     self.log("Signal: " +  checkSignal);
-    self.log(JSON.stringify(self.getVisibleRobots().filter(bots => {return bots.castle_talk > 0})));
-    self.log(JSON.stringify(otherCastles));
+    //self.log(JSON.stringify(self.getVisibleRobots().filter(bots => {return bots.castle_talk > 0})));
+    //self.log(JSON.stringify(otherCastles));
 
-    if(checkSignal <= 0){
+    if(checkSignal <= 0 && !otherCastles[0].mirrorCastleDestroyed) {
         otherCastles[0].signalBuilding = true
         self.castleTalk(100);
-        return castle.buildFromQueue(self)
-        
+        //If there is a signal to send, forgo building unit for one turn and ensure signal sent
+        if (hasSignalToSend) {
+            self.log("Attempting to send signal.....")
+            return;
+        } else {
+            return castle.buildFromQueue(self)
+        }
     }
     else{
 
@@ -296,6 +325,11 @@ castle.makeDecision = (self, otherCastles) => {
                         {
                             const removedCastle = self.enemyCastles.splice(k,1)[0];
                             enemyCastlesLength = self.enemyCastles.length;
+                            self.teamCastles.forEach(tc => {
+                                if(movement.positionsAreEqual(enemyCastle, movement.getMirrorCastle(tc, self.map))) {
+                                    tc.mirrorCastleDestroyed = true;
+                                }
+                            })
                             //self.log("Enemy castle removed from array----------------------------------------------------------------------------------------")
                             //self.log(self.target);
                             //self.log(removedCastle);
@@ -303,7 +337,7 @@ castle.makeDecision = (self, otherCastles) => {
                             {
                                 self.target = self.enemyCastles[0];
                                 self.pendingMessages.push(communication.positionToSignal(self.target, self.map));
-                                //self.log("Signal stored-------------------------------------------------------------------------------------------");
+                                self.log("Signal stored-------------------------------------------------------------------------------------------");
                                 //self.log(self.pendingMessages);
                                 return;
                             }
@@ -328,13 +362,15 @@ castle.signalNewUnitTarget = (self) =>{
         {
             const newTarget = self.pendingMessages.pop();
             self.signal(newTarget, self.map.length*self.map.length);
-            //self.log("Signal sent to units, " + newTarget + "---------------------------------------------------------------------------------------------------------");
+            self.log("Signal sent to units, " + newTarget + "---------------------------------------------------------------------------------------------------------");
+            return true;
         }
         else
         {
             self.log("Not enough fuel to send signal");
         }
     }
+    return false;
 }
 
 export default castle;

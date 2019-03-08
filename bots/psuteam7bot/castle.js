@@ -175,7 +175,8 @@ castle.findPosition = (self) => {
                 y: 0, 
                 buildCounter: buildCounter, 
                 signalBuilding: false,
-                mirrorCastleDestroyed: false
+                mirrorCastleDestroyed: false,
+                silentCount: 0
             })
         }
 
@@ -195,6 +196,12 @@ castle.findPosition = (self) => {
                     }
                     else if(foundCastle.castle_talk == 101){
                         teamCastle.signalBuilding = false;
+                    } else {
+                        //If no castle_talk visible, start checking. After certain amout of time, assume destroyed
+                        teamCastle.silentCount++;
+                        if(silentCount >= 10) {
+                            teamCastle.signalBuilding = false; 
+                        }
                     }
                     /*else if(foundCastle.castle_talk >= 1){
                         self.log("Castle talk: " + foundCastle.castle_talk);

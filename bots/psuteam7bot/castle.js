@@ -17,6 +17,13 @@ castle.doAction = (self) => {
         self.enemyCastles = movement.getEnemyCastleLocations(self.teamCastles, self.map);
         self.log("Enemy castles: ");
         self.log(self.enemyCastles);
+        const competitionDepots = castle.findBestDepots(self, 3, 1, true);
+        const prophetArray = []
+        competitionDepots.forEach(depot => {
+            prophetArray.push({unit: "PROPHET", x: depot.x, y: depot.y});
+        })
+        self.castleBuildQueue = prophetArray.concat(self.castleBuildQueue);
+        self.log(self.castleBuildQueue);
     }
 
     //On first turn:
@@ -40,9 +47,6 @@ castle.doAction = (self) => {
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
         self.target = mirrorCastle;
         self.log(self.castleBuildQueue);
-        /*//Testing aggressive searching
-        self.resourceClusters = castle.findBestDepots(self, true);
-        self.resourceClusters = 0;*/
         return castle.buildFromQueue(self);
     }
     else if (self.me.turn <= 4) 
@@ -61,8 +65,8 @@ castle.doAction = (self) => {
         castle.checkUnitCastleTalk(self);
         const hasSignalToSend = castle.signalNewUnitTarget(self);
         const botsInQueue = self.castleBuildQueue.length;
-        //If there are still pilgrims to build, prioritize that
-        if(botsInQueue > 0 && self.castleBuildQueue[0].unit == "PILGRIM") {
+        //If there are still pilgrims of prophets to build, prioritize those unique units
+        if(botsInQueue > 0 && ((self.castleBuildQueue[0].unit == "PILGRIM") || (self.castleBuildQueue[0].unit == "PROPHET"))) {
             return castle.buildFromQueue(self);
         //Keep queue at reasonable size, adding another prophet as necessary so prophets are continually build
         } else if (botsInQueue <= 5) {
@@ -71,14 +75,6 @@ castle.doAction = (self) => {
         return castle.makeDecision(self, self.teamCastles, hasSignalToSend);
     }
 }
-
-castle.initializeStrategy = (self) => {
-    const castleCount = self.teamCastles.length;
-    const mapSize = self.map.length;
-    const enemyCastleDistXY = movement.getDistanceXY(self.me, movement.getMirrorCastle(self.me, self.map));
-    const enemyCastleDistance = castleDistXY.x + castleDistXY.y;
-}
-
 
 /** Method to check if any of the adjacent tile is available. Place the unit if true.
  */
@@ -392,6 +388,7 @@ castle.signalNewUnitTarget = (self) =>{
  * is false. NOTE: All sorting places higher priority locations lower in the list (i.e. `clusters[0]` will be highest priority)
  * 
  * @param self Castle calling method
+ * @param minClusterSize Filters out any clusters with less local depots than this value
  * @param searchAggressively Boolean indicating whether to filter for depots that the enemy might be targeting. If true, filters for
  * locations that are past the midpoint between calling castle and it's mirror castle but before the range limit. If false, filters for
  * locations just past the midpoint or closer to the castle
@@ -401,7 +398,7 @@ castle.signalNewUnitTarget = (self) =>{
  * is greater than the midpoint (i.e. 0.5)
  * @return Returns an array of objects that include a location and other information about a tile close to other resource depots
  */
-castle.findBestDepots = (self, competitionIndex, searchAggressively) => {
+castle.findBestDepots = (self, minClusterSize, competitionIndex, searchAggressively) => {
     //Internal helper function that is self-explanatory. Needed because we are often searching for coordiantes in a range
     const valueIsBetween = (value, a, b) => {
         return value <= Math.max(a,b) && value >= Math.min(a,b);
@@ -413,8 +410,11 @@ castle.findBestDepots = (self, competitionIndex, searchAggressively) => {
     const castleDistXY = movement.getDistanceXY(self.me, movement.getMirrorCastle(self.me, self.map));
     const castleDistance = castleDistXY.x + castleDistXY.y;
     //Following four objects are numerous locations to determine range between with to search
-    const rangeLimit = {x: self.me.x+(castleDistance*competitionIndex), y: self.me.y+(castleDistance*competitionIndex)}; //Max coordinate in x or y direction - only use one!
-    const midPoint = {x: self.me.x+(castleDistXY.x/2), y: self.me.y+(castleDistXY.y/2)}; //Midpoint
+    const midPoint = {x: self.map.length/2, y: self.map.length/2}; //Midpoint
+    const rangeLimit = { //Max coordinate in x or y direction - only use one!
+        x: (midPoint.x > self.me.x) ? self.me.x+(castleDistance*competitionIndex) : self.me.x-(castleDistance*competitionIndex), 
+        y: (midPoint.y > self.me.y) ? self.me.y+(castleDistance*competitionIndex) : self.me.y-(castleDistance*competitionIndex)
+    }; 
     const conservativeMid = { //Something just before midPoint - allows us to account for things in middle better
         x: (midPoint.x > self.me.x) ? midPoint.x-2 : midPoint.x+2,
         y: (midPoint.y > self.me.y) ? midPoint.y-2 : midPoint.y+2
@@ -433,6 +433,9 @@ castle.findBestDepots = (self, competitionIndex, searchAggressively) => {
             if(self.karbonite_map[y][x] || self.fuel_map[y][x]) {
                 let currentCheck = {x: x, y: y, count: -1, dist: -1};
                 currentCheck = castle.processLocalDepots(self, currentCheck);
+                if(currentCheck.count < minClusterSize) {
+                    continue;
+                }
                 let nearbyIndex = clusters.findIndex(depot => {
                     return movement.getDistance(currentCheck, depot) <= 9 && depot.count >= currentCheck.count;
                 });
@@ -446,6 +449,9 @@ castle.findBestDepots = (self, competitionIndex, searchAggressively) => {
             }
         }
     }
+    self.log("IN CLUSTER SEARCH")
+    self.log(clusters.length);
+    self.log(JSON.stringify(self.teamCastles))
     //Filter for those within reasonable range for which we can compete and aren't closer to another friendly castle
     clusters = clusters.filter(target => {
         let closerTeamCastle = false;
@@ -464,6 +470,8 @@ castle.findBestDepots = (self, competitionIndex, searchAggressively) => {
         });
         return !closerTeamCastle;
     });
+    self.log(clusters.length);
+
     //If search aggressively, filter for targets just before midpoint to compete with opponent
     if(searchAggressively) {
         /*clusters = clusters.sort((a,b) => {
@@ -486,7 +494,10 @@ castle.findBestDepots = (self, competitionIndex, searchAggressively) => {
                 return b.count - a.count;
             }
         })*/
-        cluster = clusters.filter(cluster => {
+        self.log("RangeLimit: " + JSON.stringify(rangeLimit))
+        self.log("Mid: " + JSON.stringify(midPoint))
+        clusters = clusters.filter(cluster => {
+            self.log("Cluster: " + JSON.stringify(cluster))
             if(mapHorizonal) {
                 return valueIsBetween(cluster.y, rangeLimit.y, conservativeMid.y);
             } else {
@@ -524,6 +535,8 @@ castle.findBestDepots = (self, competitionIndex, searchAggressively) => {
             }
         })
     }
+    self.log(clusters);
+    self.log("END CLUSTER SEARCH")
     //Return sorted by count size
     return clusters.sort((a,b) => { return b.count - a.count; });
 }
@@ -552,12 +565,12 @@ castle.processLocalDepots = (self, location) => {
 }
 
 
-castle.getNextClusterLocation = (self) => {
+/*castle.getNextClusterLocation = (self) => {
     if(self.currentCluster < 0) {
         self.resourceClusters = castle.findBestDepots(self, false);
         self.currentCluster = 0;
     }
     return self.resourceClusters[self.currentCluster];
-}
+}*/
 
 export default castle;

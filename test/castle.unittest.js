@@ -18,7 +18,7 @@ describe('Castle Helpers Unit Tests', function(){
 
     });
 
-    describe.only('findBestDepots() tests', function() {
+    describe.only('findDepotClusters() tests', function() {
         it('should only get one location per cluster', function(done) {
             myBot = new MyRobot();
             const karbAlterations = [
@@ -32,7 +32,7 @@ describe('Castle Helpers Unit Tests', function(){
             mockGame.alterMap("karbonite_map", karbAlterations);
             mockGame.createNewRobot(myBot, 0, 0, 0, 0);
 
-            output = castle.findBestDepots(myBot, 1, true);
+            output = castle.findDepotClusters(myBot, 0, 1, true);
 
             expect(output.length).equals(1);
 
@@ -56,7 +56,7 @@ describe('Castle Helpers Unit Tests', function(){
             mockGame.alterMap("karbonite_map", karbAlterations);
             mockGame.createNewRobot(myBot, 0, 0, 0, 0);
 
-            output = castle.findBestDepots(myBot, testIndex, true);
+            output = castle.findDepotClusters(myBot, 0, testIndex, true);
             output.forEach(cluster => {
                 expect(cluster.x <= testIndex);
             })
@@ -66,7 +66,7 @@ describe('Castle Helpers Unit Tests', function(){
             mockGame.alterMap("map", [{x: 9, y: 0, value:false},{x: 9, y: 9, value:false}]); //Horizontal reflection
             mockGame.createNewRobot(myBot, 0, 0, 0, 0);
 
-            output = castle.findBestDepots(myBot, testIndex, true);
+            output = castle.findDepotClusters(myBot, 0, testIndex, true);
             output.forEach(cluster => {
                 expect(cluster.y <= testIndex);
             })
@@ -88,7 +88,7 @@ describe('Castle Helpers Unit Tests', function(){
             myBot.teamCastles = [{id: myBot.me.id, x: myBot.me.x, y: myBot.me.y}, {id: myBot.me.id-1, x: 0, y: 9}];
             //console.log(myBot);
 
-            output = castle.findBestDepots(myBot, 1, true);
+            output = castle.findDepotClusters(myBot, 0, 1, true);
         
             expect(output.length).equals(1);
             expect(output[0]).to.have.property('x', 3);
@@ -109,6 +109,7 @@ describe('Castle Helpers Unit Tests', function(){
                 {x: 1, y: 2, value:true},
                 {x: 2, y: 1, value:true},
                 {x: 2, y: 2, value:true},
+                {x: 6, y: 6, value:true}
             ]
 
             //Vertical reflection map
@@ -116,7 +117,7 @@ describe('Castle Helpers Unit Tests', function(){
             mockGame.alterMap("map", [{x: 0, y: 9, value:false},{x: 9, y: 9, value:false}]); //Vertical reflection
             mockGame.createNewRobot(myBot, 0, 0, 0, 0);
 
-            output = castle.findBestDepots(myBot, testIndex, true);
+            output = castle.findDepotClusters(myBot, 0, testIndex, true);
             expect(output.length).equals(1);
             expect(output[0]).to.have.property('x', 8);
             expect(output[0]).to.have.property('y', 1);
@@ -127,7 +128,7 @@ describe('Castle Helpers Unit Tests', function(){
             mockGame.alterMap("map", [{x: 9, y: 0, value:false},{x: 9, y: 9, value:false}]); //Horizontal reflection
             mockGame.createNewRobot(myBot, 0, 0, 0, 0);
 
-            output = castle.findBestDepots(myBot, testIndex, true);
+            output = castle.findDepotClusters(myBot, 0, testIndex, true);
             expect(output.length).equals(1);
             expect(output[0]).to.have.property('x', 1);
             expect(output[0]).to.have.property('y', 8);
@@ -147,7 +148,7 @@ describe('Castle Helpers Unit Tests', function(){
                 {x: 1, y: 2, value:true},
                 {x: 2, y: 1, value:true},
                 {x: 2, y: 2, value:true},
-                {x: 6, y: 6, value:true},
+                {x: 6, y: 6, value:true}
             ]
 
             //Vertical reflection map
@@ -155,7 +156,7 @@ describe('Castle Helpers Unit Tests', function(){
             mockGame.alterMap("map", [{x: 0, y: 9, value:false},{x: 9, y: 9, value:false}]); //Vertical reflection
             mockGame.createNewRobot(myBot, 0, 0, 0, 0);
 
-            output = castle.findBestDepots(myBot, testIndex, true);
+            output = castle.findDepotClusters(myBot, 0, testIndex, false);
             expect(output.length).equals(2);
             expect(output[0]).to.have.property('x', 1);
             expect(output[0]).to.have.property('y', 1);
@@ -166,52 +167,13 @@ describe('Castle Helpers Unit Tests', function(){
             mockGame.alterMap("map", [{x: 9, y: 0, value:false},{x: 9, y: 9, value:false}]); //Horizontal reflection
             mockGame.createNewRobot(myBot, 0, 0, 0, 0);
 
-            output = castle.findBestDepots(myBot, testIndex, true);
+            output = castle.findDepotClusters(myBot, 0, testIndex, false);
             expect(output.length).equals(2);
             expect(output[0]).to.have.property('x', 1);
             expect(output[0]).to.have.property('y', 1);
 
             done();
-        });
-
-        it('if not searching aggressively, should only get items roughly on your side of map', function(done) {
-            myBot = new MyRobot();
-            const testIndex = 0.9;
-            const karbAlterations = [
-                {x: 8, y: 1, value:true},
-                {x: 9, y: 1, value:true},
-                {x: 1, y: 8, value:true},
-                {x: 1, y: 9, value:true},
-                {x: 1, y: 1, value:true},
-                {x: 1, y: 2, value:true},
-                {x: 2, y: 1, value:true},
-                {x: 2, y: 2, value:true},
-                {x: 6, y: 6, value:true},
-            ]
-
-            //Vertical reflection map
-            mockGame.alterMap("karbonite_map", karbAlterations);
-            mockGame.alterMap("map", [{x: 0, y: 9, value:false},{x: 9, y: 9, value:false}]); //Vertical reflection
-            mockGame.createNewRobot(myBot, 0, 0, 0, 0);
-
-            output = castle.findBestDepots(myBot, testIndex, true);
-            expect(output.length).equals(2);
-            expect(output[0]).to.have.property('x', 1);
-            expect(output[0]).to.have.property('y', 1);
-
-            //Horizontal reflection map
-            mockGame.initEmptyMaps(10);
-            mockGame.alterMap("karbonite_map", karbAlterations);
-            mockGame.alterMap("map", [{x: 9, y: 0, value:false},{x: 9, y: 9, value:false}]); //Horizontal reflection
-            mockGame.createNewRobot(myBot, 0, 0, 0, 0);
-
-            output = castle.findBestDepots(myBot, testIndex, true);
-            expect(output.length).equals(2);
-            expect(output[0]).to.have.property('x', 1);
-            expect(output[0]).to.have.property('y', 1);
-
-            done();
-        });        
+        });       
     })
 
 });

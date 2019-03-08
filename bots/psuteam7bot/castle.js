@@ -17,7 +17,7 @@ castle.doAction = (self) => {
         self.enemyCastles = movement.getEnemyCastleLocations(self.teamCastles, self.map);
         self.log("Enemy castles: ");
         self.log(self.enemyCastles);
-        const competitionDepots = castle.findBestDepots(self, 3, 1, true);
+        const competitionDepots = castle.findDepotClusters(self, 3, 0.7, true);
         const prophetArray = []
         competitionDepots.forEach(depot => {
             prophetArray.push({unit: "PROPHET", x: depot.x, y: depot.y});
@@ -398,7 +398,7 @@ castle.signalNewUnitTarget = (self) =>{
  * is greater than the midpoint (i.e. 0.5)
  * @return Returns an array of objects that include a location and other information about a tile close to other resource depots
  */
-castle.findBestDepots = (self, minClusterSize, competitionIndex, searchAggressively) => {
+castle.findDepotClusters = (self, minClusterSize, competitionIndex, searchAggressively) => {
     //Internal helper function that is self-explanatory. Needed because we are often searching for coordiantes in a range
     const valueIsBetween = (value, a, b) => {
         return value <= Math.max(a,b) && value >= Math.min(a,b);
@@ -451,7 +451,6 @@ castle.findBestDepots = (self, minClusterSize, competitionIndex, searchAggressiv
     }
     self.log("IN CLUSTER SEARCH")
     self.log(clusters.length);
-    self.log(JSON.stringify(self.teamCastles))
     //Filter for those within reasonable range for which we can compete and aren't closer to another friendly castle
     clusters = clusters.filter(target => {
         let closerTeamCastle = false;
@@ -474,26 +473,6 @@ castle.findBestDepots = (self, minClusterSize, competitionIndex, searchAggressiv
 
     //If search aggressively, filter for targets just before midpoint to compete with opponent
     if(searchAggressively) {
-        /*clusters = clusters.sort((a,b) => {
-            let aNearMidpoint;
-            let bNearMidpoint;
-            if(mapHorizonal) {
-                //Check if between rangeLimit and slightly before midpoint
-                aNearMidpoint = valueIsBetween(a.y, rangeLimit.y, conservativeMid.y);
-                bNearMidpoint = valueIsBetween(b.y, rangeLimit.y, conservativeMid.y);
-            } else {
-                //Check if between rangeLimit and slightly before midpoint
-                aNearMidpoint = valueIsBetween(a.x, rangeLimit.x, conservativeMid.x);
-                bNearMidpoint = valueIsBetween(b.x, rangeLimit.x, conservativeMid.x);
-            }
-            if (aNearMidpoint && !bNearMidpoint) {
-                return -1;
-            } else if (!aNearMidpoint && bNearMidpoint) {
-                return 1;
-            } else {
-                return b.count - a.count;
-            }
-        })*/
         self.log("RangeLimit: " + JSON.stringify(rangeLimit))
         self.log("Mid: " + JSON.stringify(midPoint))
         clusters = clusters.filter(cluster => {
@@ -507,26 +486,6 @@ castle.findBestDepots = (self, minClusterSize, competitionIndex, searchAggressiv
         })
     //Otherwise, filter for things just pst midpoint or closer 
     } else {
-        /*clusters = clusters.sort((a,b) => {
-            let aBeforeMidpoint;
-            let bBeforeMidpoint;
-            if(mapHorizonal) {
-                //Check if slightly past mid or closer to castle
-                aBeforeMidpoint = valueIsBetween(a.y, castleBorder.y, generousMid.y);
-                bBeforeMidpoint = valueIsBetween(b.y, castleBorder.y, generousMid.y);
-            } else {
-                //Check if slightly past mid or closer to castle
-                aBeforeMidpoint = valueIsBetween(a.x, castleBorder.x, generousMid.x);
-                bBeforeMidpoint = valueIsBetween(b.x, castleBorder.x, generousMid.x);
-            }
-            if (aBeforeMidpoint && !bBeforeMidpoint) {
-                return -1;
-            } else if (!aBeforeMidpoint && bBeforeMidpoint) {
-                return 1;
-            } else {
-                return b.count - a.count;
-            }
-        })*/
         clusters = clusters.filter(cluster => {
             if(mapHorizonal) {
                 return valueIsBetween(cluster.y, castleBorder.y, generousMid.y);
@@ -535,6 +494,32 @@ castle.findBestDepots = (self, minClusterSize, competitionIndex, searchAggressiv
             }
         })
     }
+    //Handling edge cases where spots are close and can watched by a single prophet
+    clusters = clusters.filter(cluster => {
+        let nearby = clusters.findIndex(c => {
+            return !movement.positionsAreEqual(cluster, c) && movement.getDistance(cluster, c) <= 32;
+        });
+        //Find anything nearby, remove if nearby has smaller count or is farther from base. If nearby has higher count
+        //or is closer to base, filter out current cluster instead. Repeat until all nearby or this cluster removed
+        while(nearby >= 0) {
+            if(clusters[nearby].count > cluster.count) {
+                return false;
+            } else if (clusters[nearby].count < cluster.count) {
+                clusters.splice(nearby, 1);
+            } else {
+                if(movement.getDistance(self.me, cluster) > movement.getDistance(self.me, clusters[nearby])) {
+                    return false;
+                } else {
+                    clusters.splice(nearby, 1);
+                }
+            }
+            nearby = clusters.findIndex(c => {
+                return !movement.positionsAreEqual(cluster, c) && movement.getDistance(cluster, c) <= 32;
+            })
+        }
+        return true;      
+    });
+
     self.log(clusters);
     self.log("END CLUSTER SEARCH")
     //Return sorted by count size
@@ -567,7 +552,7 @@ castle.processLocalDepots = (self, location) => {
 
 /*castle.getNextClusterLocation = (self) => {
     if(self.currentCluster < 0) {
-        self.resourceClusters = castle.findBestDepots(self, false);
+        self.resourceClusters = castle.findDepotClusters(self, false);
         self.currentCluster = 0;
     }
     return self.resourceClusters[self.currentCluster];

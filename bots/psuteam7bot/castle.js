@@ -17,6 +17,13 @@ castle.doAction = (self) => {
         self.enemyCastles = movement.getEnemyCastleLocations(self.teamCastles, self.map);
         self.log("Enemy castles: ");
         self.log(self.enemyCastles);
+        const competitionDepots = castle.findDepotClusters(self, 3, 0.7, true);
+        const prophetArray = []
+        competitionDepots.forEach(depot => {
+            prophetArray.push({unit: "PROPHET", x: depot.x, y: depot.y});
+        })
+        self.castleBuildQueue = prophetArray.concat(self.castleBuildQueue);
+        self.log(self.castleBuildQueue);
     }
 
     //On first turn:
@@ -39,7 +46,7 @@ castle.doAction = (self) => {
         
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
         self.target = mirrorCastle;
-        self.log(self.castleBuildQueue)
+        self.log(self.castleBuildQueue);
         return castle.buildFromQueue(self);
     }
     else if (self.me.turn <= 4) 
@@ -58,8 +65,8 @@ castle.doAction = (self) => {
         castle.checkUnitCastleTalk(self);
         const hasSignalToSend = castle.signalNewUnitTarget(self);
         const botsInQueue = self.castleBuildQueue.length;
-        //If there are still pilgrims to build, prioritize that
-        if(botsInQueue > 0 && self.castleBuildQueue[0].unit == "PILGRIM") {
+        //If there are still pilgrims of prophets to build, prioritize those unique units
+        if(botsInQueue > 0 && ((self.castleBuildQueue[0].unit == "PILGRIM") || (self.castleBuildQueue[0].unit == "PROPHET"))) {
             return castle.buildFromQueue(self);
         //Keep queue at reasonable size, adding another prophet as necessary so prophets are continually build
         } else if (botsInQueue <= 5) {
@@ -68,6 +75,7 @@ castle.doAction = (self) => {
         return castle.makeDecision(self, self.teamCastles, hasSignalToSend);
     }
 }
+
 /** Method to check if any of the adjacent tile is available. Place the unit if true.
  */
 castle.findUnitPlace = (self, unitType) => {
@@ -167,7 +175,8 @@ castle.findPosition = (self) => {
                 y: 0, 
                 buildCounter: buildCounter, 
                 signalBuilding: false,
-                mirrorCastleDestroyed: false
+                mirrorCastleDestroyed: false,
+                silentCount: 0
             })
         }
 
@@ -184,9 +193,17 @@ castle.findPosition = (self) => {
                     if(foundCastle.castle_talk == 100){
                         teamCastle.buildCounter.total++;
                         teamCastle.signalBuilding = true;
+                        teamCastle.silentCount = 0;
                     }
                     else if(foundCastle.castle_talk == 101){
                         teamCastle.signalBuilding = false;
+                        teamCastle.silentCount = 0;
+                    } else {
+                        //If no castle_talk visible, start checking. After certain amout of time, assume destroyed
+                        teamCastle.silentCount++;
+                        if(teamCastle.silentCount >= 10) {
+                            teamCastle.signalBuilding = false; 
+                        }
                     }
                     /*else if(foundCastle.castle_talk >= 1){
                         self.log("Castle talk: " + foundCastle.castle_talk);
@@ -372,5 +389,182 @@ castle.signalNewUnitTarget = (self) =>{
     }
     return false;
 }
+
+/**
+ * Function that gets an array of locations representing positions close to a number of resource depots. Prioritizes bigger clusters
+ * and filters by locations that are between from a range limit (dictated by the `competitionIndex` param in the function) and roughly 
+ * the midpoint is `searchAggressively` is set to true or filters by locations roughly on the castle's side of the map if `searchAggressively`
+ * is false. NOTE: All sorting places higher priority locations lower in the list (i.e. `clusters[0]` will be highest priority)
+ * 
+ * @param self Castle calling method
+ * @param minClusterSize Filters out any clusters with less local depots than this value
+ * @param searchAggressively Boolean indicating whether to filter for depots that the enemy might be targeting. If true, filters for
+ * locations that are past the midpoint between calling castle and it's mirror castle but before the range limit. If false, filters for
+ * locations just past the midpoint or closer to the castle
+ * @param competitionIndex Value from 0 to 1 indicating how far between the calling castle and the enemy castle we should set our rangeLimit
+ * for how far we are willing to compete for resource. E.g. if competitionIndex=0.5, we will only search for resources that are at most halfway
+ * between castle and mirror castle. In all practicality this value should be greater than 0.5 as the "searchAggressive" case assumes this index
+ * is greater than the midpoint (i.e. 0.5)
+ * @return Returns an array of objects that include a location and other information about a tile close to other resource depots
+ */
+castle.findDepotClusters = (self, minClusterSize, competitionIndex, searchAggressively) => {
+    //Internal helper function that is self-explanatory. Needed because we are often searching for coordiantes in a range
+    const valueIsBetween = (value, a, b) => {
+        return value <= Math.max(a,b) && value >= Math.min(a,b);
+    }
+
+    let clusters = [];
+    
+    const mapHorizonal = movement.isHorizontalReflection(self.map);
+    const castleDistXY = movement.getDistanceXY(self.me, movement.getMirrorCastle(self.me, self.map));
+    const castleDistance = castleDistXY.x + castleDistXY.y;
+    //Following four objects are numerous locations to determine range between with to search
+    const midPoint = {x: self.map.length/2, y: self.map.length/2}; //Midpoint
+    const rangeLimit = { //Max coordinate in x or y direction - only use one!
+        x: (midPoint.x > self.me.x) ? self.me.x+(castleDistance*competitionIndex) : self.me.x-(castleDistance*competitionIndex), 
+        y: (midPoint.y > self.me.y) ? self.me.y+(castleDistance*competitionIndex) : self.me.y-(castleDistance*competitionIndex)
+    }; 
+    const conservativeMid = { //Something just before midPoint - allows us to account for things in middle better
+        x: (midPoint.x > self.me.x) ? midPoint.x-2 : midPoint.x+2,
+        y: (midPoint.y > self.me.y) ? midPoint.y-2 : midPoint.y+2
+    }
+    const generousMid = { //Something just after midPoint - allows us to account for things in middle better
+        x: (midPoint.x > self.me.x) ? midPoint.x+2 : midPoint.x-2,
+        y: (midPoint.y > self.me.y) ? midPoint.y+2 : midPoint.y-2
+    }
+    const castleBorder = { //End of map on castle's side of map - allows us to account for everything else on our side of midpoint
+        x: (midPoint.x > self.me.x) ? 0 : self.map.length-1,
+        y: (midPoint.y > self.me.y) ? 0 : self.map.length-1
+    }
+
+    for(let y = 0; y < self.map.length; y++) {
+        for(let x = 0; x < self.map.length; x++) {
+            if(self.karbonite_map[y][x] || self.fuel_map[y][x]) {
+                let currentCheck = {x: x, y: y, count: -1, dist: -1};
+                currentCheck = castle.processLocalDepots(self, currentCheck);
+                if(currentCheck.count < minClusterSize) {
+                    continue;
+                }
+                let nearbyIndex = clusters.findIndex(depot => {
+                    return movement.getDistance(currentCheck, depot) <= 9 && depot.count >= currentCheck.count;
+                });
+                //If nothing nearby, add to clusters
+                if(nearbyIndex < 0) {
+                    clusters.push(currentCheck)
+                //If nearby cluster but current better, add to cluster
+                } else if (clusters[nearbyIndex].count > currentCheck.count || clusters[nearbyIndex].dist > currentCheck.count) {
+                    clusters[nearbyIndex] = currentCheck;
+                }
+            }
+        }
+    }
+    self.log("IN CLUSTER SEARCH")
+    self.log(clusters.length);
+    //Filter for those within reasonable range for which we can compete and aren't closer to another friendly castle
+    clusters = clusters.filter(target => {
+        let closerTeamCastle = false;
+        self.teamCastles.forEach(castle => {
+            if(castle.id != self.me.id) {
+                //Filter out if another castle is closer to target
+                if(movement.getDistance(self.me, target) > movement.getDistance(castle, target)) {
+                    closerTeamCastle = true;
+                }
+            } else {
+                //Filter out if this castle is close enough to target to have created initial pilgrims for it
+                if(movement.getDistance(castle, target) <= 16) {
+                    closerTeamCastle = true;
+                }
+            }
+        });
+        return !closerTeamCastle;
+    });
+    self.log(clusters.length);
+
+    //If search aggressively, filter for targets just before midpoint to compete with opponent
+    if(searchAggressively) {
+        self.log("RangeLimit: " + JSON.stringify(rangeLimit))
+        self.log("Mid: " + JSON.stringify(midPoint))
+        clusters = clusters.filter(cluster => {
+            self.log("Cluster: " + JSON.stringify(cluster))
+            if(mapHorizonal) {
+                return valueIsBetween(cluster.y, rangeLimit.y, conservativeMid.y);
+            } else {
+                //Check if between rangeLimit and slightly before midpoint
+                return valueIsBetween(cluster.x, rangeLimit.x, conservativeMid.x);
+            }
+        })
+    //Otherwise, filter for things just pst midpoint or closer 
+    } else {
+        clusters = clusters.filter(cluster => {
+            if(mapHorizonal) {
+                return valueIsBetween(cluster.y, castleBorder.y, generousMid.y);
+            } else {
+                return valueIsBetween(cluster.x, castleBorder.x, generousMid.x);
+            }
+        })
+    }
+    //Handling edge cases where spots are close and can watched by a single prophet
+    clusters = clusters.filter(cluster => {
+        let nearby = clusters.findIndex(c => {
+            return !movement.positionsAreEqual(cluster, c) && movement.getDistance(cluster, c) <= 32;
+        });
+        //Find anything nearby, remove if nearby has smaller count or is farther from base. If nearby has higher count
+        //or is closer to base, filter out current cluster instead. Repeat until all nearby or this cluster removed
+        while(nearby >= 0) {
+            if(clusters[nearby].count > cluster.count) {
+                return false;
+            } else if (clusters[nearby].count < cluster.count) {
+                clusters.splice(nearby, 1);
+            } else {
+                if(movement.getDistance(self.me, cluster) > movement.getDistance(self.me, clusters[nearby])) {
+                    return false;
+                } else {
+                    clusters.splice(nearby, 1);
+                }
+            }
+            nearby = clusters.findIndex(c => {
+                return !movement.positionsAreEqual(cluster, c) && movement.getDistance(cluster, c) <= 32;
+            })
+        }
+        return true;      
+    });
+
+    self.log(clusters);
+    self.log("END CLUSTER SEARCH")
+    //Return sorted by count size
+    return clusters.sort((a,b) => { return b.count - a.count; });
+}
+
+/**
+ * Method to determine how many resource depots are around a given location.
+ * @param self MyRobot object to access map
+ * @param location Location to evaluate
+ * @return Object contain location coordinates, count of number of depots within +/- 3 tiles in
+ * x and y direction, plus sum of all R^2 distances to depots (smaller number means closer to all tiles)
+ */
+castle.processLocalDepots = (self, location) => {
+    let count = 0;
+    let dist = 0;
+    for(let y = location.y-3; y <= location.y+3; y++) {
+        for(let x = location.x-3; x <= location.x+3; x++) {
+            if(self._bc_check_on_map(x, y)) {
+                if(self.karbonite_map[y][x] || self.fuel_map[y][x]) {
+                    ++count;
+                    dist += movement.getDistance(location, {x: x, y: y});
+                }
+            }
+        }
+    }
+    return { x: location.x, y: location.y, count: count, dist: dist};
+}
+
+
+/*castle.getNextClusterLocation = (self) => {
+    if(self.currentCluster < 0) {
+        self.resourceClusters = castle.findDepotClusters(self, false);
+        self.currentCluster = 0;
+    }
+    return self.resourceClusters[self.currentCluster];
+}*/
 
 export default castle;

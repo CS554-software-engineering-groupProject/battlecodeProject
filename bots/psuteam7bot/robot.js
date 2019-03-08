@@ -25,6 +25,8 @@ class MyRobot extends BCAbstractRobot {
         this.occupiedResources = [];
         this.squadSize = null;                           //Squad size for squad movements
         this.castleBuildQueue = [];                      //Queue for what units the castle should build. NOT related to which castles should build when
+        this.resourceClusters = [];                      //Array of cluster locations that might be competed for
+        this.currentCluster = -1;                        //Integer to keep track of "next" cluster location to search for
         this.baseID = null;                              //ID of original castle/church robot
         this.pendingMessages = [];                       //Stores castle signal to units for new targets
         this.receivedMessages = [];                      //Store partially received castle talk signal

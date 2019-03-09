@@ -18,11 +18,16 @@ castle.doAction = (self) => {
         self.log("Enemy castles: ");
         self.log(self.enemyCastles);
         const competitionDepots = castle.findDepotClusters(self, 3, 0.7, true);
-        const prophetArray = []
-        competitionDepots.forEach(depot => {
-            prophetArray.push({unit: "PROPHET", x: depot.x, y: depot.y});
+        const churchDepots = castle.findDepotClusters(self, 3, 0.7, false);
+        const extraUnitArray = [];
+        churchDepots.forEach(depot => {
+            extraUnitArray.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
-        self.castleBuildQueue = prophetArray.concat(self.castleBuildQueue);
+        competitionDepots.forEach(depot => {
+            extraUnitArray.push({unit: "PROPHET", x: depot.x, y: depot.y});
+        })
+        self.castleBuildQueue = extraUnitArray.concat(self.castleBuildQueue);
+        self.log("ADDING SPECIAL UNITS TO QUEUE");
         self.log(self.castleBuildQueue);
     }
 

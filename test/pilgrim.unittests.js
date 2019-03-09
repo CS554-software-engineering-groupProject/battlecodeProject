@@ -164,15 +164,87 @@ describe('Pilgrim Unit Tests', function() {
             done();
         });
 
-        it('should become miner if at target', function(done) {
-            let stubTakeMinerAction = mockGame.replaceMethod("pilgrim", "takeMinerAction").returns('becoming pilgrim');
+        it('should become miner if at target with local base nearby', function(done) {
+            let stubTakeMinerAction = mockGame.replaceMethod("pilgrim", "takeMinerAction").returns('becoming miner');
+            let stubBuildChurch = mockGame.replaceMethod("pilgrim", "buildChurch").returns('not becoming miner');
             myBot.target = {x: myBot.me.x, y: myBot.me.y};
 
-            //Two locals pilgrims
+            //Nearby team castle, should become miner
             output = pilgrim.takePioneerAction(myBot);
 
             expect(myBot.role).equals('MINER');
-            expect(output).equals('becoming pilgrim');
+            expect(myBot.base).to.eql({x: 0, y: 0})
+            expect(output).equals('becoming miner');
+
+            //Nearby team church, should become miner 
+            mockGame.removeAllBots();
+            mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+            myBot.target = {x: myBot.me.x, y: myBot.me.y};
+            myBot.role = "PIONEER";
+            mockGame.createNewRobot(new MyRobot(), 0, 7, 0, 1);
+            output = pilgrim.takePioneerAction(myBot);
+
+            expect(myBot.role).equals('MINER');
+            expect(myBot.base).to.eql({x: 0, y: 7});
+            expect(output).equals('becoming miner');
+
+            //No nearby team bases, should stay pioneer 
+            mockGame.removeAllBots();
+            mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+            myBot.target = {x: myBot.me.x, y: myBot.me.y};
+            myBot.role = "PIONEER";
+            mockGame.createNewRobot(new MyRobot(), 1, 7, 0, 0);
+            mockGame.createNewRobot(new MyRobot(), 5, 5, 0, 1);
+            mockGame.createNewRobot(new MyRobot(), 7, 0, 1, 0);
+            mockGame.createNewRobot(new MyRobot(), 3, 3, 1, 1);
+            output = pilgrim.takePioneerAction(myBot);
+
+            expect(output).equals('not becoming miner');
+            expect(myBot.role).equals('PIONEER');
+
+            done();
+        });
+
+        it('should attempt to build a church if at target but no local base nearby', function(done) {
+            let stubBuildChurch = mockGame.replaceMethod("pilgrim", "buildChurch").returns('building church');
+
+            //Nearby team church, should become miner 
+            mockGame.removeAllBots();
+            mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+            myBot.target = {x: myBot.me.x, y: myBot.me.y};
+            myBot.role = "PIONEER";
+            myBot.karbonite = 50;
+            myBot.fuel = 200;
+            output = pilgrim.takePioneerAction(myBot);
+
+            expect(myBot.role).equals('PIONEER');
+            expect(output).equals('building church');
+
+            done();
+        });
+
+        it('should mine if at target with no local base nearby, but not enough resources for church', function(done) {
+            let stubBuildChurch = mockGame.replaceMethod("pilgrim", "buildChurch").returns('building church');
+
+            //Nearby team church, should become miner 
+            mockGame.removeAllBots();
+            mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+            mockGame.alterMap("karbonite_map", [{x: myBot.me.x, y: myBot.me.y, value:true}])
+            myBot.target = {x: myBot.me.x, y: myBot.me.y};
+            myBot.role = "PIONEER";
+            myBot.karbonite = 49;
+            myBot.fuel = 200;
+            output = pilgrim.takePioneerAction(myBot);
+
+            expect(myBot.role).equals('PIONEER');
+            expect(output['action']).equals('mine');
+
+            myBot.karbonite = 50;
+            myBot.fuel = 199;
+            output = pilgrim.takePioneerAction(myBot);
+
+            expect(myBot.role).equals('PIONEER');
+            expect(output['action']).equals('mine');
 
             done();
         });

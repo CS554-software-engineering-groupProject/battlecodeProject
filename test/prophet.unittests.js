@@ -369,6 +369,108 @@ describe('Prophet Unit Tests', function() {
 
     });
 
+    describe.only('takeDestroyerAction() tests', function() {
+        it('DESTROYERS with enemies in attackable range should just attack enemies', function(done) {
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 3, y: 3}];
+            myBot.target = {x: 19, y: 3};
+
+            //Teammate in attackable range
+            mockGame.createNewRobot(new MyRobot(), 1, 7, 0, 2);
+            output = prophet.takeDestroyerAction(myBot);
+
+            expect(output['action']).equals('move');
+
+            //Enemy out of attackable range
+            mockGame.createNewRobot(new MyRobot(), 9, 4, 1, 2);
+            output = prophet.takeDestroyerAction(myBot);
+
+            expect(output['action']).equals('move');
+
+            //Enemy in attackable range
+            mockGame.createNewRobot(new MyRobot(), 9, 3, 1, 2); 
+            output = prophet.takeDestroyerAction(myBot);
+
+            expect(output['action']).equals('attack');
+            expect(output['dx']).equals(8);
+            expect(output['dy']).equals(0);            
+
+            done();
+        });
+
+        it("DESTROYERS at target with no adjacent team pilgrims should wait", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.target = {x: myBot.me.x, y: myBot.me.y};
+
+            mockGame.createNewRobot(new MyRobot(), 3, 3, 0, 2);
+
+            output = prophet.takeDestroyerAction(myBot);
+
+            expect(output).to.be.undefined;
+
+            done();
+        });
+
+        it("DESTROYERS at target with adjacent team pilgrims should move to allow pilgrim access to depot", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.target = {x: 1, y: 3};
+
+            //Team pilgrim, adjust path
+            mockGame.createNewRobot(new MyRobot(), 2, 2, 0, 2);
+            output = prophet.takeDestroyerAction(myBot);
+
+            expect(myBot.target).to.not.eql({x: 1, y: 3});
+            expect(output).equals("moved successfully");
+
+            done();
+        });
+
+        it("DESTROYERS not at target with an empty path should create a path to target", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.target = {x: 19, y: 3};
+
+            output = prophet.takeDestroyerAction(myBot);
+
+            expect(myBot.path[0]).to.eql(myBot.target);
+            expect(output).equals("moved successfully");
+
+            done();
+        });
+
+        it("DESTROYERS not at target with an empty path should create a path to target", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.target = {x: 19, y: 3};
+
+            output = prophet.takeDestroyerAction(myBot);
+
+            expect(myBot.path[0]).to.eql(myBot.target);
+            expect(output).equals("moved successfully");
+
+            done();
+        });
+
+        it("DESTROYERS not at target with a path equal to 1 should check for team pilgrim on target and adjust target if so", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 3, y: 3}]; //Not a real path but w/e
+            myBot.target = {x: 3, y: 3};
+
+            //Team pilgrim, adjust path
+            mockGame.createNewRobot(new MyRobot(), 3, 3, 0, 2);
+            output = prophet.takeDestroyerAction(myBot);
+
+            expect(myBot.target).to.not.eql({x: 3, y: 3});
+            expect(myBot.path).to.deep.include(myBot.target);
+            expect(output).equals("moved successfully");
+
+            done();
+        });
+    });
+
     describe('fleeBehavior() tests', function() {
         it('should return false if no enemies in blindspot', function(done) {
             mockGame.createNewRobot(new MyRobot(), 5, 3, 1, 3);

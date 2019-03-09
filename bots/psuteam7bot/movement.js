@@ -826,70 +826,42 @@ movement.hasFuelToMove = (self, target) => {
     return self.fuel >= cost;
 }
 
-/**
- * Adapted from getMoveablePositions
- * Method that returns an array of all relative movement positions with distance less than the r2 value passed in which also includes r2 distance and index
- * of the relative direction (these can be used to filter or sort entire list as desired).
- * 
- * @param maxDist maximum radius of movement to be considered
- * @return Array of moveable positions relative to {x: 0, y: 0}
- */
-movement.getPositionsInRadius = (maxDist) => {
-    const moveablePositions = [];
-    for(let y = -1*Math.sqrt(maxDist); y <= Math.sqrt(maxDist); y++) {
-        for(let x = -1*Math.sqrt(maxDist); x <= Math.sqrt(maxDist); x++) {
-            const start = {x: 0, y: 0};
-            const output = {x: x, y: y, r2: -1, dirIndex: -1};
-            const dist = movement.getDistance(start, output)
-            if(dist <= maxDist && !movement.positionsAreEqual(start, output)) {
-                output.r2 = dist;
-                output.dirIndex = movement.getDirectionIndex(movement.getRelativeDirection(start, output))
-                moveablePositions.push(output);
-            }
-        }
-    }
-    return moveablePositions;
-}
 
 /**
- * Method to find a square near a location, nearest to the passed robot. Intended for use in
- * crusader micro movement.
+ * Method to find nearest position relative to origin from a list of positions
  * 
- * @param self MyRobot object 
- * @param location Location to find a nearby square
- * @return Returns a coordinate pair for a location nearest to self.
+ * @param origin position object
+ * @param fullMap should be return of self.map
+ * @param robotMap should be return of self.getVisibleRobotMap()
+ * @param positions array of position objects/ bot positions
+ * @param passableCheck true/ false flag to decide whether position returned must be passable or not
+ * @return Returns a coordinate pair of one of the position in positions array, passable and closest to origin. Returns origin if no positions found
  */
-movement.getNearestLocationInRadius = (self, location, radius) => {
-    const positions = movement.getPositionsInRadius(radius).forEach(element => {
-        element.x += position.x;
-        element.y += position.y;
-    });
-
-    const idealDirection = movement.getRelativeDirection(location, self.me);
+movement.getNearestPositionFromList = (origin, fullMap, robotMap, positions, passableCheck) => {
     positions.sort((a, b) => {
-        const distA = movement.getDistance(a, self.me);
-        const distB = movement.getDistance(b, self.me);
+        const distA = movement.getDistance(a, origin);
+        const distB = movement.getDistance(b, origin);
         if(distA < distB) {
-            return -2;
+            return -1;
         } else if (distA > distB) {
-            return 2;
+            return 1;
         } else {
-            if (a.dirIndex === idealDirection) {
-                return -1;
-            } else if(b.dirIndex === idealDirection) {
-                return 1;
-            } else {
-                return 0;
-            }
+            return 0;
         }
     })
     
-    for(let i = 0; i < positions.length; i++) {
-        const position = {x: location.x, y: location.y};
-        if(movement.isPassable(position, self.map, self.getVisibleRobotMap())) {
-            return position;
+    if(passableCheck)
+    {
+        for(let i = 0; i < positions.length; i++) {
+            const position = {x: location.x, y: location.y};
+            if(movement.isPassable(position, fullMap, robotMap)) {
+                return position;
+            }
         }
+        return origin;
     }
-    return location;
+    else
+        return positions[0];
+
 }
 export default movement;

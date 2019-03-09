@@ -938,6 +938,5 @@ describe('Pilgrim Unit Tests', function() {
                 done();
             });
         });
-
     });
 });

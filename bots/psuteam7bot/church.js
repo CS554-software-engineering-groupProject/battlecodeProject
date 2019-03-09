@@ -13,6 +13,8 @@ church.maxFuel = SPECS.UNITS[SPECS.CHURCH].FUEL_CAPACITY;
 
 church.doAction = (self) => {
      self.log("church" + self.id + "taking turn.");
+
+     
 }
 
 
@@ -52,12 +54,12 @@ export default church;
         
         const karboniteDepots = movement.getResourcesInRange(self.me, 36, self.karbonite_map);
         karboniteDepots.forEach(depot => {
-            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y, buildCounter:buildCounter});
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
 
         const fuelDepots = movement.getResourcesInRange(self.me, 16, self.fuel_map)
         fuelDepots.forEach(depot => {
-            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y, buildCounter:buildCounter});
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
         
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map)

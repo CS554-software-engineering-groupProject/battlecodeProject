@@ -7,17 +7,14 @@ import { setFlagsFromString } from 'v8';
 const church = {};
 
 church.UNITTYPE = ["CASTLE", "CHURCH", "PILGRIM", "CRUSADER", "PROPHET" , "PREACHER"]
-max
+
+church.maxKarbonite = SPECS.UNITS[SPECS.CHURCH].KARBONITE_CAPACITY;
+church.maxFuel = SPECS.UNITS[SPECS.CHURCH].FUEL_CAPACITY;
 
 church.doAction = (self) => {
      self.log("church" + self.id + "taking turn.");
 }
 
-/** Method to detect global resources values
- */
-church.checkGlobalResources = () =>{
-    
-}
 
 /** Method to detect and evaluate nearby visible resource depots 
  */

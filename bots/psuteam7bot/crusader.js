@@ -145,21 +145,47 @@ crusader.takeAttackerAction = (self) => {
     }
     else if(self.squadSize === 0)
     {
+        
+        //Crusader micro, Crusader-vs-Crusader,
         if(unattackable.length > 0)
         {
-            //Filter for Crusaders,
-            //Sort by distance closest to us,
-            //get nearest position in (radius == distance) from it to us
-            //If nearest position in attack radius, don't move, if not, use A* pathfind to add to move queue
+            const opforCrusaders = combat.filterByUnitType(unattackable, "CRUSADER");
 
-            //
-            //Crusader micro, Crusader-vs-Crusader,
-            if(unattackable[0].unit === self.me.unit && movement.getDistance(self.path[self.path.length-1], unattackable[0]) < SPECS.UNITS[self.me.unit].ATTACK_RADIUS[1])
+            if(opforCrusaders.length > 0)
             {
-                //Don't move if a single enemy crusader is in vision, and next location on path is inside the enemy attack range
-                self.log('Enemy Crusader detected, Crusader-vs-Crusader micro executed');
-                return;
+                const botmap = self.getVisibleRobotMap();
+                const crusaderAttackRadiusMax = SPECS.UNITS[self.me.unit].ATTACK_RADIUS[1];
+                const closestOpfor = movement.getNearestPositionFromList(self.me, self.map, botmap, opforCrusaders, false);
+                const moveableList = movement.getMoveablePositions(self).forEach((pos) =>{
+                    pos.x += self.me.x;
+                    pos.y += self.me.y;
+                });
+                const notInAttackRadius = moveableList.filter((pos) => {
+                    if(movement.getDistance(closestOpfor, pos) > crusaderAttackRadiusMax)
+                        return true;
+                    return false;
+                });
+
+                if(notInAttackRadius.length === 0)
+                {
+                    self.log("No position not in attack radius for CvC micro found\n");
+                    return;
+                }
+
+                const bestMoveablePos = movement.getNearestPositionFromList(closestOpfor, self.me.map, botmap, notInAttackRadius, true);
+                if(movement.positionsAreEqual(closestOpfor, bestMoveablePos))
+                {
+                    self.log("No moveable position for CvC micro found\n");
+                    return;
+                }
+                
+                self.log('Enemy Crusader in visible range, Crusader-vs-Crusader micro executed');
+                self.path.pop();
+                movement.adjustPath(self, bestMoveablePos);
+                self.log('ATTACKER crusader ' + self.id + ' executing micro movement, Current: [' + self.me.x + ',' + self.me.y + ']')
+                return movement.moveAlongPath(self);
             }
+
         }
 
 

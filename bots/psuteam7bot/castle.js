@@ -74,11 +74,10 @@ castle.doAction = (self) => {
         if(botsInQueue > 0 && ((self.castleBuildQueue[0].unit == "PILGRIM") || (self.castleBuildQueue[0].unit == "PROPHET"))) {
             return castle.buildFromQueue(self);
         //Keep queue at reasonable size, adding another prophet as necessary so prophets are continually build
-        }/* else if (botsInQueue <= 5) {
+        } else if (botsInQueue <= 5) {
             self.castleBuildQueue.push({unit: "CRUSADER", x: self.target.x, y: self.target.y});
         }
-        return castle.makeDecision(self, self.teamCastles, hasSignalToSend);*/
-        return;
+        return castle.makeDecision(self, self.teamCastles, hasSignalToSend);
     }
 }
 

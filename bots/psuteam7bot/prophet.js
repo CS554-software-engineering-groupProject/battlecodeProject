@@ -318,6 +318,15 @@ prophet.takeDestroyerAction = (self) =>  {
         }
     }
 
+    //Check for edge case where pilgrim on target, in which case adjust target
+    if(self.path.length === 1) {
+        const botId = self.getVisibleRobotMap()[self.target.y][self.target.x];
+        if(botId > 0 && (self.getRobot(botId).unit === 2 && self.getRobot(botId).team === self.me.team)) {
+            self.log("CHANGING TARGET BECAUSE PILGRIM MINING/BUILDING A CHURCH ON TARGET");
+            self.target = movement.findNearestLocation(self, self.me);
+            self.path = []
+        }
+    }
     //If no path yet
     if(self.path.length === 0)
     {

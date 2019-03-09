@@ -113,6 +113,9 @@ pilgrim.takePioneerAction = (self) => {
         const localBases = self.getVisibleRobots().filter(bot => {
             return bot.team === self.me.team && bot.unit <= 1 && movement.getDistance(self.me, bot) <= 49;
         });
+        localBases.sort((a,b) => {
+            return movement.getDistance(self.me, b) - movement.getDistance(self.me, a);
+        });
         //If nothing around, assume it should be a church-builder
         if(localBases.length === 0) {
             //Build church if you can
@@ -124,6 +127,7 @@ pilgrim.takePioneerAction = (self) => {
                 return self.mine();
             }
         } else {
+            self.base = {x: localBases[0].x, y: localBases[0].y};
             self.role = 'MINER';
             self.log('pilgrim PIONEER ' + self.id + ' becoming MINER')
             return pilgrim.takeMinerAction(self);

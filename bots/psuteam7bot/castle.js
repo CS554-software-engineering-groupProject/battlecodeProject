@@ -478,14 +478,10 @@ castle.findDepotClusters = (self, minClusterSize, competitionIndex, searchAggres
         });
         return !closerTeamCastle;
     });
-    self.log(clusters.length);
 
     //If search aggressively, filter for targets just before midpoint to compete with opponent
     if(searchAggressively) {
-        self.log("RangeLimit: " + JSON.stringify(rangeLimit))
-        self.log("Mid: " + JSON.stringify(midPoint))
         clusters = clusters.filter(cluster => {
-            self.log("Cluster: " + JSON.stringify(cluster))
             if(mapHorizonal) {
                 return valueIsBetween(cluster.y, rangeLimit.y, conservativeMid.y);
             } else {
@@ -504,33 +500,34 @@ castle.findDepotClusters = (self, minClusterSize, competitionIndex, searchAggres
         })
     }
     //Handling edge cases where spots are close and can watched by a single prophet
-    clusters = clusters.filter(cluster => {
+    let i = 0;
+    while(i < clusters.length) {
         let nearby = clusters.findIndex(c => {
-            return !movement.positionsAreEqual(cluster, c) && movement.getDistance(cluster, c) <= 32;
+            return !movement.positionsAreEqual(clusters[i], c) && movement.getDistance(clusters[i], c) <= 32;
         });
         //Find anything nearby, remove if nearby has smaller count or is farther from base. If nearby has higher count
         //or is closer to base, filter out current cluster instead. Repeat until all nearby or this cluster removed
         while(nearby >= 0) {
-            if(clusters[nearby].count > cluster.count) {
-                return false;
-            } else if (clusters[nearby].count < cluster.count) {
+            if(clusters[nearby].count > clusters[i].count) {
+                clusters.splice(i, 1);
+            } else if (clusters[nearby].count < clusters[i].count) {
                 clusters.splice(nearby, 1);
             } else {
-                if(movement.getDistance(self.me, cluster) > movement.getDistance(self.me, clusters[nearby])) {
-                    return false;
+                if(movement.getDistance(self.me, clusters[i]) > movement.getDistance(self.me, clusters[nearby])) {
+                    clusters.splice(i, 1);
                 } else {
                     clusters.splice(nearby, 1);
                 }
             }
             nearby = clusters.findIndex(c => {
-                return !movement.positionsAreEqual(cluster, c) && movement.getDistance(cluster, c) <= 32;
+                return !movement.positionsAreEqual(clusters[i], c) && movement.getDistance(clusters[i], c) <= 32;
             })
         }
-        return true;      
-    });
+        i++;
+    }
 
+    self.log("END CLUSTER SEARCH...RESULTS:")
     self.log(clusters);
-    self.log("END CLUSTER SEARCH")
     //Return sorted by count size
     return clusters.sort((a,b) => { return b.count - a.count; });
 }

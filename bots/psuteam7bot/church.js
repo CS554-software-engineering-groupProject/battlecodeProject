@@ -42,4 +42,11 @@ church.detectClosestResources = (position, depotMap, occupiedResources) => {
     return closest;
 }
 
+/** Method to build miners for each visible resource depot 
+ */
+
+church.mine =(self) =>{
+    
+}
+
 export default church;

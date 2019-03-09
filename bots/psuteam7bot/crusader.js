@@ -87,6 +87,7 @@ crusader.takeAttackerAction = (self) => {
             self.log('Enemy Prophet in visible range, Crusader-vs-Prophet micro executed-------------------------------------------------');
             self.path.pop();
             movement.adjustPath(self, bestMoveablePos);
+            self.path.push(bestMoveablePos);
             self.log('ATTACKER crusader ' + self.id + ' executing micro movement, Current: [' + self.me.x + ',' + self.me.y + ']')
             return movement.moveAlongPath(self);
         }
@@ -111,6 +112,7 @@ crusader.takeAttackerAction = (self) => {
             self.log('Enemy Prophet in visible range, Crusader-vs-Prophet micro executed-----------------------------------------------');
             self.path.pop();
             movement.adjustPath(self, bestMoveablePos);
+            self.path.push(bestMoveablePos);
             self.log('ATTACKER crusader ' + self.id + ' executing micro movement, Current: [' + self.me.x + ',' + self.me.y + ']')
             return movement.moveAlongPath(self);
         }
@@ -206,6 +208,7 @@ crusader.takeAttackerAction = (self) => {
                 self.log('Enemy Crusader in visible range, Crusader-vs-Crusader micro executed');
                 self.path.pop();
                 movement.adjustPath(self, bestMoveablePos);
+                self.path.push(bestMoveablePos);
                 self.log('ATTACKER crusader ' + self.id + ' executing micro movement, Current: [' + self.me.x + ',' + self.me.y + ']')
                 return movement.moveAlongPath(self);
             }

@@ -109,6 +109,44 @@ movement.rotateDirection = (direction, n) => {
 }
 
 /**
+ * Method to get directions between two different rotation indices from a starting direction index.
+ * Returns an array containing all directions from `rotationsLeft` rotations left or less from `dirIndex` 
+ * to `rotationsRight` rotations right or less from `dirIndex`.
+ * Used to get things like directions between a point (for example, anything perpendicular to or closer to
+ * the input direction would be `getDirectionsBetween(index, 2, 2)`).
+ * 
+ * @param dirIndex Starting index from which to make decisions
+ * @param rotationsLeft Non-negative number representing the max rotations to the left that should be included
+ * @param rotationsRight Non-negative number representing the max rotations to the right that should be included
+ * @return An array of directions that are between `rotationsLeft` rotations left of `dirIndex` and 
+ *         `rotationsRight` rotations right of `dirIndex`
+ * 
+ */
+movement.getDirectionsBetween = (dirIndex, rotationsLeft, rotationsRight) => {
+    const output = [];
+    const start = ((dirIndex-rotationsLeft) % 8 + 8) % 8;
+    const end = ((dirIndex+rotationsRight) % 8 + 8) % 8;
+    //console.log('s: ' + start + ' e: ' + end);
+
+    if(rotationsLeft + rotationsRight >= 7) {
+        return JSON.parse(JSON.stringify(movement.directions));
+    } else if (rotationsLeft + rotationsRight === 0) {
+        output.push(movement.directions[start]);
+        return output;
+    } else if (rotationsLeft + rotationsRight < 0) {
+        return output; //Empty
+    } else {
+        let i = start;
+        while (i !== end) {
+            output.push(movement.directions[i]);
+            i = (i+1) % 8;
+        }
+        output.push(movement.directions[end]); //Don't forget the end!
+        return output;
+    }
+}
+
+/**
 *Return difference of x-coord and y-coord between A and B
 *Input: A - a 'position/ location' object {x, y}
 *       B - a 'position/ location' object {x, y}
@@ -206,9 +244,9 @@ movement.isPassable = (location, fullMap, robotMap) => {
 
     if(x < 0 || y < 0)  //Map bound check
         return false;
-    else if(x > fullMap.length || y > fullMap.length)   //Map bound check
+    else if(x >= fullMap.length || y >= fullMap.length)   //Map bound check
         return false;
-    return((robotMap[y][x] === 0) && (fullMap[y][x])); //Returns true only if tile is empty and is passable
+    return((robotMap[y][x] <= 0) && (fullMap[y][x])); //Returns true only if tile is empty and is passable
 }
 
 /**
@@ -462,28 +500,23 @@ movement.getDiagonalPatrolPosition = (myCastleLocation, fullMap) => {
  *         method thus needs to be returned by the action of whatever bot is calling it in order to make move.
  */
 movement.moveAlongPath = (self) => {
-    //self.log("me: [" + self.me.x + "," + self.me.y + "]")
     let nextMove = self.path.pop();
-    //self.log("nextMove: [" + nextMove.x + "," + nextMove.y + "]")
 
     //If next move is viable, do it
-    if(movement.isPassable(nextMove, self.map, self.getVisibleRobotMap())) {
+    if(movement.isPassable(nextMove, self.map, self.getVisibleRobotMap()) && movement.hasFuelToMove(self, nextMove)) {
         self.log("Unit " + self.me.id + " moving to: [" + nextMove.x + "," + nextMove.y + "]")
         return self.move(nextMove.x-self.me.x, nextMove.y-self.me.y);
-    //If nextMove is destination (because path is empty), readd destination to path and wait to be moveable
-    /*} else if (self.path.length === 0) {
-        self.log("Final path position occupied - wait until unoccupied")
+    //If nextMove is passable (i.e. just not enough fuel), readd next move to path and wait until enough fuel
+    } else if (movement.isPassable(nextMove, self.map, self.getVisibleRobotMap())) {
         self.path.push(nextMove);
-        return;*/
+        self.log("Unit " + self.me.id + " waiting for more fuel")
+        return;
     //If next move not viable, reset path by readding next move, attempt to adjust path accounting for bots
     } else {
         self.path.push(nextMove);
-        //If adjustment successful, pop off new next move and go to it
+        //If adjustment successful, recurse to move on new path
         if(movement.adjustPath(self, self.me)) {
-            //self.log(self.path);
-            nextMove = self.path.pop();
-            self.log("Unit " + self.me.id + " moving to: [" + nextMove.x + "," + nextMove.y + "]")
-            return self.move(nextMove.x-self.me.x, nextMove.y-self.me.y);
+            return movement.moveAlongPath(self)
         //Otherwise, just dont move (may want to fix)
         } else {
             self.log("bot " + self.me.id + " not moving due to path conflict");
@@ -706,28 +739,25 @@ movement.initAStarMaps = (self, location, accountForBots, closedMap, infoMap) =>
  * @return Boolean indicating whether cell matches destination, indicating end of A* process
  */
 movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) => {
+    //Sort list by distance and then potentially direction - small optimization?
+    openQueue.sort((a, b) => {
+        const aCell = infoMap[a.y][a.x];
+        const bCell = infoMap[b.y][b.x];
+        if(aCell.f < bCell.f) {
+            return -2;
+        } else if (aCell.f > bCell.f) {
+            return 2;
+        } else {
+            return 0;
+        }
+    });
     const moveablePositions = movement.getMoveablePositions(self.me.unit);
     const current = openQueue.shift();
     const currCell = infoMap[current.y][current.x];
     const targetDirIndex = movement.getDirectionIndex(movement.getRelativeDirection(current, destination));
     //Add to closedMap, as it is now being processed
     closedMap[current.y][current.x] = true;
-    //Sort list by distance and then potentially direction - small optimization?
-    moveablePositions.sort((a, b) => {
-        if(a.r2 > b.r2) {
-            return -2;
-        } else if (a.r2 < b.r2) {
-            return 2;
-        } else {
-            if (a.dirIndex === targetDirIndex) {
-                return -1;
-            } else if(b.dirIndex === targetDirIndex) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-    });
+
 
     //Iterate through all moveable positions, updating their values and adding them to queue if not destination
     let gNext;
@@ -742,25 +772,23 @@ movement.processAStarCell = (self, destination, infoMap, openQueue, closedMap) =
            nextCoordinates.y < 0) {
             continue;
         }
+        const nextCell = infoMap[nextCoordinates.y][nextCoordinates.x];
+        //If destination found, we found a path! Update this last parent and return true to indicate successful completion
+        if(movement.positionsAreEqual(nextCoordinates, destination)) {
+            nextCell.parent = current;
+            return true;
+        }
         //If coordinates not already processed, do stuff
         if(!closedMap[nextCoordinates.y][nextCoordinates.x]) {
-            const nextCell = infoMap[nextCoordinates.y][nextCoordinates.x];
-            //If destination found, we found a path! Update this last parent and return true to indicate successful completion
-            if(movement.positionsAreEqual(nextCoordinates, destination)) {
+            gNext = currCell.g + movement.getDistance(current, nextCoordinates);
+            hNext = movement.getDistance(nextCoordinates, destination);
+            fNext = gNext+hNext;
+            if(nextCell.f > fNext) {
                 nextCell.parent = current;
-                return true;
-            //Otherwise, update cell information and push onto openQueue if possible improvement on path
-            } else {
-                gNext = currCell.g + movement.getDistance(current, nextCoordinates);
-                hNext = movement.getDistance(nextCoordinates, destination);
-                fNext = gNext+hNext;
-                if(nextCell.f > fNext) {
-                    nextCell.parent = current;
-                    nextCell.g = gNext;
-                    nextCell.h = hNext;
-                    nextCell.f = fNext;
-                    openQueue.push(nextCoordinates);
-                }
+                nextCell.g = gNext;
+                nextCell.h = hNext;
+                nextCell.f = fNext;
+                openQueue.push(nextCoordinates);
             }
         }        
     }
@@ -790,6 +818,12 @@ movement.createPathFromInfoMap = (location, destination, infoMap) => {
         }
     }
     return pathArray;
+}
+
+movement.hasFuelToMove = (self, target) => {
+    const dist = movement.getDistance(self.me, target);
+    const cost = SPECS.UNITS[self.me.unit].FUEL_PER_MOVE * dist;
+    return self.fuel >= cost;
 }
 
 export default movement;

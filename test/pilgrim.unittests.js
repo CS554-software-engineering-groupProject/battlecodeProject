@@ -1,12 +1,20 @@
 const mocha = require('mocha');
 const chai = require('chai');
+const mockBC19 = require('../projectUtils/mockGame.js');
+const SPECS = require('../projectUtils/psuteam7botCompiled.js').SPECS;
 const MyRobot = require('../projectUtils/psuteam7botCompiled.js').MyRobot;
 const pilgrim = require('../projectUtils/psuteam7botCompiled.js').pilgrim;
 const expect = chai.expect;
 
 
 describe('Pilgrim Unit Tests', function() {
+    let mockGame;
     describe.skip('Role objectives tests', function(done) {
+        beforeEach(function() {
+            mockGame = new mockBC19();
+            mockGame.initEmptyMaps(10);
+        })
+
         it('MINERS without a target should identify and move towards a resource', function(done) {
             let returnValue;
             let target;
@@ -150,6 +158,11 @@ describe('Pilgrim Unit Tests', function() {
     });
 
     describe('Mining tests', function() {
+        beforeEach(function() {
+            mockGame = new mockBC19();
+            mockGame.initEmptyMaps(10);
+        });
+
         it('should be able to mine if on a resource depot', function(done) {
             let returnValue;
             const myBot = new MyRobot();
@@ -281,6 +294,11 @@ describe('Pilgrim Unit Tests', function() {
 
     describe('Method tests', function() {
         describe('findClosestResource()', function(done) {
+            beforeEach(function() {
+                mockGame = new mockBC19();
+                mockGame.initEmptyMaps(10);
+            });
+
             it('should return closest non-occupied resource', function(done) {
                 let returnValue;
                 const myBot = new MyRobot();
@@ -333,6 +351,11 @@ describe('Pilgrim Unit Tests', function() {
         });
 
         describe('isDepotOccupied()', function(done) {
+            beforeEach(function() {
+                mockGame = new mockBC19();
+                mockGame.initEmptyMaps(10);
+            });
+
             it('should change nothing if target unoccupied', function(done) {
                 let returnValue;
                 const myBot = new MyRobot();
@@ -407,28 +430,24 @@ describe('Pilgrim Unit Tests', function() {
         });
 
         describe('updateResourceTarget()', function(done) {
+            beforeEach(function() {
+                mockGame = new mockBC19();
+                mockGame.initEmptyMaps(10);
+            });
+
             it('should change nothing if target unoccupied', function(done) {
                 let returnValue;
                 const myBot = new MyRobot();
-                myBot._bc_game_state = {shadow: null};
                 const startTarget = myBot.target = {x: 1, y: 1};
-                myBot.me = {
-                    id: 1,
-                    unit: 2, //Pilgrim
-                    x: 0,
-                    y: 0
-                }
-                myBot._bc_game_state.shadow = 
-                [[1,0,0,0,0],
-                 [0,0,0,0,0],
-                 [0,0,0,0,0],
-                 [0,0,0,0,0],
-                 [0,0,0,0,0]];
-                myBot.karbonite_map = [[0,0,0,0,0],
-                                       [0,1,0,0,0],
-                                       [0,0,1,0,0],
-                                       [0,0,0,1,0],
-                                       [0,0,0,0,1]];
+                const karbAlterations = [
+                    {x: 1, y: 1, value: true},
+                    {x: 2, y: 2, value: true},
+                    {x: 3, y: 3, value: true},
+                    {x: 4, y: 4, value: true}
+                ];
+
+                mockGame.alterMap("karbonite_map", karbAlterations);
+                mockGame.createNewRobot(myBot, 0, 0, 0, 2);
     
                 returnValue = pilgrim.updateResourceTarget(myBot);
                 expect(myBot.occupiedResources).to.eql([]);
@@ -440,45 +459,22 @@ describe('Pilgrim Unit Tests', function() {
             it('should update target and occupiedResources until target unoccupied', function(done) {
                 let returnValue;
                 const myBot = new MyRobot();
-                myBot.target = {x: 1, y: 1};
                 const friendlyBot1 = new MyRobot();
                 const friendlyBot2 = new MyRobot();
-                myBot.me = {
-                    id: 10,
-                    team: 0,
-                    unit: 2, //Pilgrim
-                    x: 0,
-                    y: 0
-                }
-                friendlyBot1.me = {
-                    id: 1,
-                    team: 0,
-                    unit: 2, //Pilgrim
-                    x: 1,
-                    y: 1
-                }
-                friendlyBot2.me = {
-                    id: 2,
-                    team: 0,
-                    unit: 2, //Pilgrim
-                    x: 2,
-                    y: 2
-                }
-                myBot._bc_game_state = friendlyBot1._bc_game_state = friendlyBot2._bc_game_state = {
-                    visible: [myBot.me, friendlyBot1.me, friendlyBot2.me],
-                    shadow: null
-                };
-                myBot._bc_game_state.shadow = friendlyBot1._bc_game_state.shadow = friendlyBot2._bc_game_state.shadow = 
-                [[10,0,0,0,0],
-                 [0,1,0,0,0],
-                 [0,0,2,0,0],
-                 [0,0,0,0,0],
-                 [0,0,0,0,0]];
-                myBot.karbonite_map = [[0,0,0,0,0],
-                                       [0,1,0,0,0],
-                                       [0,0,1,0,0],
-                                       [0,0,0,1,0],
-                                       [0,0,1,0,1]];
+                myBot.target = {x: 1, y: 1};
+                //Add specific karbonite_map depots for test
+                const karbAlterations = [
+                    {x: 1, y: 1, value: true},
+                    {x: 2, y: 2, value: true},
+                    {x: 3, y: 3, value: true},
+                    {x: 4, y: 4, value: true}
+                ];
+
+                mockGame.alterMap("karbonite_map", karbAlterations);
+                mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+                mockGame.createNewRobot(friendlyBot1, 1, 1, 0, 2);
+                mockGame.createNewRobot(friendlyBot2, 2, 2, 0, 2);
+                
     
                 returnValue = pilgrim.updateResourceTarget(myBot);
                 expect(myBot.occupiedResources).to.deep.include.members([{x: 1, y: 1}, {x: 2, y: 2}]);
@@ -487,6 +483,5 @@ describe('Pilgrim Unit Tests', function() {
                 done();
             });
         });
-
     });
 });

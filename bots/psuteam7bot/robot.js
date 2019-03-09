@@ -3,6 +3,7 @@ import pilgrim from './pilgrim.js';
 import prophet from './prophet.js';
 import castle from './castle.js';
 import church from './church.js';
+import crusader from './crusader.js';
 import combat from './combat.js';
 import movement from './movement.js';
 import communication from './communication.js';
@@ -20,9 +21,15 @@ class MyRobot extends BCAbstractRobot {
         this.path = [];                                  //Array representing sequence of moves towards target. `path.pop()` gets next move
         this.previous = null;                            //Previous tile traversed by unit like {x: _, y: _}, initialized to the spawning/ starting location
         this.potentialEnemyCastleLocation = null;
+        this.attackerMoves = 0;
         this.occupiedResources = [];
         this.squadSize = null;                           //Squad size for squad movements
         this.castleBuildQueue = [];                      //Queue for what units the castle should build. NOT related to which castles should build when
+        this.resourceClusters = [];                      //Array of cluster locations that might be competed for
+        this.currentCluster = -1;                        //Integer to keep track of "next" cluster location to search for
+        this.baseID = null;                              //ID of original castle/church robot
+        this.pendingMessages = [];                       //Stores castle signal to units for new targets
+        this.receivedMessages = [];                      //Store partially received castle talk signal
     }
     turn() {
         if(this.previous == null) {
@@ -41,6 +48,9 @@ class MyRobot extends BCAbstractRobot {
                     break;
                 case SPECS.PROPHET:
                     this.myType = prophet;
+                    break;
+                case SPECS.CRUSADER:
+                    this.myType = crusader;
                     break;
             }
         }

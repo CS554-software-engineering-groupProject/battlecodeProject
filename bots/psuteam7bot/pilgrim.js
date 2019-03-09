@@ -1,6 +1,6 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
 import movement from './movement.js';
-import combat from './combat.js';
+import castle from './castle.js';
 import communication from './communication.js';
 
 const pilgrim = {};
@@ -110,9 +110,24 @@ pilgrim.takePioneerAction = (self) => {
         return movement.moveAlongPath(self);
     //If at target, become miner
     } else {
-        self.role = 'MINER';
-        self.log('pilgrim PIONEER ' + self.id + ' becoming MINER')
-        return pilgrim.takeMinerAction(self);
+        const localBases = self.getVisibleRobots().filter(bot => {
+            return bot.team === self.me.team && bot.unit <= 1 && movement.getDistance(self.me, bot) <= 49;
+        });
+        //If nothing around, assume it should be a church-builder
+        if(localBases.length === 0) {
+            //Build church if you can
+            if(self.fuel >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL && self.karbonite >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE) {
+                return pilgrim.buildChurch(self);
+            //Otherwise, tell base that you want to build, and at least try to mine so you can deposit once church build. 
+            } else {
+                self.castleTalk(121);
+                return self.mine();
+            }
+        } else {
+            self.role = 'MINER';
+            self.log('pilgrim PIONEER ' + self.id + ' becoming MINER')
+            return pilgrim.takeMinerAction(self);
+        }
     }
 }
 
@@ -216,6 +231,34 @@ pilgrim.updateResourceTarget = (self) => {
     }
     //Update path accordingly
     movement.aStarPathfinding(self, self.me, self.target, false);
+}
+
+/**
+ * Function to for a pilgrim to build a church. Assumes pilgrim is at best local depot, so 
+ */
+pilgrim.buildChurch = (self) => {
+    let bestCount = 0;
+    let bestLoc;
+    for(let i = -1; i<= 1; i++) {   
+        for(let j = -1; j<= 1; j++) {
+            const loc = {x: (self.me.x + i), y: (self.me.y+j)} 
+            if(!movement.isPassable(loc, self.map, self.getVisibleRobotMap()) 
+                || self.karbonite_map[loc.y][loc.x] || self.fuel_map[loc.y][loc.x]) {
+                continue;
+            }
+            const locInfo = castle.processLocalDepots(self, loc);
+            if(locInfo.count > bestCount) {
+                bestCount = locInfo.count;
+                bestLoc = {x: loc.x, y: loc.y, dx: i, dy: j};
+            } else if (locInfo.count === bestCount && (movement.getDistance(self.base, bestLoc) > movement.getDistance(self.base, loc))) {
+                bestCount = locInfo.count;
+                bestLoc = {x: loc.x, y: loc.y, dx: i, dy: j};
+            }
+        }
+    }
+    self.base = {x: bestLoc.x, y: bestLoc.y}
+    self.log('pilgrim ' + self.id + ' building a church at [' + (self.me.x+i) + ',' + (self.me.y+j) +']'); 
+    return self.buildUnit(1, bestLoc.dx, bestLoc.dy); 
 }
 
 

@@ -20,11 +20,11 @@ castle.doAction = (self) => {
         const competitionDepots = castle.findDepotClusters(self, 3, 0.7, true);
         const churchDepots = castle.findDepotClusters(self, 3, 0.7, false);
         const extraUnitArray = [];
-        churchDepots.forEach(depot => {
-            extraUnitArray.push({unit: "PILGRIM", x: depot.x, y: depot.y});
-        })
         competitionDepots.forEach(depot => {
             extraUnitArray.push({unit: "PROPHET", x: depot.x, y: depot.y});
+        })
+        churchDepots.forEach(depot => {
+            extraUnitArray.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
         self.castleBuildQueue = extraUnitArray.concat(self.castleBuildQueue);
         self.log("ADDING SPECIAL UNITS TO QUEUE");
@@ -74,10 +74,11 @@ castle.doAction = (self) => {
         if(botsInQueue > 0 && ((self.castleBuildQueue[0].unit == "PILGRIM") || (self.castleBuildQueue[0].unit == "PROPHET"))) {
             return castle.buildFromQueue(self);
         //Keep queue at reasonable size, adding another prophet as necessary so prophets are continually build
-        } else if (botsInQueue <= 5) {
+        }/* else if (botsInQueue <= 5) {
             self.castleBuildQueue.push({unit: "CRUSADER", x: self.target.x, y: self.target.y});
         }
-        return castle.makeDecision(self, self.teamCastles, hasSignalToSend);
+        return castle.makeDecision(self, self.teamCastles, hasSignalToSend);*/
+        return;
     }
 }
 
@@ -518,10 +519,16 @@ castle.findDepotClusters = (self, minClusterSize, competitionIndex, searchAggres
             } else if (clusters[nearby].count < clusters[i].count) {
                 clusters.splice(nearby, 1);
             } else {
-                if(movement.getDistance(self.me, clusters[i]) > movement.getDistance(self.me, clusters[nearby])) {
+                if(clusters[nearby].dist < clusters[i].dist) {
                     clusters.splice(i, 1);
-                } else {
+                } else if(clusters[nearby].dist > clusters[i].dist) {
                     clusters.splice(nearby, 1);
+                } else {
+                    if(movement.getDistance(self.me, clusters[i]) > movement.getDistance(self.me, clusters[nearby])) {
+                        clusters.splice(i, 1);
+                    } else {
+                        clusters.splice(nearby, 1);
+                    }
                 }
             }
             nearby = clusters.findIndex(c => {

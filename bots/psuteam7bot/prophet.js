@@ -303,8 +303,19 @@ prophet.takeDestroyerAction = (self) =>  {
 
     if(movement.positionsAreEqual(self.target, self.me))
     {
-        self.log('At target, Waiting...');
-        return;
+        //Check there is a pilgrim trying to get to this target depot
+        const nearbyPilgrims = self.getVisibleRobots().filter(bot => {
+            return bot.team === self.me.team && bot.unit === 2 && movement.getDistance(self.me, bot) <= 2;
+        })
+        //If not, just wait
+        if(nearbyPilgrims.length === 0) {
+            self.log('At target, Waiting...');
+            return;
+        //If pilgrim wants spot, change target to somewhere else and move off depot for them
+        } else {
+            self.log("CHANGING TARGET SO PILGRIM CAN MINE/BUILD A CHURCH");
+            self.target = movement.findNearestLocation(self, self.me);
+        }
     }
 
     //If no path yet

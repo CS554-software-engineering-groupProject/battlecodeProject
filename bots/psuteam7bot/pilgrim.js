@@ -238,6 +238,7 @@ pilgrim.updateResourceTarget = (self) => {
  */
 pilgrim.buildChurch = (self) => {
     let bestCount = 0;
+    let bestDist = 0;
     let bestLoc;
     for(let i = -1; i<= 1; i++) {   
         for(let j = -1; j<= 1; j++) {
@@ -249,15 +250,17 @@ pilgrim.buildChurch = (self) => {
             const locInfo = castle.processLocalDepots(self, loc);
             if(locInfo.count > bestCount) {
                 bestCount = locInfo.count;
+                bestDist = locInfo.dist;
                 bestLoc = {x: loc.x, y: loc.y, dx: i, dy: j};
-            } else if (locInfo.count === bestCount && (movement.getDistance(self.base, bestLoc) > movement.getDistance(self.base, loc))) {
+            } else if (locInfo.count === bestCount && bestDist > locInfo.dist) {
                 bestCount = locInfo.count;
+                bestDist = locInfo.dist;
                 bestLoc = {x: loc.x, y: loc.y, dx: i, dy: j};
             }
         }
     }
     self.base = {x: bestLoc.x, y: bestLoc.y}
-    self.log('pilgrim ' + self.id + ' building a church at [' + (self.me.x+i) + ',' + (self.me.y+j) +']'); 
+    self.log('pilgrim ' + self.id + ' building a church at [' + bestLoc.x + ',' + bestLoc.y +']'); 
     return self.buildUnit(1, bestLoc.dx, bestLoc.dy); 
 }
 

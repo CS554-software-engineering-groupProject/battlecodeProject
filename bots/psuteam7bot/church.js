@@ -11,10 +11,16 @@ church.UNITTYPE = ["CASTLE", "CHURCH", "PILGRIM", "CRUSADER", "PROPHET" , "PREAC
 church.doAction = (self) => {
      self.log("church" + self.id + "taking turn.");
 }
+
+/** Method to detect global resources values
+ */
+church.checkGlobalResources = () =>{
+    
+}
+
 /** Method to detect and evaluate nearby visible resource depots 
  */
 church.detectResources = () => {
 
 }
-
 export default church;

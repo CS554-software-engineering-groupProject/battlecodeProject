@@ -7,6 +7,7 @@ import { setFlagsFromString } from 'v8';
 const church = {};
 
 church.UNITTYPE = ["CASTLE", "CHURCH", "PILGRIM", "CRUSADER", "PROPHET" , "PREACHER"]
+max
 
 church.doAction = (self) => {
      self.log("church" + self.id + "taking turn.");
@@ -20,7 +21,9 @@ church.checkGlobalResources = () =>{
 
 /** Method to detect and evaluate nearby visible resource depots 
  */
-church.detectResources = () => {
+church.detectClosestResources = () => {
 
 }
+
+
 export default church;

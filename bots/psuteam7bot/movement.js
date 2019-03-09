@@ -848,12 +848,12 @@ movement.getNearestPositionFromList = (origin, fullMap, robotMap, positions, pas
         } else {
             return 0;
         }
-    })
+    });
     
     if(passableCheck)
     {
         for(let i = 0; i < positions.length; i++) {
-            const position = {x: location.x, y: location.y};
+            const position = {x: positions[i].x, y: positions[i].y};
             if(movement.isPassable(position, fullMap, robotMap)) {
                 return position;
             }

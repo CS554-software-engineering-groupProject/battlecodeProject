@@ -21,7 +21,7 @@ church.checkGlobalResources = () =>{
 
 /** Method to detect and evaluate nearby visible resource depots 
  */
-church.detectClosestResources = () => {
+church.detectClosestResources = (position, depotMap, occupiedResources) => {
 
 }
 

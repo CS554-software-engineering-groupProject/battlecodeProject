@@ -12,17 +12,13 @@ pilgrim.maxFuel = SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY;
  */
 pilgrim.doAction = (self) => {
     self.log("pilgrim " + self.id + " taking turn - occupied depots: " + JSON.stringify(self.occupiedResources));
-    const onMap = (self, x, y) => {
-        const mapSize = self.map.length;
-        return (x < mapSize) && (x >= 0) && (y < mapSize) && (y >= 0)
-    }
     
     if (self.role === 'UNASSIGNED') {
         self.base = movement.findAdjacentBase(self);
-        //Tweaking to set base not directly on top of castle, because causing pathfinding issues
-        //self.base = {x: self.me.x, y: self.me.y};
+        if(self.base === null) {
+            self.base = {x: self.me.x, y: self.me.y};
+        }
         self.log("Set base as " + JSON.stringify(self.base));
-        //Gets nearby base, checks turn
         self.role = 'PIONEER'
         communication.initTeamCastleInformation(self);
         //Set target base on castle signal

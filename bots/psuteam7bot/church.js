@@ -29,11 +29,20 @@ church.detectClosestResources = (position, depotMap, occupiedResources) => {
         for(let x = 0; x<mapSize; x++){
             const currDist = movement.getDistance(position, {x: x, y: y});
             if(depotMap[x][y] == true && (currDist < minDist)){
-                
+                //Check if occupiedResources has a match
+                const occupiedArray = occupiedResources.filter(depot => {
+                    return depot.x === x && depot.y === y;
+                });
+                //If no matches (occupiedArray is empty), set as potential position
+                if(occupiedArray.length === 0) {
+                    closest.x = x;
+                    closest.y = y;
+                    minDist = currDist;
+                }
             }
         }
     }
+    return closest;
 }
-
 
 export default church;

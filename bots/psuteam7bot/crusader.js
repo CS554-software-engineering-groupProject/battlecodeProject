@@ -66,6 +66,32 @@ crusader.takeAttackerAction = (self) => {
 
     const visibleRobots = self.getVisibleRobots();
     const attackable = combat.filterByAttackable(self, visibleRobots);
+    const unattackable = combat.filterByUnattackable(self, visibleRobots);
+
+    //Crusader-vs-Prophet micro, single prophet, 1 enemy prophet in attackable range and no other enemy units in vision
+    if((attackable.length === 1 && attackable[0].unit === 4) && unattackable.length === 0 && movement.getDistance(self.me, attackable[0]) >= SPECS.UNITS[attackable[0].unit].ATTACK_RADIUS[0])
+    {
+        const location = movement.getNearestLocationInRadius(self, attackable[0], SPECS.UNITS[attackable[0].unit].ATTACK_RADIUS[0]-1)
+        if(!movement.positionsAreEqual(location, attackable[0]))
+        {
+            movement.aStarPathfinding(self, self.me, location, false);
+            self.log('Enemy prophet detected, Crusader-vs-Prophet micro executed');
+            return movement.moveAlongPath(self);
+        }
+
+    }
+
+    //single prophet, 1 enemy prophet in unattackable range and no other enemy units
+    if(unattackable.length === 1  && attackable[0].unit === 4 && movement.getDistance(self.me, attackable[0]) >= SPECS.UNITS[attackable[0].unit].ATTACK_RADIUS[0])
+    {
+        const location = movement.getNearestLocationInRadius(self, unattackable[0], SPECS.UNITS[attackable[0].unit].ATTACK_RADIUS[0]-1)
+        if(!movement.positionsAreEqual(location, unattackable[0]))
+        {
+            movement.aStarPathfinding(self, self.me, location, false);
+            self.log('Enemy prophet detected, Crusader-vs-Prophet micro executed');
+            return movement.moveAlongPath(self);
+        }
+    }
 
     //Attack visible enemies
     if(attackable.length > 0)
@@ -119,6 +145,24 @@ crusader.takeAttackerAction = (self) => {
     }
     else if(self.squadSize === 0)
     {
+        if(unattackable.length > 0)
+        {
+            //Filter for Crusaders,
+            //Sort by distance closest to us,
+            //get nearest position in (radius == distance) from it to us
+            //If nearest position in attack radius, don't move, if not, use A* pathfind to add to move queue
+
+            //
+            //Crusader micro, Crusader-vs-Crusader,
+            if(unattackable[0].unit === self.me.unit && movement.getDistance(self.path[self.path.length-1], unattackable[0]) < SPECS.UNITS[self.me.unit].ATTACK_RADIUS[1])
+            {
+                //Don't move if a single enemy crusader is in vision, and next location on path is inside the enemy attack range
+                self.log('Enemy Crusader detected, Crusader-vs-Crusader micro executed');
+                return;
+            }
+        }
+
+
         self.log('ATTACKER crusader ' + self.id + ' moving towards enemy base, Current: [' + self.me.x + ',' + self.me.y + ']')
         return movement.moveAlongPath(self);
     }

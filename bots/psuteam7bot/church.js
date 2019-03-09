@@ -24,6 +24,7 @@ church.checkGlobalResources = () =>{
 church.detectClosestResources = (position, depotMap, occupiedResources) => {
     const mapSize = depotMap.length;
     let misDist = 2*Math.pow(mapSize, 2);
+    let closest = { x: -1, y: -1}
 }
 
 

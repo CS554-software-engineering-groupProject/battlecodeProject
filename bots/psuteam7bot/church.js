@@ -42,11 +42,39 @@ church.detectClosestResources = (position, depotMap, occupiedResources) => {
     return closest;
 }
 
-/** Method to build miners for each visible resource depot 
- */
-
-church.minerAction =(self) =>{
-    
-}
 
 export default church;
+
+
+/** 
+ * if(self.me.turn === 1)
+    {
+        
+        const karboniteDepots = movement.getResourcesInRange(self.me, 36, self.karbonite_map);
+        karboniteDepots.forEach(depot => {
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y, buildCounter:buildCounter});
+        })
+
+        const fuelDepots = movement.getResourcesInRange(self.me, 16, self.fuel_map)
+        fuelDepots.forEach(depot => {
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y, buildCounter:buildCounter});
+        })
+        
+        const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
+        self.target = mirrorCastle;
+        self.log(self.castleBuildQueue);
+
+        return castle.buildFromQueue(self);
+    }
+    else if (self.me.turn <= 4) 
+    {
+        self.log("BUILD QUEUE NON-EMPTY")
+        self.log(self.castleBuildQueue)
+        const botsInQueue = self.castleBuildQueue.length;
+        //Keep queue at reasonable size, adding another crusader as necessary so crusaders are continually build
+        if (botsInQueue <= 5) {
+            self.castleBuildQueue.push({unit: "PROPHETS", x: self.target.x, y: self.target.y});
+        }
+        return castle.buildFromQueue(self);
+    }
+ */

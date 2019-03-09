@@ -68,29 +68,16 @@ crusader.takeAttackerAction = (self) => {
     const attackable = combat.filterByAttackable(self, visibleRobots);
     const unattackable = combat.filterByUnattackable(self, visibleRobots);
 
-    //Crusader-vs-Prophet micro, single prophet, 1 enemy prophet in attackable range and no other enemy units in vision
+    // TODO Crusader-vs-Prophet micro, single prophet, 1 enemy prophet in attackable range and no other enemy units in vision
     if((attackable.length === 1 && attackable[0].unit === 4) && unattackable.length === 0 && movement.getDistance(self.me, attackable[0]) >= SPECS.UNITS[attackable[0].unit].ATTACK_RADIUS[0])
     {
-        const location = movement.getNearestLocationInRadius(self, attackable[0], SPECS.UNITS[attackable[0].unit].ATTACK_RADIUS[0]-1)
-        if(!movement.positionsAreEqual(location, attackable[0]))
-        {
-            movement.aStarPathfinding(self, self.me, location, false);
-            self.log('Enemy prophet detected, Crusader-vs-Prophet micro executed');
-            return movement.moveAlongPath(self);
-        }
 
     }
 
-    //single prophet, 1 enemy prophet in unattackable range and no other enemy units
+    // TODO single prophet, 1 enemy prophet in unattackable range and no other enemy units
     if(unattackable.length === 1  && attackable[0].unit === 4 && movement.getDistance(self.me, attackable[0]) >= SPECS.UNITS[attackable[0].unit].ATTACK_RADIUS[0])
     {
-        const location = movement.getNearestLocationInRadius(self, unattackable[0], SPECS.UNITS[attackable[0].unit].ATTACK_RADIUS[0]-1)
-        if(!movement.positionsAreEqual(location, unattackable[0]))
-        {
-            movement.aStarPathfinding(self, self.me, location, false);
-            self.log('Enemy prophet detected, Crusader-vs-Prophet micro executed');
-            return movement.moveAlongPath(self);
-        }
+
     }
 
     //Attack visible enemies

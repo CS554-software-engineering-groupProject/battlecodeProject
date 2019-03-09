@@ -9,10 +9,10 @@ const church = {};
 church.UNITTYPE = ["CASTLE", "CHURCH", "PILGRIM", "CRUSADER", "PROPHET" , "PREACHER"]
 
 church.doAction = (self) => {
-
-    self.log("church" + self.id + "taking turn.");
-
+     self.log("church" + self.id + "taking turn.");
 }
+/** Method to detect and evaluate nearby visible resource depots 
+ */
 
 
 export default church;

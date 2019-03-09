@@ -13,6 +13,8 @@ church.doAction = (self) => {
 }
 /** Method to detect and evaluate nearby visible resource depots 
  */
-
+church.detectResources = () => {
+    
+}
 
 export default church;

@@ -17,12 +17,12 @@ church.doAction = (self) => {
     if(self.me.turn == 1){
         const karboniteDepots = movement.getResourcesInRange(self.me, 36, self.karbonite_map);
         karboniteDepots.forEach(depot => {
-            self.castle.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
 
         const fuelDepots = movement.getResourcesInRange(self.me, 16, self.fuel_map)
         fuelDepots.forEach(depot => {
-            self.castle.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
 
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
@@ -33,7 +33,8 @@ church.doAction = (self) => {
     }  
     else if (self.me.turn <= 4) {
         self.log("BUILD QUEUE NON-EMPTY")
-        self.log(self.castle.castleBuildQueue)
+        self.log(self.castleBuildQueue)
+        const botsInQueue = self.castleBuildQueue.length;
     }  
 }
 

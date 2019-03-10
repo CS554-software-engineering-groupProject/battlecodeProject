@@ -60,11 +60,8 @@ castle.doAction = (self) => {
         castle.checkUnitCastleTalk(self);
         const hasSignalToSend = castle.signalNewUnitTarget(self);
         const botsInQueue = self.castleBuildQueue.length;
-        //If there are still pilgrims of prophets to build, prioritize those unique units
-        if(botsInQueue > 0 && ((self.castleBuildQueue[0].unit == "PILGRIM") || (self.castleBuildQueue[0].unit == "PROPHET"))) {
-            return castle.buildFromQueue(self);
         //Keep queue at reasonable size, adding another prophet as necessary so prophets are continually build
-        } else if (botsInQueue <= 5) {
+        if (botsInQueue <= 5) {
             self.castleBuildQueue.push({unit: "CRUSADER", x: self.target.x, y: self.target.y});
         }
         return castle.makeDecision(self, self.teamCastles, hasSignalToSend);
@@ -103,7 +100,6 @@ castle.makeMacroDecisions = (self) => {
     } else {
         self.macro.defenders = 3;
         self.macro.turtle = false;
-        self.macro.defenders = 8;
         self.macro.buildChurch = churchDepots.length > 0;
         competitionDepots.forEach(depot => {
             extraUnitArray.push({unit: "PROPHET", x: depot.x, y: depot.y});
@@ -113,7 +109,8 @@ castle.makeMacroDecisions = (self) => {
 }
 
 
-/** Method to check if any of the adjacent tile is available. Place the unit if true.
+/**
+ *  Method to check if any of the adjacent tile is available. Place the unit if true.
  */
 castle.findUnitPlace = (self, unitType) => {
     for(let i = -1; i<= 1; i++){   
@@ -301,7 +298,7 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
 
     
     //if there are any attackable enemies nearby, castle will start attacking instead of building any other units
-    if(attackableEnemies > 0){
+    if(attackableEnemies.length > 0){
         const dx = attackableEnemies[0].x - self.me.x;
         const dy = attackableEnemies[0].y - self.me.y;
 
@@ -329,12 +326,11 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
         if(self.fuel >= SPECS.UNITS[SPECS["PROPHET"]].CONSTRUCTION_FUEL && 
             self.karbonite >= SPECS.UNITS[SPECS["PROPHET"]].CONSTRUCTION_KARBONITE) {
             //Signal what you would normally             
-            const ctSignal = self.teamCastles[0].signalBuilding ? 101 : 100;
+            const ctSignal = self.teamCastles[0].signalBuilding ? 100 : 101;
             self.castleTalk(ctSignal);
             return castle.findUnitPlace(self, "PROPHET");
         }
-    }
-   
+    }   
 
     //otherwise castles will signal which castle has done building the units and will take decisions accordingly
     const checkSignal = otherCastles.findIndex(castle =>{
@@ -342,8 +338,6 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
     });
 
     self.log("Signal: " +  checkSignal);
-    //self.log(JSON.stringify(self.getVisibleRobots().filter(bots => {return bots.castle_talk > 0})));
-    //self.log(JSON.stringify(otherCastles));
 
     if(checkSignal <= 0 && !otherCastles[0].mirrorCastleDestroyed) {
         otherCastles[0].signalBuilding = true
@@ -356,12 +350,17 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
             return castle.buildFromQueue(self)
         }
     }
-    else{
-
-        self.log('Not building units, differeing to other castles')
+    else {
         otherCastles[0].signalBuilding = false
         self.castleTalk(101);
-        return
+        const botsInQueue = self.castleBuildQueue.length;
+        //If there are still pilgrims of prophets to build, prioritize those unique units over deferring to rushing castle
+        if(botsInQueue > 0 && ((self.castleBuildQueue[0].unit == "PILGRIM") || (self.castleBuildQueue[0].unit == "PROPHET"))) {
+            return castle.buildFromQueue(self);
+        } else {
+            self.log('Not building units, differeing to other castles')
+            return;
+        }
     }  
 
 }

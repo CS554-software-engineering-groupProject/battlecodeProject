@@ -14,7 +14,9 @@ church.maxFuel = SPECS.UNITS[SPECS.CHURCH].FUEL_CAPACITY;
 church.doAction = (self) => {
      self.log("church" + self.id + "taking turn.");
 
-     
+    if(self.me.turn == 1){
+        
+    }    
 }
 
 

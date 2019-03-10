@@ -14,7 +14,7 @@ describe('Church unit test', function(){
         mockGame.initEmptyMaps(10);
     });
 
-    describe(' tests', function(){
+    describe('getResourcesInRange returns targets correctly', function(){
 
     });
 })

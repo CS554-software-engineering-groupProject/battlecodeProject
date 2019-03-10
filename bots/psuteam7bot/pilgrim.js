@@ -24,7 +24,7 @@ pilgrim.doAction = (self) => {
         //Set target base on castle signal
         const {x, y} = communication.signalToPosition(self.getRobot(self.teamCastles[0].id).signal, self.map)
         self.target = {x: x, y: y};
-        self.log("pilgrim MINER " + self.id + " targeting depot at [" + self.target.x + "," + self.target.y + "]")
+        self.log("pilgrim PIONEER " + self.id + " targeting depot at [" + self.target.x + "," + self.target.y + "]")
     }
 
     if(self.role === 'MINER') {
@@ -239,7 +239,7 @@ pilgrim.updateResourceTarget = (self) => {
 pilgrim.buildChurch = (self) => {
     let bestCount = 0;
     let bestDist = 0;
-    let bestLoc;
+    let bestLoc = null;
     for(let i = -1; i<= 1; i++) {   
         for(let j = -1; j<= 1; j++) {
             const loc = {x: (self.me.x + i), y: (self.me.y+j)} 
@@ -259,9 +259,14 @@ pilgrim.buildChurch = (self) => {
             }
         }
     }
-    self.base = {x: bestLoc.x, y: bestLoc.y}
-    self.log('pilgrim ' + self.id + ' building a church at [' + bestLoc.x + ',' + bestLoc.y +']'); 
-    return self.buildUnit(1, bestLoc.dx, bestLoc.dy); 
+    if (bestLoc != null) {
+        self.base = {x: bestLoc.x, y: bestLoc.y}
+        self.log('pilgrim ' + self.id + ' building a church at [' + bestLoc.x + ',' + bestLoc.y +']'); 
+        return self.buildUnit(1, bestLoc.dx, bestLoc.dy); 
+    } else {
+        self.log("No viable church positions - no taking action");
+        return;
+    }
 }
 
 

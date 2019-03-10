@@ -35,14 +35,36 @@ describe('Pilgrim Unit Tests', function() {
             done();
         });
 
-        it('UNASSIGNED pilgrims', function(done) {
-            myBot.role = "TESTROLE";
-
+        it('UNASSIGNED pilgrims should set their base and target then become PIONEERS', function(done) {
+            let stubTakePioneerAction = mockGame.replaceMethod("pilgrim", "takePioneerAction").returns('taking pioneer action');
+            myBot.role = "UNASSIGNED";
+            localCastle.me.signal = 4;
+            localCastle.me.signal_radius = 2;
+            
+            mockGame._setCommunication(localCastle);
             output = pilgrim.doAction(myBot);
 
-            expect(output).to.be.undefined;
+            expect(myBot.base).to.eql({x: 0, y: 0});
+            expect(myBot.target).to.eql({x: 4, y: 0});
+            expect(output).equals('taking pioneer action');
             done();
-        })
+        });
+
+        it('UNASSIGNED pilgrims with no local base should set base to current position', function(done) {
+            let stubTakePioneerAction = mockGame.replaceMethod("pilgrim", "takePioneerAction").returns('taking pioneer action');
+            let stubSignal2Position = mockGame.replaceMethod("communication", "signalToPosition").returns({x: 5, y: 5});
+            
+            mockGame.removeAllBots();
+            mockGame.createNewRobot(localCastle, 1, 3, 0, 2);
+            mockGame.createNewRobot(myBot, 1, 1, 0, 2);
+            myBot.teamCastles = [{id: localCastle.id, x: localCastle.me.x, y: localCastle.me.y}];
+            output = pilgrim.doAction(myBot);
+
+            expect(myBot.base).to.eql({x: 1, y: 1});
+            expect(myBot.target).to.eql({x: 5, y: 5});
+            expect(output).equals('taking pioneer action');
+            done();
+        });
 
         it('PIONEER/MINER pilgrims should just call respective action methods', function(done) {
             let stubTakePioneerAction = mockGame.replaceMethod("pilgrim", "takePioneerAction").returns('taking pioneer action');
@@ -407,146 +429,51 @@ describe('Pilgrim Unit Tests', function() {
         });
     });
 
-    describe('takeMinerAction() tests', function() {
-        it('should set target to depot of relatively less plentiful resource if no target', function(done) {
+    describe('buildChurch() tests', function() {
+        it('should skip building if no viable build locations', function(done) {
             let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
             const karbAlterations = [
-                {x: 3, y: 4, value:true},
-                {x: 1, y: 5, value:true}
+                {x: 0, y: 1, value:true},
+                {x: 0, y: 2, value:true},
+                {x: 1, y: 0, value:true}
             ];
             const fuelAlterations = [
-                {x: 4, y: 3, value:true},
-                {x: 5, y: 1, value:true}
+                {x: 2, y: 2, value:true},
+                {x: 2, y: 1, value:true},
+                {x: 1, y: 2, value:true}
+            ];
+            mockGame.alterMap("karbonite_map", karbAlterations);
+            mockGame.alterMap("fuel_map", fuelAlterations);
+            mockGame.createNewRobot(new MyRobot(), 2, 0, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 0, 2, 0, 2);
+
+            output = pilgrim.buildChurch(myBot);
+
+            expect(output).to.be.undefined;
+
+            done();
+        });
+
+        it('should build church at best location if at least one viable spot', function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
+            const karbAlterations = [
+                {x: 1, y: 0, value:true},
+                {x: 0, y: 2, value:true},
+                {x: 1, y: 0, value:true}
+            ];
+            const fuelAlterations = [
+                {x: 2, y: 2, value:true},
+                {x: 2, y: 1, value:true},
+                {x: 2, y: 0, value:true}
             ];
             mockGame.alterMap("karbonite_map", karbAlterations);
             mockGame.alterMap("fuel_map", fuelAlterations);
 
-            //Relatively more karbonite, target fuel
-            myBot.karbonite = 10;
-            myBot.fuel = myBot.karbonite*5-1;
-            output = pilgrim.takeMinerAction(myBot);
+            output = pilgrim.buildChurch(myBot);
 
-            expect(myBot.target).to.not.be.null;
-            expect(myBot.target).eql({x: 4, y: 3});
-            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.false;
-            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.true;
-            expect(output).equals('move made');
-
-            //Relatively more fuel, target karbonite
-            myBot.karbonite = 10;
-            myBot.fuel = myBot.karbonite*5+1;
-            myBot.target = null;
-            output = pilgrim.takeMinerAction(myBot);
-
-            expect(myBot.target).to.not.be.null;
-            expect(myBot.target).eql({x: 3, y: 4});
-            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.true;
-            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.false;
-            expect(output).equals('move made');
-
-            //Relatively equal resources, target karbonite
-            myBot.karbonite = 10;
-            myBot.fuel = myBot.karbonite*5;
-            myBot.target = null;
-            output = pilgrim.takeMinerAction(myBot);
-
-            expect(myBot.target).to.not.be.null;
-            expect(myBot.target).eql({x: 3, y: 4});
-            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.true;
-            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.false;
-            expect(output).equals('move made');
-
-            //Edge case with 0 karbonite, target karbonite
-            myBot.karbonite = 0;
-            myBot.fuel = 3;
-            myBot.target = null;
-            output = pilgrim.takeMinerAction(myBot);
-
-            expect(myBot.target).to.not.be.null;
-            expect(myBot.target).eql({x: 3, y: 4});
-            expect(myBot.karbonite_map[myBot.target.y][myBot.target.x]).to.be.true;
-            expect(myBot.fuel_map[myBot.target.y][myBot.target.x]).to.be.false;
-            expect(output).equals('move made');
-            
-            done();
-        });
-
-        
-        it('should give resources if near adjacent base and fuel or karbonite at carrying capacity', function(done) {
-            myBot.target = {x: myBot.me.x, y: myBot.me.y};
-            myBot.me.karbonite = 20;
-
-            output = pilgrim.takeMinerAction(myBot);
-
-            expect(output['action']).equals('give');
-            expect(output['dx']).equals(-1);
-            expect(output['dy']).equals(-1);
-
-            myBot.me.karbonite = 0;
-            myBot.me.fuel = 100;
-
-            output = pilgrim.takeMinerAction(myBot);
-
-            expect(output['action']).equals('give');
-            expect(output['dx']).equals(-1);
-            expect(output['dy']).equals(-1);
-
-            done();
-        });
-
-        it('should move towards base if not near castle, there is a path, and fuel or karbonite at carrying capacity', function(done) {
-            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
-            const returningPilgrim = new MyRobot();
-            mockGame.createNewRobot(returningPilgrim, 5, 5, 0, 2);
-            returningPilgrim.path = [{x: 2, y: 2}];
-            returningPilgrim.target = {x: myBot.me.x+1, y: myBot.me.y+1};
-            returningPilgrim.me.karbonite = 20;
-
-            output = pilgrim.takeMinerAction(returningPilgrim);
-
-            expect(output).equals('move made');
-
-            done();
-        });
-
-        it('should update path to base if no path and fuel or karbonite at carrying capacity', function(done) {
-            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
-            const returningPilgrim = new MyRobot();
-            mockGame.createNewRobot(returningPilgrim, 5, 5, 0, 2);
-            returningPilgrim.target = {x: localCastle.me.x, y: localCastle.me.y};
-            returningPilgrim.base = {x: localCastle.me.x, y: localCastle.me.y};
-            returningPilgrim.me.karbonite = 20;
-
-            output = pilgrim.takeMinerAction(returningPilgrim);
-
-            expect(returningPilgrim.path[0]).eql({x: localCastle.me.x, y: localCastle.me.y});
-            expect(output).equals('move made');
-
-            done();
-        });
-
-        it('should mine if not at carrying capacity and at target depot', function(done) {
-            myBot.target = {x: myBot.me.x, y: myBot.me.y};
-            myBot.me.karbonite = 19;
-            myBot.me.fuel = 99;
-
-            mockGame.alterMap("karbonite_map", [{x: myBot.me.x, y: myBot.me.y, value:true}])
-            output = pilgrim.takeMinerAction(myBot);
-
-            expect(output['action']).equals('mine');
-
-            done();
-        });
-
-        it('should move towards target if not at carrying capacity and not at target depot', function(done) {
-            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns('move made');
-            myBot.target = {x: myBot.me.x+1, y: myBot.me.y+1};
-            myBot.me.karbonite = 19;
-            myBot.me.karbonite = 99;
-
-            output = pilgrim.takeMinerAction(myBot);
-
-            expect(output).equals('move made');
+            expect(output['action']).equals('build');
+            expect(output['dx']).equals(0);
+            expect(output['dy']).equals(1)
 
             done();
         });

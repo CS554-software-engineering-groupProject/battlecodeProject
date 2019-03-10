@@ -13,4 +13,8 @@ describe('Church unit test', function(){
         mockGame = new mockBC19();
         mockGame.initEmptyMaps(10);
     });
+
+    describe(' tests', function(){
+
+    });
 })

@@ -383,7 +383,7 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
         self.log("Castle talk received: " + alliedUnits[i].castle_talk);
         //self.log("Enemy castles: ");
         //self.log(self.enemyCastles);
-        let messageValue = alliedUnits[i].castle_talk;
+        let messageValue = alliedUnits[i].castle_talk -1;
         
         //Castle talk is in the range 0-63 inclusive, reserved for coords - assume as destroyed enemy castle loc
         if(messageValue >= 0 && messageValue < 64)

@@ -85,10 +85,11 @@ describe('Crusader Unit Tests', function() {
     });
 
     describe('takeAttackerAction() tests', function() {
-        it('ATTACKERS with no base should identify enemy castles', function(done) {
+        it('ATTACKERS with no base should set target to enemy castle', function(done) {
             let stubCheckEnemyCastle = mockGame.replaceMethod("communication", "checkAndReportEnemyCastleDestruction").returns(false);
             myBot.base = null;
             myBot.target = {x: 9, y: 3};
+            myBot.squadSize = 0; //To ensure move by attacker - on test map it's skipped
 
             //Unknown, get mirror castle returns null?
             output = crusader.takeAttackerAction(myBot);
@@ -113,6 +114,7 @@ describe('Crusader Unit Tests', function() {
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
             myBot.path = [{x: 3, y: 3}];
             myBot.target = {x: 9, y: 3};
+            myBot.squadSize = 0; //To ensure move by attacker - on test map attackerMoves cannot be 0 unfortunately
 
             //Teammate in attackable range
             mockGame.createNewRobot(new MyRobot(), 1, 7, 0, 2);
@@ -153,26 +155,26 @@ describe('Crusader Unit Tests', function() {
             done();
         });
 
-        it("ATTACKERS with a path should move for 6 turns iff they have fuel to move", function(done) {
+        it("ATTACKERS with a path should move for some amount of turns iff they have fuel to move", function(done) {
             let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
             myBot.path = [{x: 3, y: 3}];
             myBot.target = {x: 9, y: 3};
 
             //Enough fuel, still turns to move
-            myBot.attackerMoves = 5;
+            myBot.attackerMoves = -1; //Adjust because on small map won't make many moves
             myBot.fuel = 4;
             output = crusader.takeAttackerAction(myBot);
 
-            expect(myBot.attackerMoves).equals(6);
+            expect(myBot.attackerMoves).equals(0);
             expect(output).equals("moved successfully");
 
             //Not enough fuel, still turns to move
-            myBot.attackerMoves = 5;
+            myBot.attackerMoves = -1;
             myBot.fuel = 3;
             output = crusader.takeAttackerAction(myBot);
 
-            expect(myBot.attackerMoves).equals(5);
+            expect(myBot.attackerMoves).equals(-1); //Adjust because on small map won't make many moves
             expect(output).to.be.undefined;
             
 

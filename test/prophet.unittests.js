@@ -54,36 +54,39 @@ describe('Prophet Unit Tests', function() {
         });
 
         it("UNASSIGNED bots should use the radio signal from the base if one exists", function(done) {
-            let stubDefenderAction = mockGame.replaceMethod("prophet", "takeDefenderAction").returns('skipping defender action');
+            let stubDestroyerAction = mockGame.replaceMethod("prophet", "takeDestroyerAction").returns('skipping destroyer action');
             let signalPos = communication.signalToPosition(17, mockGame.game.map);
             localCastle.me.signal = 17;
             localCastle.me.signal_radius = 2;
             mockGame._setCommunication(localCastle);
 
+            mockGame.alterMap("karbonite_map", [{x: signalPos.x, y: signalPos.y, value:true}]) //Force into destoryer path so defender section doesn't reset target
             output = prophet.doAction(myBot);
 
             expect(myBot.base).to.eql({x: 0, y: 3});
-            expect(myBot.role).equals("DEFENDER");
+            expect(myBot.role).equals("DESTROYER");
             expect(myBot.target).to.eql(signalPos);
-            expect(output).equals('skipping defender action');
+            expect(output).equals('skipping destroyer action');
 
             done();
         });
 
         it("UNASSIGNED bots should use getMirrorCastle if radio signal from the base DNE", function(done) {
-            let stubDefenderAction = mockGame.replaceMethod("prophet", "takeDefenderAction").returns('skipping defender action');
+            let stubDestroyerAction = mockGame.replaceMethod("prophet", "takeDestroyerAction").returns('skipping destroyer action');
+
+            mockGame.alterMap("karbonite_map", [{x: 18, y: 3, value:true}]) //Force into destoryer path so defender section doesn't reset target
 
             output = prophet.doAction(myBot);
 
             expect(myBot.base).to.eql({x: 0, y: 3});
-            expect(myBot.role).equals("DEFENDER");
+            expect(myBot.role).equals("DESTROYER");
             expect(myBot.target).to.eql({x: 18, y: 3});
-            expect(output).equals('skipping defender action');
+            expect(output).equals('skipping destroyer action');
 
             done();
         });
 
-        it("UNASSIGNED bots should become DEFENDERS if 2 or less local prophets, ATTACKERS otherwise", function(done) {
+        it("UNASSIGNED bots should become DEFENDERS if 8 or less local prophets, ATTACKERS otherwise", function(done) {
             let stubDefenderAction = mockGame.replaceMethod("prophet", "takeDefenderAction").returns('skipping defender action');
             let stubAttackerAction = mockGame.replaceMethod("prophet", "takeAttackerAction").returns('skipping attacker action');
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
@@ -94,26 +97,33 @@ describe('Prophet Unit Tests', function() {
             expect(myBot.role).equals("DEFENDER");
             expect(output).equals('skipping defender action');
 
-            //Two defenders in range of base, one out of range
+            //Eight defenders in range of base, one out of range
             myBot.role = "UNASSIGNED";
             mockGame.createNewRobot(new MyRobot(), 8, 3, 0, 4);
-            mockGame.createNewRobot(new MyRobot(), 8, 4, 0, 4);
+            mockGame.createNewRobot(new MyRobot(), 7, 3, 0, 4);
+            mockGame.createNewRobot(new MyRobot(), 8, 2, 0, 4);
+            mockGame.createNewRobot(new MyRobot(), 5, 3, 0, 4);
+            mockGame.createNewRobot(new MyRobot(), 0, 8, 0, 4);
+            mockGame.createNewRobot(new MyRobot(), 6, 6, 0, 4);
+            mockGame.createNewRobot(new MyRobot(), 0, 6, 0, 4);
+            mockGame.createNewRobot(new MyRobot(), 4, 5, 0, 4);
+
 
             output = prophet.doAction(myBot);
             
             expect(myBot.role).equals("DEFENDER");
             expect(output).equals('skipping defender action');
 
-            //Two defenders in range of base, one non-prophet also in range
+            //Eight defenders in range of base, one non-prophet also in range
             myBot.role = "UNASSIGNED";
-            mockGame.createNewRobot(new MyRobot(), 3, 3, 0, 3);
+            mockGame.createNewRobot(new MyRobot(), 3, 4, 0, 3);
 
             output = prophet.doAction(myBot);
 
             expect(myBot.role).equals("DEFENDER");
             expect(output).equals('skipping defender action');
 
-            //Three defenders in range of base
+            //Nine defenders in range of base
             myBot.role = "UNASSIGNED";
             mockGame.createNewRobot(new MyRobot(), 4, 4, 0, 4);
 

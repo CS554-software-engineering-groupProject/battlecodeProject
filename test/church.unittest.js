@@ -7,5 +7,9 @@ const movement = require('../projectUtils/psuteam7botCompiled.js').movement;
 const expect = chai.expect;
 
 describe('Church unit test', function(){
-    
+    let mockGame;
+    let mybot;
+    beforeEach(function(){
+        
+    })
 })

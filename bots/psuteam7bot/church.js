@@ -30,7 +30,10 @@ church.doAction = (self) => {
         self.log(self.castleBuildQueue);
 
         return church.castle.buildFromQueue(self);
-    }    
+    }  
+    else if (self.me.turn <= 4) {
+        
+    }  
 }
 
 

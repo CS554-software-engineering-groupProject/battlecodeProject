@@ -1124,4 +1124,122 @@ describe('Movement Helpers Unit Tests', function() {
             done();
         });
     });
+
+    describe.skip('getNearestPositionFromList() Tests', function() {
+        let output;
+        let myBot = new MyRobot();
+        let loc1 = {x: 5, y: 5};
+        let loc2 = {x: 3, y: 3}
+        let targets = [{x: 3, y: 4}, {x: 2, y: 1}, {x: 1, y: 1}, {x: 4, y: 4}]
+
+        beforeEach(function() {
+            mockGame = new mockBC19();
+            mockGame.initEmptyMaps(6);
+            mockGame.createNewRobot(myBot, 0, 0, 0, 2);
+        });
+
+        it('Should return closest tile when true passableCheck is false',function() {
+            //Works with bots
+            output = movement.getNearestPositionFromList(myBot, myBot.map, myBot.getVisibleRobotMap(), targets, false);
+            expect(output).eql({x: 1, y: 1});
+
+            mapAlterations = [
+                {x: 1, y: 1, value: false}
+            ]
+            mockGame.alterMap("map", mapAlterations);
+
+            //Works with impassable tile
+            output = movement.getNearestPositionFromList(myBot, myBot.map, myBot.getVisibleRobotMap(), targets, false);
+            expect(output).eql({x: 1, y: 1});
+
+
+            mapAlterations = [
+                {x: 1, y: 1, value: true}
+            ]
+            mockGame.alterMap("map", mapAlterations);
+            mockGame.createNewRobot(new MyRobot(), 1, 1, 0, 2);
+
+            //Works with occupied tile
+            output = movement.getNearestPositionFromList(myBot, myBot.map, myBot.getVisibleRobotMap(), targets, false);
+            expect(output).eql({x: 1, y: 1});
+
+            //Works with locs instead of bot
+            output = movement.getNearestPositionFromList(loc1, myBot.map, myBot.getVisibleRobotMap(), targets, false);
+            expect(output).eql({x: 4, y: 4});
+
+            output = movement.getNearestPositionFromList(loc2, myBot.map, myBot.getVisibleRobotMap(), targets, false);
+            expect(output).eql({x: 3, y: 4});
+        });
+
+        it('Should return closest unoccupied tile when passableCheck is true',function() {
+            //Works with bots and passable tiles
+            targets = [{x: 3, y: 4}, {x: 2, y: 1}, {x: 1, y: 1}, {x: 4, y: 4}];
+            expect(movement.getNearestPositionFromList(myBot, myBot.map, myBot.getVisibleRobotMap(), targets, true)).eql({x: 1, y: 1});
+
+            mapAlterations = [
+                {x: 1, y: 1, value: false}
+            ]
+            mockGame.alterMap("map", mapAlterations);
+
+            //Gets nearest passable tile instead
+            expect(movement.getNearestPositionFromList(myBot, myBot.map, myBot.getVisibleRobotMap(), targets, true)).eql({x: 2, y: 1});
+
+            mockGame.alterMap("map", mapAlterations);
+            mockGame.createNewRobot(new MyRobot(), 2, 1, 0, 2);
+
+            //Gets nearest unoccupied tile instead
+            expect(movement.getNearestPositionFromList(myBot, myBot.map, myBot.getVisibleRobotMap(), targets, true)).eql({x: 3, y: 4});
+
+            //Works with locs instead of bot
+            expect(movement.getNearestPositionFromList(loc1, myBot.map, myBot.getVisibleRobotMap(), targets, true)).eql({x: 4, y: 4});
+
+            expect(movement.getNearestPositionFromList(loc2, myBot.map, myBot.getVisibleRobotMap(), targets, true)).eql({x: 3, y: 4});
+        });
+
+        it('Should return itself when all locations on list are not passable and passableCheck is true',function() {
+
+            mapAlterations = [
+                {x: 1, y: 1, value: false},
+                {x: 3, y: 4, value: false}, 
+                {x: 2, y: 1, value: false},
+                {x: 4, y: 4, value: false}
+            ]
+            mockGame.alterMap("map", mapAlterations);
+
+            //Works with bots
+            output = movement.getNearestPositionFromList(myBot, myBot.map, myBot.getVisibleRobotMap(), targets, true);
+            expect(output).eql({x: 0, y: 0});
+
+            //Works with locs
+            output = movement.getNearestPositionFromList(loc1, myBot.map, myBot.getVisibleRobotMap(), targets, true);
+            expect(output).eql(loc1);
+
+            output = movement.getNearestPositionFromList(loc2, myBot.map, myBot.getVisibleRobotMap(), targets, true);
+            expect(output).eql(loc2);
+
+            mapAlterations = [
+                {x: 1, y: 1, value: false},
+                {x: 3, y: 4, value: false}, 
+                {x: 2, y: 1, value: false},
+                {x: 4, y: 4, value: false}
+            ]
+            mockGame.alterMap("map", mapAlterations);
+
+            mockGame.createNewRobot(new MyRobot(), 1, 1, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 3, 4, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 2, 1, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 4, 4, 0, 2);
+
+            //Works with bots
+            output = movement.getNearestPositionFromList(myBot, myBot.map, myBot.getVisibleRobotMap(), targets, true);
+            expect(output).eql({x: 0, y: 0});
+
+            //Works with locs
+            output = movement.getNearestPositionFromList(loc1, myBot.map, myBot.getVisibleRobotMap(), targets, true);
+            expect(output).eql(loc1);
+
+            output = movement.getNearestPositionFromList(loc2, myBot.map, myBot.getVisibleRobotMap(), targets, true);
+            expect(output).eql(loc2);
+        });
+    });
 });

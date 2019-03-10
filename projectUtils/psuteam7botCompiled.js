@@ -1091,22 +1091,16 @@ movement.hasFuelToMove = (self, target) => {
  * @return Returns a coordinate pair of one of the position in positions array, passable and closest to origin. Returns origin if no positions found
  */
 movement.getNearestPositionFromList = (origin, fullMap, robotMap, positions, passableCheck) => {
-    positions.sort((a, b) => {
+    const sortedPositions = positions.sort((a, b) => {
         const distA = movement.getDistance(a, origin);
         const distB = movement.getDistance(b, origin);
-        if(distA < distB) {
-            return -1;
-        } else if (distA > distB) {
-            return 1;
-        } else {
-            return 0;
-        }
+        return distA - distB;
     });
     
     if(passableCheck)
     {
-        for(let i = 0; i < positions.length; i++) {
-            const position = {x: positions[i].x, y: positions[i].y};
+        for(let i = 0; i < sortedPositions.length; i++) {
+            const position = {x: sortedPositions[i].x, y: sortedPositions[i].y};
             if(movement.isPassable(position, fullMap, robotMap)) {
                 return position;
             }
@@ -1114,7 +1108,7 @@ movement.getNearestPositionFromList = (origin, fullMap, robotMap, positions, pas
         return origin;
     }
     else
-        return positions[0];
+        return {x: sortedPositions[0].x, y: sortedPositions[0].y};
 
 };
 
@@ -2701,7 +2695,7 @@ crusader.takeAttackerAction = (self) => {
 
             if(opforCrusaders.length > 0)
             { 
-                self.log('Enemy Crusader in visible range, executing Crusader-vs-Crusader micro--------------------------------------------------------------------');
+                self.log('Enemy Crusader in visible range, executing Crusader-vs-Crusader micro');
                 if(opforCrusaders.length !== unattackable.length)
                 {
                     self.log("Mixed units detected, defaulting to normal behavior");

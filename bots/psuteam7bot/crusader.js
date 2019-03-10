@@ -105,8 +105,9 @@ crusader.takeAttackerAction = (self) => {
         }
     }
 
+    const movesFromBase = Math.floor(Math.sqrt(movement.getDistance(self.base, self.target))/6)-1;
     //If first seven turns, move away from allied base towards enemy base, else check if squadSize threshold is met and is 0
-    if(self.attackerMoves < 6)
+    if(self.attackerMoves < movesFromBase)
     {
         if(movement.hasFuelToMove(self, self.path[self.path.length-1])) {
             self.attackerMoves++;

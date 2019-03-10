@@ -1373,18 +1373,18 @@ castle.doAction = (self) => {
         self.enemyCastles = movement.getEnemyCastleLocations(self.teamCastles, self.map);
         self.log("Enemy castles: ");
         self.log(self.enemyCastles);
-        const competitionDepots = castle.findDepotClusters(self, 3, 0.7, true);
+        /*const competitionDepots = castle.findDepotClusters(self, 3, 0.7, true);
         const churchDepots = castle.findDepotClusters(self, 3, 0.7, false);
         const extraUnitArray = [];
         competitionDepots.forEach(depot => {
             extraUnitArray.push({unit: "PROPHET", x: depot.x, y: depot.y});
-        });
+        })
         churchDepots.forEach(depot => {
             extraUnitArray.push({unit: "PILGRIM", x: depot.x, y: depot.y});
-        });
+        })
         self.castleBuildQueue = extraUnitArray.concat(self.castleBuildQueue);
         self.log("ADDING SPECIAL UNITS TO QUEUE");
-        self.log(self.castleBuildQueue);
+        self.log(self.castleBuildQueue);*/
     }
 
     //On first turn:
@@ -1437,6 +1437,37 @@ castle.doAction = (self) => {
     }
 };
 
+
+castle.makeMacroDecisions = (self) => {
+    const castleCount = self.teamCastles.length;
+    const castleDistances = [];
+    self.teamCastles.forEach(tc => {
+        castleDistances.push(movement.getDistance(tc, movement.getMirrorCastle(tc, self.map)));
+    });
+    const competitionDepots = castle.findDepotClusters(self, 3, 0.7, true);
+    const churchDepots = castle.findDepotClusters(self, 3, 0.7, false);
+
+    if(castleCount === 1) {
+        if(castleDistances[0] > 18) {
+            self.macro.defenders = 0;
+            self.macro.buildChurch = false;
+            self.macro.turtle = false;
+        } else {
+            self.macro.defenders = 8;
+            self.macro.turtle = true;
+            self.macro.buildChurch = churchDepots.length > 0;
+            self.macro.considerChurchTurn = 50;
+        }
+    } else {
+        self.macro.defenders = 3;
+        self.macro.turtle = false;
+        self.macro.defenders = 8;
+        self.macro.buildChurch = churchDepots.length > 0;
+    }
+
+};
+
+
 /** Method to check if any of the adjacent tile is available. Place the unit if true.
  */
 castle.findUnitPlace = (self, unitType) => {
@@ -1466,6 +1497,7 @@ castle.buildFromQueue = (self) => {
     const botsOnMap = combat.getVisibleAllies(self).length;
     let buildCount = 0;  
     let fuelCap = 0; 
+    let karbCap = 0;
     if(self.me.turn > 20) {
         /*Take lesser of 1. bots built and 2. bots on map
           1. Case for when castle destroyed and new one starts building - ensures it starts sooner rather than when 
@@ -1475,10 +1507,11 @@ castle.buildFromQueue = (self) => {
         */
         buildCount = Math.min(self.teamCastles[0].buildCounter.total, botsOnMap);
         fuelCap = 50+5*buildCount; //25+25*self.teamCastles.length;
+        karbCap = 20*self.teamCastles.length;
     }
     //If past very start of game and fuel amount low, don't build a unit
-    if(self.fuel < fuelCap) {
-        self.log('not building unit to conserve fuel');
+    if(self.fuel < fuelCap || self.karbonite < karbCap) {
+        self.log('not building unit to conserve resources');
         return;
     //If you are able to build next unit, signal coordinates so it knows where to go and build it
     } else if(self.fuel >= SPECS.UNITS[SPECS[nextBuild.unit]].CONSTRUCTION_FUEL && 
@@ -1634,6 +1667,26 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
         self.log('Enemies in the visible range, building phrophets');
         return castle.findUnitPlace(self, 'PROPHET');
     }
+
+    const nearbyDefenders = self.getVisibleRobots().filter((robotElement) => {
+        if(robotElement.team === self.me.team && robotElement.unit === 4)
+        {
+            const distance = movement.getDistance(self.me, robotElement);
+            return distance <= 64;
+        }
+    });
+
+    if(nearbyDefenders.length < self.macro.defenders) {
+        self.log("LESS DEFENDERS: " + nearbyDefenders.length);
+        if(self.fuel >= SPECS.UNITS[SPECS["PROPHET"]].CONSTRUCTION_FUEL && 
+            self.karbonite >= SPECS.UNITS[SPECS["PROPHET"]].CONSTRUCTION_KARBONITE) {
+            //Signal what you would normally             
+            const ctSignal = self.teamCastles[0].signalBuilding ? 101 : 100;
+            self.castleTalk(ctSignal);
+            return castle.findUnitPlace(self, "PROPHET");
+        }
+    }
+   
 
     //otherwise castles will signal which castle has done building the units and will take decisions accordingly
     const checkSignal = otherCastles.findIndex(castle =>{
@@ -2233,12 +2286,23 @@ prophet.doAction = (self) => {
             }
         });
 
-        //2 defenders towards mirror castle, should be enough to kill a crusader in 2 turns before it gets to attack range
-        if(nearbyDefenders.length < 3)
+        //Defenders towards mirror castle, should be enough to kill a crusader in 2 turns before it gets to attack range
+        if(nearbyDefenders.length < 9)
         {
             self.log("Base defenders = " + JSON.stringify(nearbyDefenders.length) + ", Assigned as a defender");
             self.role = "DEFENDER";
-
+            const defendDirection = movement.getRelativeDirection(self.me, self.target);
+            let defendDirIndex = movement.getDirectionIndex(defendDirection);
+            let dirs = movement.getDirectionsBetween(defendDirIndex, 1, 1).sort((a,b) => {
+                return movement.getDistance(b, defendDirection) - movement.getDistance(a, defendDirection);
+            });
+            //Choose a direction
+            let targetDir = dirs[nearbyDefenders.length % 3];
+            const dist = Math.abs(targetDir.x)+Math.abs(targetDir.y) === 2 ? 3 : 5;
+            let t = {x: self.me.x+dist*targetDir.x, y: self.me.y+dist*targetDir.y};
+            //Edge case where target not on map
+            t = self._bc_check_on_map(t.x, t.y) ? t : {x: self.me.x+5*defendDirection.x, y: self.me.y+5*defendDirection.y};
+            self.target = t;
         }
         else
         {
@@ -2279,11 +2343,13 @@ prophet.takeDefenderAction = (self) =>  {
     //Limited movement towards enemy castle (movement towards guard post)
     if(self.attackerMoves < 3)
     {
+        self.log("IN ATTACKER MOVES");
+        self.log(JSON.stringify(self.target));
         //Reusing attacker move naming convention
         self.attackerMoves++;
         if(self.path.length === 0)
         {
-            if(movement.aStarPathfinding(self, self.me, self.target, false)) {
+            if(movement.aStarPathfinding(self, self.me, self.target, true)) {
                 self.log(self.path);
             } else {
                 self.log('Cannot get path to guard post');
@@ -2487,7 +2553,6 @@ prophet.takeDestroyerAction = (self) =>  {
         const nearbyPilgrims = self.getVisibleRobots().filter(bot => {
             return bot.team === self.me.team && bot.unit === 2 && movement.getDistance(self.me, bot) <= 2;
         });
-        console.log(nearbyPilgrims);
         //If not, just wait
         if(nearbyPilgrims.length === 0) {
             self.log('At target, Waiting...');
@@ -2708,6 +2773,12 @@ class MyRobot extends BCAbstractRobot {
         this.baseID = null;                              //ID of original castle/church robot
         this.pendingMessages = [];                       //Stores castle signal to units for new targets
         this.receivedMessages = [];                      //Store partially received castle talk signal
+        this.macro = {
+            defenders: 2,
+            buildChurch: false,
+            considerChurchTurn: 1000,
+            turtle: false      
+        };
     }
     turn() {
         if(this.previous == null) {

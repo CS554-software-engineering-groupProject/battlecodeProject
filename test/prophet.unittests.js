@@ -369,7 +369,7 @@ describe('Prophet Unit Tests', function() {
 
     });
 
-    describe.only('takeDestroyerAction() tests', function() {
+    describe('takeDestroyerAction() tests', function() {
         it('DESTROYERS with enemies in attackable range should just attack enemies', function(done) {
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
             myBot.path = [{x: 3, y: 3}];

@@ -31,6 +31,7 @@ class MyRobot extends BCAbstractRobot {
         this.pendingMessages = [];                       //Stores castle signal to units for new targets
         this.receivedMessages = [];                      //Store partially received castle talk signal
         this.macro = {
+            localPilgrims: 0,
             defenders: 2,
             buildChurch: false,
             considerChurchTurn: 1000,

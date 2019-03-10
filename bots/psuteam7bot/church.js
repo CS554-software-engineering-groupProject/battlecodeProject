@@ -53,7 +53,10 @@ church.getResourcesInRange = (location, maxDistance, resourceMap) =>{
     for(let y = 0; y < resourceMap.length; ++y){
         for (let x = 0; x < resourceMap.length; ++x) {
             if(resourceMap[x][y]){
-                
+                currentDist = movement.getDistance(location, {x, y});
+                if(currentDist <= maxDistance) {
+                    targets.push({x: x, y: y, distance: currentDist})
+                } 
             }
         }
     }

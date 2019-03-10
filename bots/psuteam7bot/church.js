@@ -73,5 +73,3 @@ church.getResourcesInRange = (location, maxDistance, resourceMap) =>{
 
 
 export default church;
-
-

@@ -1303,8 +1303,8 @@ communication.checkAndReportEnemyCastleDestruction = (self) => {
     if(robotID === 0)
     {
         //Add coords to pending messages, push y then x
-        self.pendingMessages.push(y);
-        self.pendingMessages.push(x);
+        self.pendingMessages.push(y+1);
+        self.pendingMessages.push(x+1);
         return true;
     }
     else //Case target occupied or not in visible radius, -1 or there is a robotID > 0
@@ -1313,8 +1313,8 @@ communication.checkAndReportEnemyCastleDestruction = (self) => {
         if(robotID > 0 && self.getRobot(robotID).unit !== 0)
         {
             //Add coords to pending messages, push y then x
-            self.pendingMessages.push(y);
-            self.pendingMessages.push(x);
+            self.pendingMessages.push(y+1);
+            self.pendingMessages.push(x+1);
             return true;
         }
     }
@@ -1373,18 +1373,7 @@ castle.doAction = (self) => {
         self.enemyCastles = movement.getEnemyCastleLocations(self.teamCastles, self.map);
         self.log("Enemy castles: ");
         self.log(self.enemyCastles);
-        /*const competitionDepots = castle.findDepotClusters(self, 3, 0.7, true);
-        const churchDepots = castle.findDepotClusters(self, 3, 0.7, false);
-        const extraUnitArray = [];
-        competitionDepots.forEach(depot => {
-            extraUnitArray.push({unit: "PROPHET", x: depot.x, y: depot.y});
-        })
-        churchDepots.forEach(depot => {
-            extraUnitArray.push({unit: "PILGRIM", x: depot.x, y: depot.y});
-        })
-        self.castleBuildQueue = extraUnitArray.concat(self.castleBuildQueue);
-        self.log("ADDING SPECIAL UNITS TO QUEUE");
-        self.log(self.castleBuildQueue);*/
+        castle.makeMacroDecisions(self);
     }
 
     //On first turn:
@@ -1404,6 +1393,7 @@ castle.doAction = (self) => {
         fuelDepots.forEach(depot => {
             self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         });
+        self.macro.localPilgrims = karboniteDepots.length + fuelDepots.length;
         
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map);
         self.target = mirrorCastle;
@@ -1426,18 +1416,18 @@ castle.doAction = (self) => {
         castle.checkUnitCastleTalk(self);
         const hasSignalToSend = castle.signalNewUnitTarget(self);
         const botsInQueue = self.castleBuildQueue.length;
-        //If there are still pilgrims of prophets to build, prioritize those unique units
-        if(botsInQueue > 0 && ((self.castleBuildQueue[0].unit == "PILGRIM") || (self.castleBuildQueue[0].unit == "PROPHET"))) {
-            return castle.buildFromQueue(self);
         //Keep queue at reasonable size, adding another prophet as necessary so prophets are continually build
-        } else if (botsInQueue <= 5) {
+        if (botsInQueue <= 5) {
             self.castleBuildQueue.push({unit: "CRUSADER", x: self.target.x, y: self.target.y});
         }
         return castle.makeDecision(self, self.teamCastles, hasSignalToSend);
     }
 };
 
-
+/**
+ * Method that sets properties of the `macro` object. Used to determine certain
+ * strategies throughout the game
+ */
 castle.makeMacroDecisions = (self) => {
     const castleCount = self.teamCastles.length;
     const castleDistances = [];
@@ -1446,6 +1436,7 @@ castle.makeMacroDecisions = (self) => {
     });
     const competitionDepots = castle.findDepotClusters(self, 3, 0.7, true);
     const churchDepots = castle.findDepotClusters(self, 3, 0.7, false);
+    const extraUnitArray = [];
 
     if(castleCount === 1) {
         if(castleDistances[0] > 18) {
@@ -1458,17 +1449,24 @@ castle.makeMacroDecisions = (self) => {
             self.macro.buildChurch = churchDepots.length > 0;
             self.macro.considerChurchTurn = 50;
         }
+        competitionDepots.forEach(depot => {
+            extraUnitArray.push({unit: "PROPHET", x: depot.x, y: depot.y});
+        });
+        self.castleBuildQueue = extraUnitArray.concat(self.castleBuildQueue);
     } else {
         self.macro.defenders = 3;
         self.macro.turtle = false;
-        self.macro.defenders = 8;
         self.macro.buildChurch = churchDepots.length > 0;
+        competitionDepots.forEach(depot => {
+            extraUnitArray.push({unit: "PROPHET", x: depot.x, y: depot.y});
+        });
     }
 
 };
 
 
-/** Method to check if any of the adjacent tile is available. Place the unit if true.
+/**
+ *  Method to check if any of the adjacent tile is available. Place the unit if true.
  */
 castle.findUnitPlace = (self, unitType) => {
     for(let i = -1; i<= 1; i++){   
@@ -1656,7 +1654,7 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
 
     
     //if there are any attackable enemies nearby, castle will start attacking instead of building any other units
-    if(attackableEnemies > 0){
+    if(attackableEnemies.length > 0){
         const dx = attackableEnemies[0].x - self.me.x;
         const dy = attackableEnemies[0].y - self.me.y;
 
@@ -1667,6 +1665,9 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
         self.log('Enemies in the visible range, building phrophets');
         return castle.findUnitPlace(self, 'PROPHET');
     }
+
+    //Check if more pilgrims are needed - won't be built until next turn
+    castle.assessLocalPilgrims(self);
 
     const nearbyDefenders = self.getVisibleRobots().filter((robotElement) => {
         if(robotElement.team === self.me.team && robotElement.unit === 4)
@@ -1681,12 +1682,11 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
         if(self.fuel >= SPECS.UNITS[SPECS["PROPHET"]].CONSTRUCTION_FUEL && 
             self.karbonite >= SPECS.UNITS[SPECS["PROPHET"]].CONSTRUCTION_KARBONITE) {
             //Signal what you would normally             
-            const ctSignal = self.teamCastles[0].signalBuilding ? 101 : 100;
+            const ctSignal = self.teamCastles[0].signalBuilding ? 100 : 101;
             self.castleTalk(ctSignal);
             return castle.findUnitPlace(self, "PROPHET");
         }
-    }
-   
+    }   
 
     //otherwise castles will signal which castle has done building the units and will take decisions accordingly
     const checkSignal = otherCastles.findIndex(castle =>{
@@ -1694,8 +1694,6 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
     });
 
     self.log("Signal: " +  checkSignal);
-    //self.log(JSON.stringify(self.getVisibleRobots().filter(bots => {return bots.castle_talk > 0})));
-    //self.log(JSON.stringify(otherCastles));
 
     if(checkSignal <= 0 && !otherCastles[0].mirrorCastleDestroyed) {
         otherCastles[0].signalBuilding = true;
@@ -1708,12 +1706,17 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
             return castle.buildFromQueue(self)
         }
     }
-    else{
-
-        self.log('Not building units, differeing to other castles');
+    else {
         otherCastles[0].signalBuilding = false;
         self.castleTalk(101);
-        return
+        const botsInQueue = self.castleBuildQueue.length;
+        //If there are still pilgrims of prophets to build, prioritize those unique units over deferring to rushing castle
+        if(botsInQueue > 0 && ((self.castleBuildQueue[0].unit == "PILGRIM") || (self.castleBuildQueue[0].unit == "PROPHET"))) {
+            return castle.buildFromQueue(self);
+        } else {
+            self.log('Not building units, differeing to other castles');
+            return;
+        }
     }  
 
 };
@@ -1736,7 +1739,7 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
         self.log("Castle talk received: " + alliedUnits[i].castle_talk);
         //self.log("Enemy castles: ");
         //self.log(self.enemyCastles);
-        let messageValue = alliedUnits[i].castle_talk;
+        let messageValue = alliedUnits[i].castle_talk -1;
         
         //Castle talk is in the range 0-63 inclusive, reserved for coords - assume as destroyed enemy castle loc
         if(messageValue >= 0 && messageValue < 64)
@@ -1975,6 +1978,44 @@ castle.processLocalDepots = (self, location) => {
     return { x: location.x, y: location.y, count: count, dist: dist};
 };
 
+/**
+ * Method that checks number of local pilgrims. If less than expected, considers depot locations to build a pilgrim for 
+ * an unoccupied position
+ */
+castle.assessLocalPilgrims = (self) => {
+    const currentLocal = self.getVisibleRobots().filter(bot => {
+        return bot.team === self.me.team && bot.unit === 2 && movement.getDistance(self.me, bot) <= 16;
+    });
+
+    //If some pilgrims missing, do work to replenish local pilgrim count
+    if(currentLocal.length < self.macro.localPilgrims) {
+        let depots = movement.getResourcesInRange(self.me, 16, self.karbonite_map).concat(movement.getResourcesInRange(self.me, 16, self.fuel_map));
+        depots = depots.filter(d => {
+            let occupied = false;
+            currentLocal.forEach(bot => {
+                if(movement.positionsAreEqual(bot, d)) {
+                    occupied = true;
+                }
+            });
+            return !occupied;
+        });
+        //If the number of remaining, unoccupied depots plus those that are occupied equals expected count, 
+        //build pilgrims for unoccupied depots since we trust these are actually unoccupied 
+        //Otherwise, don't do anything because some pilgrim is moving around and we aren't sure which depots
+        //are actually unoccupied.
+        if((depots.length + currentLocal.length) === self.macro.localPilgrims) {
+            depots.forEach(d => {
+                const alreadyBuilt = self.castleBuildQueue.findIndex(buildInfo => {
+                    return buildInfo.unit === "PILGRIM" && movement.positionsAreEqual(d, buildInfo);
+                });
+                if(alreadyBuilt < 0) {
+                    self.castleBuildQueue.unshift({unit: "PILGRIM", x: d.x, y: d.y});
+                }
+            });
+        }
+    }
+};
+
 const pilgrim = {};
 pilgrim.maxKarbonite = SPECS.UNITS[SPECS.PILGRIM].KARBONITE_CAPACITY;
 pilgrim.maxFuel = SPECS.UNITS[SPECS.PILGRIM].FUEL_CAPACITY;
@@ -1996,7 +2037,7 @@ pilgrim.doAction = (self) => {
         //Set target base on castle signal
         const {x, y} = communication.signalToPosition(self.getRobot(self.teamCastles[0].id).signal, self.map);
         self.target = {x: x, y: y};
-        self.log("pilgrim MINER " + self.id + " targeting depot at [" + self.target.x + "," + self.target.y + "]");
+        self.log("pilgrim PIONEER " + self.id + " targeting depot at [" + self.target.x + "," + self.target.y + "]");
     }
 
     if(self.role === 'MINER') {
@@ -2211,7 +2252,7 @@ pilgrim.updateResourceTarget = (self) => {
 pilgrim.buildChurch = (self) => {
     let bestCount = 0;
     let bestDist = 0;
-    let bestLoc;
+    let bestLoc = null;
     for(let i = -1; i<= 1; i++) {   
         for(let j = -1; j<= 1; j++) {
             const loc = {x: (self.me.x + i), y: (self.me.y+j)}; 
@@ -2231,9 +2272,14 @@ pilgrim.buildChurch = (self) => {
             }
         }
     }
-    self.base = {x: bestLoc.x, y: bestLoc.y};
-    self.log('pilgrim ' + self.id + ' building a church at [' + bestLoc.x + ',' + bestLoc.y +']'); 
-    return self.buildUnit(1, bestLoc.dx, bestLoc.dy); 
+    if (bestLoc != null) {
+        self.base = {x: bestLoc.x, y: bestLoc.y};
+        self.log('pilgrim ' + self.id + ' building a church at [' + bestLoc.x + ',' + bestLoc.y +']'); 
+        return self.buildUnit(1, bestLoc.dx, bestLoc.dy); 
+    } else {
+        self.log("No viable church positions - no taking action");
+        return;
+    }
 };
 
 const prophet = {};
@@ -2719,8 +2765,9 @@ crusader.takeAttackerAction = (self) => {
         }
     }
 
+    const movesFromBase = Math.floor(Math.sqrt(movement.getDistance(self.base, self.target))/6)-1;
     //If first seven turns, move away from allied base towards enemy base, else check if squadSize threshold is met and is 0
-    if(self.attackerMoves < 6)
+    if(self.attackerMoves < movesFromBase)
     {
         if(movement.hasFuelToMove(self, self.path[self.path.length-1])) {
             self.attackerMoves++;
@@ -2774,6 +2821,7 @@ class MyRobot extends BCAbstractRobot {
         this.pendingMessages = [];                       //Stores castle signal to units for new targets
         this.receivedMessages = [];                      //Store partially received castle talk signal
         this.macro = {
+            localPilgrims: 0,
             defenders: 2,
             buildChurch: false,
             considerChurchTurn: 1000,

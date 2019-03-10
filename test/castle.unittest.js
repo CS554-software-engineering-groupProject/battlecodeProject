@@ -14,9 +14,9 @@ describe('Castle Helpers Unit Tests', function(){
         mockGame.initEmptyMaps(10);
     });
 
-    describe('', function(done){
+    /*describe('', function(done){
 
-    });
+    });*/
 
     describe('findDepotClusters() tests', function() {
         it('should only get one location per cluster', function(done) {

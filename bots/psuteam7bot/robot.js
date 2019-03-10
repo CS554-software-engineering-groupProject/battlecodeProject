@@ -30,6 +30,13 @@ class MyRobot extends BCAbstractRobot {
         this.baseID = null;                              //ID of original castle/church robot
         this.pendingMessages = [];                       //Stores castle signal to units for new targets
         this.receivedMessages = [];                      //Store partially received castle talk signal
+        this.macro = {
+            localPilgrims: 0,
+            defenders: 2,
+            buildChurch: false,
+            considerChurchTurn: 1000,
+            turtle: false      
+        }
     }
     turn() {
         if(this.previous == null) {

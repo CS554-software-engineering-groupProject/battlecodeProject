@@ -142,7 +142,7 @@ describe('Communication Helpers Unit Tests', function() {
             expect(myBot.pendingMessages).to.eql([]);
             expect(communication.checkAndReportEnemyCastleDestruction(myBot)).to.equals(true);
             expect(myBot.pendingMessages).to.have.lengthOf(2);
-            expect(myBot.pendingMessages).to.eql([3, 2]);
+            expect(myBot.pendingMessages).to.eql([4, 3]);
 
             done();
         });
@@ -155,7 +155,7 @@ describe('Communication Helpers Unit Tests', function() {
             expect(myBot.pendingMessages).to.eql([]);
             expect(communication.checkAndReportEnemyCastleDestruction(myBot)).to.equals(true);
             expect(myBot.pendingMessages).to.have.lengthOf(2);
-            expect(myBot.pendingMessages).to.eql([3, 2]);
+            expect(myBot.pendingMessages).to.eql([4, 3]);
             done();
         });
 

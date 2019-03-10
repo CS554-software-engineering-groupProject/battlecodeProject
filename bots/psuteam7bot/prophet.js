@@ -53,12 +53,23 @@ prophet.doAction = (self) => {
             }
         });
 
-        //2 defenders towards mirror castle, should be enough to kill a crusader in 2 turns before it gets to attack range
-        if(nearbyDefenders.length < 3)
+        //Defenders towards mirror castle, should be enough to kill a crusader in 2 turns before it gets to attack range
+        if(nearbyDefenders.length < 9)
         {
             self.log("Base defenders = " + JSON.stringify(nearbyDefenders.length) + ", Assigned as a defender");
             self.role = "DEFENDER";
-
+            const defendDirection = movement.getRelativeDirection(self.me, self.target)
+            let defendDirIndex = movement.getDirectionIndex(defendDirection);
+            let dirs = movement.getDirectionsBetween(defendDirIndex, 1, 1).sort((a,b) => {
+                return movement.getDistance(b, defendDirection) - movement.getDistance(a, defendDirection);
+            });
+            //Choose a direction
+            let targetDir = dirs[nearbyDefenders.length % 3];
+            const dist = Math.abs(targetDir.x)+Math.abs(targetDir.y) === 2 ? 3 : 5
+            let t = {x: self.me.x+dist*targetDir.x, y: self.me.y+dist*targetDir.y}
+            //Edge case where target not on map
+            t = self._bc_check_on_map(t.x, t.y) ? t : {x: self.me.x+5*defendDirection.x, y: self.me.y+5*defendDirection.y}
+            self.target = t;
         }
         else
         {
@@ -99,11 +110,13 @@ prophet.takeDefenderAction = (self) =>  {
     //Limited movement towards enemy castle (movement towards guard post)
     if(self.attackerMoves < 3)
     {
+        self.log("IN ATTACKER MOVES")
+        self.log(JSON.stringify(self.target));
         //Reusing attacker move naming convention
         self.attackerMoves++;
         if(self.path.length === 0)
         {
-            if(movement.aStarPathfinding(self, self.me, self.target, false)) {
+            if(movement.aStarPathfinding(self, self.me, self.target, true)) {
                 self.log(self.path)
             } else {
                 self.log('Cannot get path to guard post')
@@ -303,10 +316,30 @@ prophet.takeDestroyerAction = (self) =>  {
 
     if(movement.positionsAreEqual(self.target, self.me))
     {
-        self.log('At target, Waiting...');
-        return;
+        //Check there is a pilgrim trying to get to this target depot
+        const nearbyPilgrims = self.getVisibleRobots().filter(bot => {
+            return bot.team === self.me.team && bot.unit === 2 && movement.getDistance(self.me, bot) <= 2;
+        })
+        //If not, just wait
+        if(nearbyPilgrims.length === 0) {
+            self.log('At target, Waiting...');
+            return;
+        //If pilgrim wants spot, change target to somewhere else and move off depot for them
+        } else {
+            self.log("CHANGING TARGET SO PILGRIM CAN MINE/BUILD A CHURCH");
+            self.target = movement.findNearestLocation(self, self.me);
+        }
     }
 
+    //Check for edge case where pilgrim on target, in which case adjust target
+    if(self.path.length === 1) {
+        const botId = self.getVisibleRobotMap()[self.target.y][self.target.x];
+        if(botId > 0 && (self.getRobot(botId).unit === 2 && self.getRobot(botId).team === self.me.team)) {
+            self.log("CHANGING TARGET BECAUSE PILGRIM MINING/BUILDING A CHURCH ON TARGET");
+            self.target = movement.findNearestLocation(self, self.me);
+            self.path = []
+        }
+    }
     //If no path yet
     if(self.path.length === 0)
     {

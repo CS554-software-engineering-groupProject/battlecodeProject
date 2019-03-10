@@ -201,4 +201,158 @@ describe('Castle Helpers Unit Tests', function(){
         });
     });
 
+    describe('assessLocalPilgrims() tests', function() {
+        it('should only count local pilgrims when adding to queue', function(done) {
+            myBot = new MyRobot();
+            myBot.macro.localPilgrims = 0;
+            const karbAlterations = [
+                {x: 3, y: 0, value:true},
+                {x: 0, y: 3, value:true},
+                {x: 2, y: 2, value:true}
+            ]
+            const fuelAlterations = [
+                {x: 1, y: 0, value:true},
+                {x: 0, y: 1, value:true},
+                {x: 4, y: 4, value:true}
+            ]
+
+            mockGame.alterMap("karbonite_map", karbAlterations);
+            mockGame.alterMap("fuel_map", fuelAlterations);
+            mockGame.createNewRobot(myBot, 0, 0, 0, 0);
+
+            //Things that shouldn't be counted
+            mockGame.createNewRobot(new MyRobot(), 1, 0, 0, 3);
+            mockGame.createNewRobot(new MyRobot(), 4, 4, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 3, 0, 1, 2);
+
+            output = castle.assessLocalPilgrims(myBot);
+
+            expect(myBot.castleBuildQueue).eql([]);
+
+            done();
+        });
+
+        it('should do nothing if local pilgrims greater or equal to macro value', function(done) {
+            myBot = new MyRobot();
+            myBot.macro.localPilgrims = 2;
+            const karbAlterations = [
+                {x: 3, y: 0, value:true},
+                {x: 0, y: 3, value:true},
+                {x: 2, y: 2, value:true}
+            ]
+            const fuelAlterations = [
+                {x: 1, y: 0, value:true},
+                {x: 0, y: 1, value:true},
+                {x: 4, y: 4, value:true}
+            ]
+
+            mockGame.alterMap("karbonite_map", karbAlterations);
+            mockGame.alterMap("fuel_map", fuelAlterations);
+            mockGame.createNewRobot(myBot, 0, 0, 0, 0);
+
+            mockGame.createNewRobot(new MyRobot(), 1, 2, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 2, 2, 0, 2);
+
+            output = castle.assessLocalPilgrims(myBot);
+
+            expect(myBot.castleBuildQueue).eql([]);
+
+            done();
+        });
+
+        it('should do nothing if more unoccupied depots than local pilgrims', function(done) {
+            myBot = new MyRobot();
+            myBot.macro.localPilgrims = 5;
+            const karbAlterations = [
+                {x: 3, y: 0, value:true},
+                {x: 0, y: 3, value:true},
+                {x: 2, y: 2, value:true}
+            ]
+            const fuelAlterations = [
+                {x: 1, y: 0, value:true},
+                {x: 0, y: 1, value:true},
+                {x: 4, y: 4, value:true}
+            ]
+
+            mockGame.alterMap("karbonite_map", karbAlterations);
+            mockGame.alterMap("fuel_map", fuelAlterations);
+            mockGame.createNewRobot(myBot, 0, 0, 0, 0);
+
+            //5 local depots, 3 local pilgrims on depot, 1 not on depot
+            mockGame.createNewRobot(new MyRobot(), 1, 0, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 2, 2, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 3, 0, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 3, 2, 0, 2);
+
+            output = castle.assessLocalPilgrims(myBot);
+
+            expect(myBot.castleBuildQueue).eql([]);
+
+            done();
+        });
+
+        it('should not add pilgrims for depots already in castleBuildQueue', function(done) {
+            myBot = new MyRobot();
+            myBot.macro.localPilgrims = 5;
+            const karbAlterations = [
+                {x: 3, y: 0, value:true},
+                {x: 0, y: 3, value:true},
+                {x: 2, y: 2, value:true}
+            ]
+            const fuelAlterations = [
+                {x: 1, y: 0, value:true},
+                {x: 0, y: 1, value:true},
+                {x: 4, y: 4, value:true}
+            ]
+
+            mockGame.alterMap("karbonite_map", karbAlterations);
+            mockGame.alterMap("fuel_map", fuelAlterations);
+            mockGame.createNewRobot(myBot, 0, 0, 0, 0);
+
+            //5 local depots, 4 local pilgrims on depot, last depot in queue
+            mockGame.createNewRobot(new MyRobot(), 1, 0, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 2, 2, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 3, 0, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 0, 1, 0, 2);
+            myBot.castleBuildQueue = [{unit: "PILGRIM", x: 0, y: 3}];
+
+            output = castle.assessLocalPilgrims(myBot);
+
+            expect(myBot.castleBuildQueue).to.deep.include.members([{unit: "PILGRIM", x: 0, y: 3}]);
+
+            done();
+        });
+
+        it('should add pilgrims for unoccupied depots not in castleBuildQueue', function(done) {
+            myBot = new MyRobot();
+            myBot.macro.localPilgrims = 5;
+            const karbAlterations = [
+                {x: 3, y: 0, value:true},
+                {x: 0, y: 3, value:true},
+                {x: 2, y: 2, value:true}
+            ]
+            const fuelAlterations = [
+                {x: 1, y: 0, value:true},
+                {x: 0, y: 1, value:true},
+                {x: 4, y: 4, value:true}
+            ]
+
+            mockGame.alterMap("karbonite_map", karbAlterations);
+            mockGame.alterMap("fuel_map", fuelAlterations);
+            mockGame.createNewRobot(myBot, 0, 0, 0, 0);
+
+            //5 local depots, 4 local pilgrims on depot, last depot not in queue
+            mockGame.createNewRobot(new MyRobot(), 1, 0, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 2, 2, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 3, 0, 0, 2);
+            mockGame.createNewRobot(new MyRobot(), 0, 1, 0, 2);
+
+            output = castle.assessLocalPilgrims(myBot);
+
+            expect(myBot.castleBuildQueue).to.deep.include.members([{unit: "PILGRIM", x: 0, y: 3}]);
+
+            done();
+        });
+    });
+
 });

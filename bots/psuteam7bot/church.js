@@ -49,6 +49,8 @@ church.doAction = (self) => {
 church.getResourcesInRange = (location, maxDistance, resourceMap) =>{
     const targets = [];
     let currentDist;
+
+    for(let y = 0; y < resourceMap.length; ++y)
 }
 
 

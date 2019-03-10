@@ -71,8 +71,8 @@ communication.checkAndReportEnemyCastleDestruction = (self) => {
     if(robotID === 0)
     {
         //Add coords to pending messages, push y then x
-        self.pendingMessages.push(y);
-        self.pendingMessages.push(x);
+        self.pendingMessages.push(y+1);
+        self.pendingMessages.push(x+1);
         return true;
     }
     else //Case target occupied or not in visible radius, -1 or there is a robotID > 0
@@ -81,8 +81,8 @@ communication.checkAndReportEnemyCastleDestruction = (self) => {
         if(robotID > 0 && self.getRobot(robotID).unit !== 0)
         {
             //Add coords to pending messages, push y then x
-            self.pendingMessages.push(y);
-            self.pendingMessages.push(x);
+            self.pendingMessages.push(y+1);
+            self.pendingMessages.push(x+1);
             return true;
         }
     }

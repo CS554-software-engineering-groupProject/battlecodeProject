@@ -310,6 +310,9 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
         return castle.findUnitPlace(self, 'PROPHET');
     }
 
+    //Check if more pilgrims are needed - won't be built until next turn
+    castle.assessLocalPilgrims(self);
+
     const nearbyDefenders = self.getVisibleRobots().filter((robotElement) => {
         if(robotElement.team === self.me.team && robotElement.unit === 4)
         {
@@ -318,22 +321,16 @@ castle.makeDecision = (self, otherCastles, hasSignalToSend) => {
         }
     });
 
-    //Add defenders to front of queue if needed
     if(nearbyDefenders.length < self.macro.defenders) {
         self.log("LESS DEFENDERS: " + nearbyDefenders.length)
-        let needToAdd = self.macro.defenders;
-        self.castleBuildQueue.forEach(bot => {
-            if(bot.unit === "PROPHET") {
-                needToAdd--;
-            }
-        })
-        for(let i = 0; i < needToAdd; i++) {
-            self.castleBuildQueue.unshift({unit: "PROPHET", x: self.target.x, y: self.target.y});
+        if(self.fuel >= SPECS.UNITS[SPECS["PROPHET"]].CONSTRUCTION_FUEL && 
+            self.karbonite >= SPECS.UNITS[SPECS["PROPHET"]].CONSTRUCTION_KARBONITE) {
+            //Signal what you would normally             
+            const ctSignal = self.teamCastles[0].signalBuilding ? 100 : 101;
+            self.castleTalk(ctSignal);
+            return castle.findUnitPlace(self, "PROPHET");
         }
     }   
-
-    //Check if more pilgrims are needed and add to front of queue if so
-    castle.assessLocalPilgrims(self);
 
     //otherwise castles will signal which castle has done building the units and will take decisions accordingly
     const checkSignal = otherCastles.findIndex(castle =>{

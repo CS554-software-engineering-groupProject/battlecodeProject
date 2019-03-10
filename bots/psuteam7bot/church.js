@@ -50,7 +50,9 @@ church.getResourcesInRange = (location, maxDistance, resourceMap) =>{
     const targets = [];
     let currentDist;
 
-    for(let y = 0; y < resourceMap.length; ++y)
+    for(let y = 0; y < resourceMap.length; ++y){
+        for (let x = 0; x < resourceMap.length; ++x) 
+    }
 }
 
 

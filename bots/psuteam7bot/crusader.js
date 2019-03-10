@@ -68,9 +68,10 @@ crusader.takeAttackerAction = (self) => {
     const attackable = combat.filterByAttackable(self, visibleRobots);
     const unattackable = combat.filterByUnattackable(self, visibleRobots);
 
-    // TODO Crusader-vs-Prophet micro, single prophet, 1 enemy prophet in attackable range and no other enemy units in vision
+    // TODO Crusader-vs-Prophet micro, single prophet, 1 enemy prophet in attackable range
     if((attackable.length === 1 && attackable[0].unit === 4) && movement.getDistance(self.me, attackable[0]) >= SPECS.UNITS[attackable[0].unit].ATTACK_RADIUS[0])
     {
+        self.log('Enemy Prophet in visible range, executing Crusader-vs-Prophet micro');
         const moveableList = movement.getMoveablePositions(self.me.unit);
         moveableList.forEach((pos) =>{
             pos.x += self.me.x;
@@ -78,43 +79,56 @@ crusader.takeAttackerAction = (self) => {
         });
 
         const bestMoveablePos = movement.getNearestPositionFromList(attackable[0], self.map, self.getVisibleRobotMap(), moveableList, true);
-        if(movement.positionsAreEqual(attackable[0], bestMoveablePos))
+        if(movement.positionsAreEqual(attackable[0], bestMoveablePos) || (movement.getDistance(bestMoveablePos, attackable[0]) >= movement.getDistance(self.me, attackable[0])))
         {
-            self.log("No moveable position for CvP micro found\n");
+            self.log("No better moveable position for CvP micro found\n");
         }
         else
         {
-            self.log('Enemy Prophet in visible range, Crusader-vs-Prophet micro executed-------------------------------------------------');
-            self.path.pop();
-            movement.adjustPath(self, bestMoveablePos);
+            if(self.path.length > 1)
+            {
+                self.path.pop();
+                movement.adjustPath(self, bestMoveablePos);
+            }
             self.path.push(bestMoveablePos);
             self.log('ATTACKER crusader ' + self.id + ' executing micro movement, Current: [' + self.me.x + ',' + self.me.y + ']')
             return movement.moveAlongPath(self);
         }
     }
 
-    // TODO single prophet, more than 1 enemy prophet in unattackable range
-    if(attackable.length === 0 && unattackable.length >= 1  && unattackable[0].unit === 4 && movement.getDistance(self.me, unattackable[0]) >= SPECS.UNITS[unattackable[0].unit].ATTACK_RADIUS[0])
+    //Unattackable prophet in vision, no attackable enemies
+    if(attackable.length === 0 && unattackable.length >= 1)
     {
-        const moveableList = movement.getMoveablePositions(self.me.unit);
-        moveableList.forEach((pos) =>{
-            pos.x += self.me.x;
-            pos.y += self.me.y;
-        });
+        const unattackableProphets = combat.filterByUnitType(unattackable, "PROPHET");
+        if(unattackableProphets.length >= 1)
+        {
+            self.log('Enemy Prophet in visible range, executing Crusader-vs-Prophet micro---------------------------------------------------------------');
+            //get nearest prophet location
+            const nearestProphet = movement.getNearestPositionFromList(self.me, self.map, self.getVisibleRobotMap(), unattackableProphets, false);
 
-        const bestMoveablePos = movement.getNearestPositionFromList(unattackable[0], self.map, self.getVisibleRobotMap(), moveableList, true);
-        if(movement.positionsAreEqual(unattackable[0], bestMoveablePos))
-        {
-            self.log("No moveable position for CvP micro found\n");
-        }
-        else
-        {
-            self.log('Enemy Prophet in visible range, Crusader-vs-Prophet micro executed-----------------------------------------------');
-            self.path.pop();
-            movement.adjustPath(self, bestMoveablePos);
-            self.path.push(bestMoveablePos);
-            self.log('ATTACKER crusader ' + self.id + ' executing micro movement, Current: [' + self.me.x + ',' + self.me.y + ']')
-            return movement.moveAlongPath(self);
+            //unattackable and in vision means Crusader is in Prophet attack range
+            const moveableList = movement.getMoveablePositions(self.me.unit);
+            moveableList.forEach((pos) =>{
+                pos.x += self.me.x;
+                pos.y += self.me.y;
+            });
+
+            const bestMoveablePos = movement.getNearestPositionFromList(nearestProphet, self.map, self.getVisibleRobotMap(), moveableList, true);
+            if(movement.positionsAreEqual(nearestProphet, bestMoveablePos) || (movement.getDistance(bestMoveablePos, nearestProphet) >= movement.getDistance(self.me, nearestProphet)))
+            {
+                self.log("No better moveable position for CvP micro found\n");
+            }
+            else
+            {
+                if(self.path.length > 1)
+                {
+                    self.path.pop();
+                    movement.adjustPath(self, bestMoveablePos);
+                }
+                self.path.push(bestMoveablePos);
+                self.log('ATTACKER crusader ' + self.id + ' executing micro movement, Current: [' + self.me.x + ',' + self.me.y + ']')
+                return movement.moveAlongPath(self);
+            }
         }
     }
 
@@ -199,9 +213,9 @@ crusader.takeAttackerAction = (self) => {
                 }
 
                 const bestMoveablePos = movement.getNearestPositionFromList(closestOpfor, self.map, botmap, notInAttackRadius, true);
-                if(movement.positionsAreEqual(closestOpfor, bestMoveablePos))
+                if(movement.positionsAreEqual(closestOpfor, bestMoveablePos) || movement.getDistance(bestMoveablePos, closestOpfor) >= movement.getDistance(self.me, closestOpfor))
                 {
-                    self.log("No moveable position for CvC micro found\n");
+                    self.log("No better moveable position for CvC micro found\n");
                     return;
                 }
                 

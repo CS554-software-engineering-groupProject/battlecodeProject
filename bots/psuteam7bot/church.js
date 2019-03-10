@@ -15,7 +15,10 @@ church.doAction = (self) => {
      self.log("church" + self.id + "taking turn.");
 
     if(self.me.turn == 1){
-        
+        const karboniteDepots = movement.getResourcesInRange(self.me, 36, self.karbonite_map);
+        karboniteDepots.forEach(depot => {
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
+        })
     }    
 }
 

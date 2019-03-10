@@ -19,6 +19,11 @@ church.doAction = (self) => {
         karboniteDepots.forEach(depot => {
             self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
         })
+
+        const fuelDepots = movement.getResourcesInRange(self.me, 16, self.fuel_map)
+        fuelDepots.forEach(depot => {
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
+        })
     }    
 }
 

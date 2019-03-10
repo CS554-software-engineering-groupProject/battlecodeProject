@@ -32,7 +32,8 @@ church.doAction = (self) => {
         return church.castle.buildFromQueue(self);
     }  
     else if (self.me.turn <= 4) {
-        
+        self.log("BUILD QUEUE NON-EMPTY")
+        self.log(self.castle.castleBuildQueue)
     }  
 }
 

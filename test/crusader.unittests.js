@@ -334,15 +334,18 @@ describe('Crusader Unit Tests', function() {
         it("ATTACKERS should perform CvC micro and move to closest tile outside of attack range of enemy Crusader", function(done) {
             let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
-            myBot.path = [{x: 3, y: 3}];
+            myBot.path = [{x: 9, y: 3}, {x:7, y: 3},{x: 4, y: 3}];
             myBot.target = {x: 9, y: 3};
             myBot.attackerMoves = 6;
             myBot.squadSize = 0;
-            mockGame.createNewRobot(new MyRobot(), 8, 3, 1, 3);
+            mockGame.createNewRobot(new MyRobot(), 7, 3, 1, 3);
 
             output = crusader.takeAttackerAction(myBot);
-
-            expect(myBot.path[0]).to.eql({x: 2, y: 3});
+            console.log(myBot.path);
+            expect(myBot.path[0]).to.eql({x: 9, y: 3});
+            expect(myBot.path[1]).to.eql({x: 7, y: 2});
+            expect(myBot.path[2]).to.eql({x: 6, y: 2});
+            expect(myBot.path[3]).to.eql({x: 3, y: 2});
             expect(myBot.attackerMoves).equals(6);
             expect(myBot.squadSize).equals(0);
             expect(output).equals("moved successfully");
@@ -353,17 +356,20 @@ describe('Crusader Unit Tests', function() {
         it("ATTACKERS should perform CvC micro and not move if current location is the best location outside the enemy Crusader attack range", function(done) {
             let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
-            myBot.path = [{x: 3, y: 3}];
+            myBot.path = [{x: 9, y: 3}, {x:7, y: 3},{x: 4, y: 3}];
             myBot.target = {x: 9, y: 3};
             myBot.attackerMoves = 6;
             myBot.squadSize = 0;
             mockGame.createNewRobot(new MyRobot(), 6, 3, 1, 3);
             output = crusader.takeAttackerAction(myBot);
 
-            expect(myBot.path[0]).to.eql({x: 3, y: 3});
+            expect(myBot.path[0]).to.eql({x: 9, y: 3});
+            expect(myBot.path[1]).to.eql({x: 7, y: 3});
+            expect(myBot.path[2]).to.eql({x: 4, y: 3});
+            expect(myBot.path[3]).to.eql({x: 2, y: 4});
             expect(myBot.attackerMoves).equals(6);
             expect(myBot.squadSize).equals(0);
-            expect(output).to.be.undefined;
+            expect(output).equals("moved successfully");
 
             const mapAlterations = [ 
                 { x: 2, y: 1, value: false},
@@ -382,10 +388,33 @@ describe('Crusader Unit Tests', function() {
 
             output = crusader.takeAttackerAction(myBot);
 
-            expect(myBot.path[0]).to.eql({x: 3, y: 3});
+            expect(myBot.path[0]).to.eql({x: 9, y: 3});
+            expect(myBot.path[1]).to.eql({x: 7, y: 3});
+            expect(myBot.path[2]).to.eql({x: 4, y: 3});
             expect(myBot.attackerMoves).equals(6);
             expect(myBot.squadSize).equals(0);
             expect(output).to.be.undefined;
+
+            done();
+        });
+
+        it("ATTACKERS should skip CvC micro if enemy Crusader in attackable radius", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 9, y: 3}, {x:7, y: 3},{x: 4, y: 3}];
+            myBot.target = {x: 9, y: 3};
+            myBot.attackerMoves = 6;
+            myBot.squadSize = 0;
+            mockGame.createNewRobot(new MyRobot(), 5, 3, 1, 3);
+
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.path[0]).to.eql({x: 9, y: 3});
+            expect(myBot.path[1]).to.eql({x: 7, y: 3});
+            expect(myBot.path[2]).to.eql({x: 4, y: 3});
+            expect(myBot.path[3]).to.be.undefined;
+            expect(myBot.attackerMoves).equals(6);
+            expect(myBot.squadSize).equals(0);
 
             done();
         });

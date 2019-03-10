@@ -2611,7 +2611,7 @@ crusader.takeAttackerAction = (self) => {
         const unattackableProphets = combat.filterByUnitType(unattackable, "PROPHET");
         if(unattackableProphets.length >= 1)
         {
-            self.log('Enemy Prophet in visible range, executing Crusader-vs-Prophet micro---------------------------------------------------------------');
+            self.log('Enemy Prophet in visible range, executing Crusader-vs-Prophet micro');
             //get nearest prophet location
             const nearestProphet = movement.getNearestPositionFromList(self.me, self.map, self.getVisibleRobotMap(), unattackableProphets, false);
 
@@ -2729,8 +2729,12 @@ crusader.takeAttackerAction = (self) => {
                 }
                 
                 self.log('Enemy Crusader in visible range, Crusader-vs-Crusader micro executed');
-                self.path.pop();
-                movement.adjustPath(self, bestMoveablePos);
+                
+                if(self.path.length > 1)
+                {
+                    self.path.pop();
+                    movement.adjustPath(self, bestMoveablePos);
+                }
                 self.path.push(bestMoveablePos);
                 self.log('ATTACKER crusader ' + self.id + ' executing micro movement, Current: [' + self.me.x + ',' + self.me.y + ']');
                 return movement.moveAlongPath(self);

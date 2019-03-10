@@ -5,7 +5,7 @@
 1. Install npm.
 2. `npm install -g bc19`.
 3. Run or compile your code using bc19run or bc19compile. Note that the bot code needs to be in its own directory. Example: `bc19run -b bots/psuteam7bot -r bots/psuteam7bot --chi 1000`.
-4.  Upload compiled code using bc19upload. Make sure you've defined environment variables BC_USERNAME and BC_PASSWORD, which should be the credentials you use to access this site.
+4. ~~Upload compiled code using bc19upload. Make sure you've defined environment variables BC_USERNAME and BC_PASSWORD, which should be the credentials you use to access this site.~~ Since completion of BattleCode 2019, just compile bot and upload to PSU appspot.
 
 ## Testing:
 

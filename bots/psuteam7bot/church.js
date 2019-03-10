@@ -60,6 +60,15 @@ church.getResourcesInRange = (location, maxDistance, resourceMap) =>{
             }
         }
     }
+
+    targets.sort((a,b) => {
+        if(a.distance < b.distance) {
+            return -1;
+        } else {
+            return 1;
+        }
+    });
+    return targets;
 }
 
 

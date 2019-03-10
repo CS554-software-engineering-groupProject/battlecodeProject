@@ -47,7 +47,8 @@ church.doAction = (self) => {
 /** Method to detect and evaluate nearby visible resource depots 
  */
 church.getResourcesInRange = (location, maxDistance, resourceMap) =>{
-    
+    const targets = [];
+    let currentDist;
 }
 
 

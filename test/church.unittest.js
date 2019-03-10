@@ -10,6 +10,7 @@ describe('Church unit test', function(){
     let mockGame;
     let mybot;
     beforeEach(function(){
-        
-    })
+        mockGame = new mockBC19();
+        mockGame.initEmptyMaps(10);
+    });
 })

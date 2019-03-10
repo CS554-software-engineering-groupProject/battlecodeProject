@@ -633,8 +633,8 @@ castle.assessLocalPilgrims = (self) => {
 
     //If some pilgrims missing, do work to replenish local pilgrim count
     if(currentLocal.length < self.macro.localPilgrims) {
-        const depots = movement.getResourcesInRange(self.me, 16, self.karbonite_map).concat(movement.getResourcesInRange(self.me, 16, self.fuel_map));
-        depots.filter(d => {
+        let depots = movement.getResourcesInRange(self.me, 16, self.karbonite_map).concat(movement.getResourcesInRange(self.me, 16, self.fuel_map));
+        depots = depots.filter(d => {
             let occupied = false;
             currentLocal.forEach(bot => {
                 if(movement.positionsAreEqual(bot, d)) {

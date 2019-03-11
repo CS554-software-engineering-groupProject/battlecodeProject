@@ -71,5 +71,18 @@ church.getResourcesInRange = (location, maxDistance, resourceMap) =>{
     return targets;
 }
 
+/** Each church will try to locate and record the positions of the friendly church at the start of the game
+ * Input: self = this is the reference to the object to the calling method. 
+ * Output: returnPosition = return value containing the positions of the friendly castle       
+ *  */
+church.recordPosition = (self) => {
+    let turn = self.me.turn;
+    if(turn <= 2){
+        self.signal(self.me.x,);
+    }
+    else if(turn <= 4){
+        self.signal(self.me.y,);
+    }
+}
 
 export default church;

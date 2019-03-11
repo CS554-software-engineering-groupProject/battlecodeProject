@@ -103,4 +103,5 @@ church.mirrorChurch = (myLocation, fullMap) => {
         return {x: Ax, y: y};
     }
 }
+
 export default church;

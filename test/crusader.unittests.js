@@ -225,7 +225,7 @@ describe('Crusader Unit Tests', function() {
         it("ATTACKERS with squadSize set to 0 should rush towards target", function(done) {
             let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
             myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
-            myBot.path = [{x: 3, y: 3}];
+            myBot.path = [{x: 1, y: 6}];
             myBot.target = {x: 9, y: 3};
             myBot.attackerMoves = 6;
             myBot.squadSize = 0;
@@ -238,5 +238,249 @@ describe('Crusader Unit Tests', function() {
 
             done();
         });
+
+
     });
+
+    describe('Micro Tests', function() {
+        it("ATTACKERS should perform CvP micro if there is a visible attackable enemy prophet and ATTACKER is in its attack radius", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 1, y: 5}];
+            myBot.target = {x: 9, y: 3};
+            mockGame.createNewRobot(new MyRobot(), 5, 3, 1, 4 );
+
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(output).equals("moved successfully");
+            expect(myBot.path[1]).to.eql({x: 4, y: 3});
+
+            myBot.path = [];
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(output).equals("moved successfully");
+            expect(myBot.path[0]).to.eql({x: 4, y: 3});
+            done();
+        });
+
+        it("ATTACKERS should attack if no better moveable position under enemy min attack radius is found", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 1, y: 5}];
+            myBot.target = {x: 9, y: 3};
+            mockGame.createNewRobot(new MyRobot(), 5, 3, 1, 4);
+            const mapAlterations = [ 
+                { x: 2, y: 1, value: false},
+                { x: 2, y: 2, value: false},
+                { x: 2, y: 3, value: false},
+                { x: 2, y: 4, value: false},
+                { x: 2, y: 5, value: false},
+                { x: 3, y: 1, value: false},
+                { x: 3, y: 2, value: false},
+                { x: 3, y: 3, value: false},
+                { x: 3, y: 4, value: false},
+                { x: 3, y: 5, value: false},
+                { x: 4, y: 3, value: false}
+            ];
+            mockGame.alterMap("map", mapAlterations);
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.path[0]).to.eql({x: 1, y: 5});
+            expect(myBot.path[1]).to.be.undefined;
+            expect(output['action']).equals('attack');
+            expect(output['dx']).equals(4);
+            expect(output['dy']).equals(0);            
+
+            done();
+        });
+
+        it("ATTACKERS should perform CvP micro if there is a visible unattackable enemy prophet and ATTACKER is in its attack radius", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 1, y: 5}];
+            myBot.target = {x: 9, y: 3};
+            mockGame.createNewRobot(new MyRobot(), 7, 3, 1, 4 );
+
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.path[1]).to.eql({x: 4, y: 3});
+            expect(output).equals("moved successfully");
+
+            myBot.path = [];
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.path[0]).to.eql({x: 4, y: 3});
+            expect(myBot.path[1]).to.be.undefined;
+            expect(output).equals("moved successfully");
+            done();
+
+        });
+
+        it("ATTACKERS should do the default takeAttackerAction branch of code if no better moveable position is found", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 1, y: 5}];
+            myBot.target = {x: 9, y: 3};
+            myBot.attackerMoves = 6;
+            myBot.squadSize = 0;
+            mockGame.createNewRobot(new MyRobot(), 6, 3, 1, 4);
+
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.path[0]).to.eql({x: 1, y: 5});
+            expect(output).equals("moved successfully");
+            done();
+        });
+
+
+        it("ATTACKERS should perform CvC micro and move to closest tile outside of attack range of enemy Crusader", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 9, y: 3}, {x:7, y: 3},{x: 4, y: 3}];
+            myBot.target = {x: 9, y: 3};
+            myBot.attackerMoves = 6;
+            myBot.squadSize = 0;
+            mockGame.createNewRobot(new MyRobot(), 7, 3, 1, 3);
+
+            output = crusader.takeAttackerAction(myBot);
+            expect(myBot.path[0]).to.eql({x: 9, y: 3});
+            expect(myBot.path[1]).to.eql({x: 7, y: 2});
+            expect(myBot.path[2]).to.eql({x: 6, y: 2});
+            expect(myBot.path[3]).to.eql({x: 3, y: 2});
+            expect(myBot.attackerMoves).equals(6);
+            expect(myBot.squadSize).equals(0);
+            expect(output).equals("moved successfully");
+
+            done();
+        });
+
+        it("ATTACKERS should perform CvC micro and not move if current location is the best location outside the enemy Crusader attack range", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 9, y: 3}, {x:7, y: 3},{x: 4, y: 3}];
+            myBot.target = {x: 9, y: 3};
+            myBot.attackerMoves = 6;
+            myBot.squadSize = 0;
+            mockGame.createNewRobot(new MyRobot(), 6, 3, 1, 3);
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.path[0]).to.eql({x: 9, y: 3});
+            expect(myBot.path[1]).to.eql({x: 7, y: 3});
+            expect(myBot.path[2]).to.eql({x: 4, y: 3});
+            expect(myBot.path[3]).to.eql({x: 2, y: 4});
+            expect(myBot.attackerMoves).equals(6);
+            expect(myBot.squadSize).equals(0);
+            expect(output).equals("moved successfully");
+
+            const mapAlterations = [ 
+                { x: 2, y: 1, value: false},
+                { x: 2, y: 2, value: false},
+                { x: 2, y: 3, value: false},
+                { x: 2, y: 4, value: false},
+                { x: 2, y: 5, value: false},
+                { x: 3, y: 1, value: false},
+                { x: 3, y: 2, value: false},
+                { x: 3, y: 3, value: false},
+                { x: 3, y: 4, value: false},
+                { x: 3, y: 5, value: false},
+                { x: 4, y: 3, value: false}
+            ];
+            mockGame.alterMap("map", mapAlterations);
+
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.path[0]).to.eql({x: 9, y: 3});
+            expect(myBot.path[1]).to.eql({x: 7, y: 3});
+            expect(myBot.path[2]).to.eql({x: 4, y: 3});
+            expect(myBot.attackerMoves).equals(6);
+            expect(myBot.squadSize).equals(0);
+            expect(output).to.be.undefined;
+
+            done();
+        });
+
+        it("ATTACKERS should skip CvC micro if enemy Crusader in attackable radius", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 9, y: 3}, {x:7, y: 3},{x: 4, y: 3}];
+            myBot.target = {x: 9, y: 3};
+            myBot.attackerMoves = 6;
+            myBot.squadSize = 0;
+            mockGame.createNewRobot(new MyRobot(), 5, 3, 1, 3);
+
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.path[0]).to.eql({x: 9, y: 3});
+            expect(myBot.path[1]).to.eql({x: 7, y: 3});
+            expect(myBot.path[2]).to.eql({x: 4, y: 3});
+            expect(myBot.path[3]).to.be.undefined;
+            expect(myBot.attackerMoves).equals(6);
+            expect(myBot.squadSize).equals(0);
+
+            done();
+        });
+
+        it("ATTACKERS should skip CvC micro if unattackable enemies are not just crusaders (mixed enemies)", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 9, y: 3}, {x:7, y: 3},{x: 4, y: 3}];
+            myBot.target = {x: 9, y: 3};
+            myBot.attackerMoves = 6;
+            myBot.squadSize = 0;
+            mockGame.createNewRobot(new MyRobot(), 7, 3, 1, 3);
+            mockGame.createNewRobot(new MyRobot(), 7, 2, 1, 1);
+
+            output = crusader.takeAttackerAction(myBot);
+            expect(myBot.path[0]).to.eql({x: 9, y: 3});
+            expect(myBot.path[1]).to.eql({x: 7, y: 3});
+            expect(myBot.path[2]).to.eql({x: 4, y: 3});
+            expect(myBot.path[3]).to.be.undefined;
+            expect(myBot.attackerMoves).equals(6);
+            expect(myBot.squadSize).equals(0);
+
+            done();
+        });
+
+        it("ATTACKERS should skip CvC micro if there are allied bot closer to the closest enemy Crusader and is attackable", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 9, y: 3}, {x:7, y: 3},{x: 4, y: 3}];
+            myBot.target = {x: 9, y: 3};
+            myBot.attackerMoves = 6;
+            myBot.squadSize = 0;
+            mockGame.createNewRobot(new MyRobot(), 7, 3, 1, 3);
+            mockGame.createNewRobot(new MyRobot(), 5, 3, 0, 3)
+            output = crusader.takeAttackerAction(myBot);
+            expect(myBot.path[0]).to.eql({x: 9, y: 3});
+            expect(myBot.path[1]).to.eql({x: 7, y: 3});
+            expect(myBot.path[2]).to.eql({x: 4, y: 3});
+            expect(myBot.path[3]).to.be.undefined;
+            expect(myBot.attackerMoves).equals(6);
+            expect(myBot.squadSize).equals(0);
+
+            done();
+        });
+
+        it("ATTACKERS should perform CvC micro if there are allied bot closer to the closest enemy Crusader but is unattackable", function(done) {
+            let stubMoveAlongPath = mockGame.replaceMethod("movement", "moveAlongPath").returns("moved successfully");
+            myBot.base = {x: localCastle.me.x, y: localCastle.me.y};
+            myBot.path = [{x: 9, y: 3}, {x:7, y: 3},{x: 4, y: 3}];
+            myBot.target = {x: 9, y: 3};
+            myBot.attackerMoves = 6;
+            myBot.squadSize = 0;
+            mockGame.createNewRobot(new MyRobot(), 7, 3, 1, 3);
+            mockGame.createNewRobot(new MyRobot(), 1, 2, 0, 3);
+            output = crusader.takeAttackerAction(myBot);
+
+            expect(myBot.path[0]).to.eql({x: 9, y: 3});
+            expect(myBot.path[1]).to.eql({x: 7, y: 2});
+            expect(myBot.path[2]).to.eql({x: 6, y: 2});
+            expect(myBot.path[3]).to.eql({x: 3, y: 2});
+            expect(myBot.attackerMoves).equals(6);
+            expect(myBot.squadSize).equals(0);
+            expect(output).equals("moved successfully");
+
+            done();
+        });
+    })
 });

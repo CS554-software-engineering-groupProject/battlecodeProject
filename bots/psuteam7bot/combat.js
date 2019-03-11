@@ -125,7 +125,7 @@ combat.filterByUnattackable = (self, units) => {
         const distance = movement.getDistance(self.me, robotElement);
 
         //Filter for only enemies && distance < robot's minimum attack radius && distance > robot's maximum attack radius
-        return robotElement.team !== self.me.team && distance < SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0] && distance > SPECS.UNITS[self.me.unit].ATTACK_RADIUS[1];
+        return robotElement.team !== self.me.team && (distance < SPECS.UNITS[self.me.unit].ATTACK_RADIUS[0] || distance > SPECS.UNITS[self.me.unit].ATTACK_RADIUS[1]);
     });
 }
 /**

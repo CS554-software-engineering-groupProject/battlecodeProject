@@ -826,4 +826,36 @@ movement.hasFuelToMove = (self, target) => {
     return self.fuel >= cost;
 }
 
+
+/**
+ * Method to find nearest position relative to origin from a list of positions
+ * 
+ * @param origin position object
+ * @param fullMap should be return of self.map
+ * @param robotMap should be return of self.getVisibleRobotMap()
+ * @param positions array of position objects/ bot positions
+ * @param passableCheck true/ false flag to decide whether position returned must be passable or not
+ * @return Returns a coordinate pair of one of the position in positions array, passable and closest to origin. Returns origin if no positions found
+ */
+movement.getNearestPositionFromList = (origin, fullMap, robotMap, positions, passableCheck) => {
+    const sortedPositions = positions.sort((a, b) => {
+        const distA = movement.getDistance(a, origin);
+        const distB = movement.getDistance(b, origin);
+        return distA - distB;
+    });
+    
+    if(passableCheck)
+    {
+        for(let i = 0; i < sortedPositions.length; i++) {
+            const position = {x: sortedPositions[i].x, y: sortedPositions[i].y};
+            if(movement.isPassable(position, fullMap, robotMap)) {
+                return position;
+            }
+        }
+        return origin;
+    }
+    else
+        return {x: sortedPositions[0].x, y: sortedPositions[0].y};
+
+}
 export default movement;

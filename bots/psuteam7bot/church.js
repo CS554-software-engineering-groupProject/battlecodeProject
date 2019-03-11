@@ -84,4 +84,23 @@ church.recordPosition = (self) => {
     }
 }
 
+/** Church should calculate the locations of the enemy churches using the recorded postions. Use mirror church method. 
+ * Input : the location of the friendly castles
+ * Output: mirrored images of the enemy castles
+ */
+church.mirrorChurch = (myLocation, fullMap) => {
+    const {x, y} = myLocation;
+    const Ax = fullMap.length - x - 1;
+    const Ay = fullMap.length - y - 1;
+    const isHorizontal = movement.isHorizontalReflection(fullMap);
+    
+    if(isHorizontal)
+    {
+        return {x: x, y: Ay}
+    }
+    else
+    {
+        return {x: Ax, y: y};
+    }
+}
 export default church;

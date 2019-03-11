@@ -111,7 +111,6 @@ castle.makeMacroDecisions = (self) => {
 
 }
 
-
 /**
  *  Method to check if any of the adjacent tile is available. Place the unit if true.
  */

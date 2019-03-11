@@ -60,7 +60,6 @@ church.getResourcesInRange = (location, maxDistance, resourceMap) =>{
             }
         }
     }
-
     targets.sort((a,b) => {
         if(a.distance < b.distance) {
             return -1;
@@ -78,10 +77,10 @@ church.getResourcesInRange = (location, maxDistance, resourceMap) =>{
 church.recordPosition = (self) => {
     let turn = self.me.turn;
     if(turn <= 2){
-        self.signal(self.me.x,);
+        self.signal(self.me.x);
     }
     else if(turn <= 4){
-        self.signal(self.me.y,);
+        self.signal(self.me.y);
     }
 }
 

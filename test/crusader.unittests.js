@@ -366,9 +366,7 @@ describe('Crusader Unit Tests', function() {
 
             expect(myBot.path[0]).to.eql({x: 9, y: 3});
             expect(myBot.path[1]).to.eql({x: 7, y: 3});
-            expect(myBot.path[2]).to.eql({x: 5, y: 2});
-            expect(myBot.path[3]).to.eql({x: 4, y: 2});
-            expect(myBot.path[4]).to.eql({x: 2, y: 2});
+            expect(myBot.path[2]).to.eql({x: 4, y: 3});
             expect(myBot.attackerMoves).equals(6);
             expect(myBot.squadSize).equals(0);
             expect(output).equals("moved successfully");
@@ -392,9 +390,7 @@ describe('Crusader Unit Tests', function() {
 
             expect(myBot.path[0]).to.eql({x: 9, y: 3});
             expect(myBot.path[1]).to.eql({x: 7, y: 3});
-            expect(myBot.path[2]).to.eql({x: 5, y: 2});
-            expect(myBot.path[3]).to.eql({x: 4, y: 2});
-            expect(myBot.path[4]).to.eql({x: 2, y: 2});
+            expect(myBot.path[2]).to.eql({x: 4, y: 3});
             expect(myBot.attackerMoves).equals(6);
             expect(myBot.squadSize).equals(0);
             expect(output).to.be.undefined;

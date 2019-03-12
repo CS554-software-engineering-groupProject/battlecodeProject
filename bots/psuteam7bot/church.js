@@ -29,7 +29,7 @@ church.doAction = (self) => {
         self.target = mirrorCastle;
         self.log(self.castleBuildQueue);
 
-        return church.castle.buildFromQueue(self);
+        return castle.buildFromQueue(self);
     }  
     else if (self.me.turn <= 4) {
         self.log("BUILD QUEUE NON-EMPTY")
@@ -39,7 +39,7 @@ church.doAction = (self) => {
         if (botsInQueue <= 5) {
             self.castleBuildQueue.push({unit: "PROPHETS", x: self.target.x, y: self.target.y});
         }
-        return church.castle.buildFromQueue(self);
+        return castle.buildFromQueue(self);
     }
 }
 

@@ -1,5 +1,6 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
 import movement from './movement.js';
+import castle from './castle.js';
 import combat from './combat.js';
 import communication from './communication.js';
 //import { setFlagsFromString } from 'v8';

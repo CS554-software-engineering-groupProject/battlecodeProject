@@ -1,30 +1,107 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
+import movement from './movement.js';
+import combat from './combat.js';
+import communication from './communication.js';
+//import { setFlagsFromString } from 'v8';
 
 const church = {};
-//Initial starting health of 100 and vision radius of 100
 
-//are we explicitely assigning the unique 32 bit integer id?
-//this unit always occupies single tile
-//what about if the health reduces to zero and the unit is removed? how do we write it here?
+church.UNITTYPE = ["CASTLE", "CHURCH", "PILGRIM", "CRUSADER", "PROPHET" , "PREACHER"]
+
+church.maxKarbonite = SPECS.UNITS[SPECS.CHURCH].KARBONITE_CAPACITY;
+church.maxFuel = SPECS.UNITS[SPECS.CHURCH].FUEL_CAPACITY;
 
 church.doAction = (self) => {
-    self.log("church " + self.id + " taking turn.");
-    return;
+     self.log("church" + self.id + "taking turn.");
+
+    if(self.me.turn == 1){
+        const karboniteDepots = movement.getResourcesInRange(self.me, 36, self.karbonite_map);
+        karboniteDepots.forEach(depot => {
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
+        })
+
+        const fuelDepots = movement.getResourcesInRange(self.me, 16, self.fuel_map)
+        fuelDepots.forEach(depot => {
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
+        })
+
+        const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
+        self.target = mirrorCastle;
+        self.log(self.castleBuildQueue);
+
+        return castle.buildFromQueue(self);
+    }  
+    else if (self.me.turn <= 4) {
+        self.log("BUILD QUEUE NON-EMPTY")
+        self.log(self.castleBuildQueue)
+        const botsInQueue = self.castleBuildQueue.length;
+        //Keep queue at reasonable size, adding another crusader as necessary so crusaders are continually build
+        if (botsInQueue <= 5) {
+            self.castleBuildQueue.push({unit: "PROPHETS", x: self.target.x, y: self.target.y});
+        }
+        return castle.buildFromQueue(self);
+    }
 }
 
-church.doAction = (self)=> {
-    self.log("producing" + r.id + "robot");
-    //Churches produce robots, and provide a depot for Pilgrims to deposit resources into the global economy.
-    //produce robots with their karbonite and fuel cost. 
-    //the robots can be spawned in any adjacent square including diagonals. Robots have to be added to the end of the turn queue.
 
+/** Method to detect and evaluate nearby visible resource depots 
+ */
+church.getResourcesInRange = (location, maxDistance, resourceMap) =>{
+    const targets = [];
+    let currentDist;
+
+    for(let y = 0; y < resourceMap.length; ++y){
+        for (let x = 0; x < resourceMap.length; ++x) {
+            if(resourceMap[x][y]){
+                currentDist = movement.getDistance(location, {x, y});
+                if(currentDist <= maxDistance) {
+                    targets.push({x: x, y: y, distance: currentDist})
+                } 
+            }
+        }
+    }
+    targets.sort((a,b) => {
+        if(a.distance < b.distance) {
+            return -1;
+        } else {
+            return 1;
+        }
+    });
+    return targets;
 }
 
-church.doAction = (self)=> {
-    self.log("depositing fuel to "+ self.karbonite +" global storage.");
-    self.log("depositing fuel to "+ self.fuel +" global storage.")
-    //
+/** Each church will try to locate and record the positions of the friendly church at the start of the game
+ * Input: self = this is the reference to the object to the calling method. 
+ * Output: returnPosition = return value containing the positions of the friendly castle       
+ *  */
+church.recordPosition = (self) => {
+    let turn = self.me.turn;
+    if(turn <= 2){
+        self.signal(self.me.x,(self.signal_radius)^2);
+    }
+    else if(turn <= 4){
+        self.signal(self.me.y,(self.signal_radius)^2);
+    }
 }
 
+/** Church should calculate the locations of the enemy churches using the recorded postions. Use mirror church method. 
+ * Input : the location of the friendly castles
+ * Output: mirrored images of the enemy castles
+ */
+church.mirrorChurch = (myLocation, fullMap) => {
+    const {x, y} = myLocation;
+    const Ax = fullMap.length - x - 1;
+    const Ay = fullMap.length - y - 1;
+    const isHorizontal = movement.isHorizontalReflection(fullMap);
+    
+    if(isHorizontal)
+    {
+        return {x: x, y: Ay}
+    }
+    else
+    {
+        return {x: Ax, y: y};
+    }
+}
 
 export default church;

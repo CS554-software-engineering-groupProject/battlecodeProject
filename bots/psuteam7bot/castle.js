@@ -23,8 +23,10 @@ castle.doAction = (self) => {
     //On first turn:
     //  1. add to castleBuildQueue with pilgrims for each local karbonite depot
     //  2. add to castleBuildQueue with pilgrims for each local fuel depot
+
     //  3. add to castleBuildQueue a single crusader targeting the mirror castle.
     //This ensures that all local depots are filled and a crusader will be built after
+
     if(self.me.turn === 1)
     {
         
@@ -42,6 +44,7 @@ castle.doAction = (self) => {
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map)
         self.target = mirrorCastle;
         self.log(self.castleBuildQueue);
+
         return castle.buildFromQueue(self);
     }
     else if (self.me.turn <= 4) 
@@ -108,7 +111,6 @@ castle.makeMacroDecisions = (self) => {
 
 }
 
-
 /**
  *  Method to check if any of the adjacent tile is available. Place the unit if true.
  */
@@ -119,9 +121,11 @@ castle.findUnitPlace = (self, unitType) => {
             if(movement.isPassable(location, self.map, self.getVisibleRobotMap()))
             {
                 //Send signal starting at turn 3 so you don't overrride location communication at start
+
                 /*if(self.me.turn > 4) {
                     self.castleTalk(SPECS[unitType]);
                 }*/
+
 
                 self.log('castle ' + self.id + ' building unit ' + unitType + ' at [' + (self.me.x+i) + ',' + (self.me.y+j) +']'); 
                 return self.buildUnit(SPECS[unitType], i, j);       
@@ -261,6 +265,13 @@ castle.findPosition = (self) => {
         if(a.id == self.me.id) {
             return -1;
         } else if (b.id == self.me.id) {
+            return 1;
+        }
+    });
+    self.teamCastles.sort((a,b) => {
+        if(movement.getDistance(self.me, a) > movement.getDistance(self.me, b)) {
+            return -1;
+        } else {
             return 1;
         }
     });

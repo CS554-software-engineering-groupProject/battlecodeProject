@@ -2670,30 +2670,72 @@ prophet.takeDestroyerAction = (self) =>  {
     return movement.moveAlongPath(self);
 };
 
-const church = {};
-//Initial starting health of 100 and vision radius of 100
+//import { setFlagsFromString } from 'v8';
 
-//are we explicitely assigning the unique 32 bit integer id?
-//this unit always occupies single tile
-//what about if the health reduces to zero and the unit is removed? how do we write it here?
+const church = {};
+
+church.UNITTYPE = ["CASTLE", "CHURCH", "PILGRIM", "CRUSADER", "PROPHET" , "PREACHER"];
+
+church.maxKarbonite = SPECS.UNITS[SPECS.CHURCH].KARBONITE_CAPACITY;
+church.maxFuel = SPECS.UNITS[SPECS.CHURCH].FUEL_CAPACITY;
 
 church.doAction = (self) => {
-    self.log("church " + self.id + " taking turn.");
-    return;
+     self.log("church" + self.id + "taking turn.");
+
+    if(self.me.turn == 1){
+        const karboniteDepots = movement.getResourcesInRange(self.me, 36, self.karbonite_map);
+        karboniteDepots.forEach(depot => {
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
+        });
+
+        const fuelDepots = movement.getResourcesInRange(self.me, 16, self.fuel_map);
+        fuelDepots.forEach(depot => {
+            self.castleBuildQueue.push({unit: "PILGRIM", x: depot.x, y: depot.y});
+        });
+
+        const mirrorCastle = movement.getMirrorCastle(self.me, self.map);
+        self.target = mirrorCastle;
+        self.log(self.castleBuildQueue);
+
+        return church.castle.buildFromQueue(self);
+    }  
+    else if (self.me.turn <= 4) {
+        self.log("BUILD QUEUE NON-EMPTY");
+        self.log(self.castleBuildQueue);
+        const botsInQueue = self.castleBuildQueue.length;
+        //Keep queue at reasonable size, adding another crusader as necessary so crusaders are continually build
+        if (botsInQueue <= 5) {
+            self.castleBuildQueue.push({unit: "PROPHETS", x: self.target.x, y: self.target.y});
+        }
+        return church.castle.buildFromQueue(self);
+    }
 };
 
-church.doAction = (self)=> {
-    self.log("producing" + r.id + "robot");
-    //Churches produce robots, and provide a depot for Pilgrims to deposit resources into the global economy.
-    //produce robots with their karbonite and fuel cost. 
-    //the robots can be spawned in any adjacent square including diagonals. Robots have to be added to the end of the turn queue.
 
-};
-
-church.doAction = (self)=> {
-    self.log("depositing fuel to "+ self.karbonite +" global storage.");
-    self.log("depositing fuel to "+ self.fuel +" global storage.");
-    //
+/** Method to detect and evaluate nearby visible resource depots 
+ */
+church.detectClosestResources = (position, depotMap, occupiedResources) => {
+    const mapSize = depotMap.length;
+    let minDist = 2*Math.pow(mapSize, 2);
+    let closest = { x: -1, y: -1};
+    for(let y = 0; y < mapSize; y++){
+        for(let x = 0; x<mapSize; x++){
+            const currDist = movement.getDistance(position, {x: x, y: y});
+            if(depotMap[x][y] == true && (currDist < minDist)){
+                //Check if occupiedResources has a match
+                const occupiedArray = occupiedResources.filter(depot => {
+                    return depot.x === x && depot.y === y;
+                });
+                //If no matches (occupiedArray is empty), set as potential position
+                if(occupiedArray.length === 0) {
+                    closest.x = x;
+                    closest.y = y;
+                    minDist = currDist;
+                }
+            }
+        }
+    }
+    return closest;
 };
 
 const crusader = {};

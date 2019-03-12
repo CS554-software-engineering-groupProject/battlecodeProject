@@ -186,7 +186,7 @@ describe('Pilgrim Unit Tests', function() {
             done();
         });
 
-        it('should become miner if at target with local base nearby', function(done) {
+        it.skip('should become miner if at target with local base nearby', function(done) {
             let stubTakeMinerAction = mockGame.replaceMethod("pilgrim", "takeMinerAction").returns('becoming miner');
             let stubBuildChurch = mockGame.replaceMethod("pilgrim", "buildChurch").returns('not becoming miner');
             myBot.target = {x: myBot.me.x, y: myBot.me.y};
@@ -227,7 +227,7 @@ describe('Pilgrim Unit Tests', function() {
             done();
         });
 
-        it('should attempt to build a church if at target but no local base nearby', function(done) {
+        it.skip('should attempt to build a church if at target but no local base nearby', function(done) {
             let stubBuildChurch = mockGame.replaceMethod("pilgrim", "buildChurch").returns('building church');
 
             //Nearby team church, should become miner 
@@ -245,7 +245,7 @@ describe('Pilgrim Unit Tests', function() {
             done();
         });
 
-        it('should mine if at target with no local base nearby, but not enough resources for church', function(done) {
+        it.skip('should mine if at target with no local base nearby, but not enough resources for church', function(done) {
             let stubBuildChurch = mockGame.replaceMethod("pilgrim", "buildChurch").returns('building church');
 
             //Nearby team church, should become miner 

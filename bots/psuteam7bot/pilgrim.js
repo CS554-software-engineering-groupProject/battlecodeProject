@@ -113,7 +113,7 @@ pilgrim.takePioneerAction = (self) => {
             return movement.getDistance(self.me, b) - movement.getDistance(self.me, a);
         });
         //If nothing around, assume it should be a church-builder
-        if(localBases.length === 0) {
+        /*if(localBases.length === 0) {
             //Build church if you can
             if(self.fuel >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL && self.karbonite >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE) {
                 return pilgrim.buildChurch(self);
@@ -123,11 +123,11 @@ pilgrim.takePioneerAction = (self) => {
                 return self.mine();
             }
         } else {
-            self.base = {x: localBases[0].x, y: localBases[0].y};
+            self.base = {x: localBases[0].x, y: localBases[0].y};*/
             self.role = 'MINER';
             self.log('pilgrim PIONEER ' + self.id + ' becoming MINER')
             return pilgrim.takeMinerAction(self);
-        }
+        //}
     }
 }
 

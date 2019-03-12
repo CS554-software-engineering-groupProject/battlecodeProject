@@ -1412,8 +1412,10 @@ castle.doAction = (self) => {
     //On first turn:
     //  1. add to castleBuildQueue with pilgrims for each local karbonite depot
     //  2. add to castleBuildQueue with pilgrims for each local fuel depot
+
     //  3. add to castleBuildQueue a single crusader targeting the mirror castle.
     //This ensures that all local depots are filled and a crusader will be built after
+
     if(self.me.turn === 1)
     {
         
@@ -1431,6 +1433,7 @@ castle.doAction = (self) => {
         const mirrorCastle = movement.getMirrorCastle(self.me, self.map);
         self.target = mirrorCastle;
         self.log(self.castleBuildQueue);
+
         return castle.buildFromQueue(self);
     }
     else if (self.me.turn <= 4) 
@@ -1497,7 +1500,6 @@ castle.makeMacroDecisions = (self) => {
 
 };
 
-
 /**
  *  Method to check if any of the adjacent tile is available. Place the unit if true.
  */
@@ -1508,9 +1510,11 @@ castle.findUnitPlace = (self, unitType) => {
             if(movement.isPassable(location, self.map, self.getVisibleRobotMap()))
             {
                 //Send signal starting at turn 3 so you don't overrride location communication at start
+
                 /*if(self.me.turn > 4) {
                     self.castleTalk(SPECS[unitType]);
                 }*/
+
 
                 self.log('castle ' + self.id + ' building unit ' + unitType + ' at [' + (self.me.x+i) + ',' + (self.me.y+j) +']'); 
                 return self.buildUnit(SPECS[unitType], i, j);       
@@ -1650,6 +1654,13 @@ castle.findPosition = (self) => {
         if(a.id == self.me.id) {
             return -1;
         } else if (b.id == self.me.id) {
+            return 1;
+        }
+    });
+    self.teamCastles.sort((a,b) => {
+        if(movement.getDistance(self.me, a) > movement.getDistance(self.me, b)) {
+            return -1;
+        } else {
             return 1;
         }
     });
@@ -2159,7 +2170,7 @@ pilgrim.takePioneerAction = (self) => {
             return movement.getDistance(self.me, b) - movement.getDistance(self.me, a);
         });
         //If nothing around, assume it should be a church-builder
-        if(localBases.length === 0) {
+        /*if(localBases.length === 0) {
             //Build church if you can
             if(self.fuel >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_FUEL && self.karbonite >= SPECS.UNITS[SPECS.CHURCH].CONSTRUCTION_KARBONITE) {
                 return pilgrim.buildChurch(self);
@@ -2169,11 +2180,11 @@ pilgrim.takePioneerAction = (self) => {
                 return self.mine();
             }
         } else {
-            self.base = {x: localBases[0].x, y: localBases[0].y};
+            self.base = {x: localBases[0].x, y: localBases[0].y};*/
             self.role = 'MINER';
             self.log('pilgrim PIONEER ' + self.id + ' becoming MINER');
             return pilgrim.takeMinerAction(self);
-        }
+        //}
     }
 };
 
@@ -2697,7 +2708,7 @@ church.doAction = (self) => {
         self.target = mirrorCastle;
         self.log(self.castleBuildQueue);
 
-        return church.castle.buildFromQueue(self);
+        return castle.buildFromQueue(self);
     }  
     else if (self.me.turn <= 4) {
         self.log("BUILD QUEUE NON-EMPTY");
@@ -2707,35 +2718,69 @@ church.doAction = (self) => {
         if (botsInQueue <= 5) {
             self.castleBuildQueue.push({unit: "PROPHETS", x: self.target.x, y: self.target.y});
         }
-        return church.castle.buildFromQueue(self);
+        return castle.buildFromQueue(self);
     }
 };
 
 
 /** Method to detect and evaluate nearby visible resource depots 
  */
-church.detectClosestResources = (position, depotMap, occupiedResources) => {
-    const mapSize = depotMap.length;
-    let minDist = 2*Math.pow(mapSize, 2);
-    let closest = { x: -1, y: -1};
-    for(let y = 0; y < mapSize; y++){
-        for(let x = 0; x<mapSize; x++){
-            const currDist = movement.getDistance(position, {x: x, y: y});
-            if(depotMap[x][y] == true && (currDist < minDist)){
-                //Check if occupiedResources has a match
-                const occupiedArray = occupiedResources.filter(depot => {
-                    return depot.x === x && depot.y === y;
-                });
-                //If no matches (occupiedArray is empty), set as potential position
-                if(occupiedArray.length === 0) {
-                    closest.x = x;
-                    closest.y = y;
-                    minDist = currDist;
-                }
+church.getResourcesInRange = (location, maxDistance, resourceMap) =>{
+    const targets = [];
+    let currentDist;
+
+    for(let y = 0; y < resourceMap.length; ++y){
+        for (let x = 0; x < resourceMap.length; ++x) {
+            if(resourceMap[x][y]){
+                currentDist = movement.getDistance(location, {x, y});
+                if(currentDist <= maxDistance) {
+                    targets.push({x: x, y: y, distance: currentDist});
+                } 
             }
         }
     }
-    return closest;
+    targets.sort((a,b) => {
+        if(a.distance < b.distance) {
+            return -1;
+        } else {
+            return 1;
+        }
+    });
+    return targets;
+};
+
+/** Each church will try to locate and record the positions of the friendly church at the start of the game
+ * Input: self = this is the reference to the object to the calling method. 
+ * Output: returnPosition = return value containing the positions of the friendly castle       
+ *  */
+church.recordPosition = (self) => {
+    let turn = self.me.turn;
+    if(turn <= 2){
+        self.signal(self.me.x,(self.signal_radius)^2);
+    }
+    else if(turn <= 4){
+        self.signal(self.me.y,(self.signal_radius)^2);
+    }
+};
+
+/** Church should calculate the locations of the enemy churches using the recorded postions. Use mirror church method. 
+ * Input : the location of the friendly castles
+ * Output: mirrored images of the enemy castles
+ */
+church.mirrorChurch = (myLocation, fullMap) => {
+    const {x, y} = myLocation;
+    const Ax = fullMap.length - x - 1;
+    const Ay = fullMap.length - y - 1;
+    const isHorizontal = movement.isHorizontalReflection(fullMap);
+    
+    if(isHorizontal)
+    {
+        return {x: x, y: Ay}
+    }
+    else
+    {
+        return {x: Ax, y: y};
+    }
 };
 
 const crusader = {};
